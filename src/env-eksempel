@@ -1,0 +1,13 @@
+#
+APIKEY=""
+
+FIKS_ENDPOINT=""
+FIKS_ID =""
+FIKS_PWD =""
+FIKS_ROLLE_ID = "" # med rett  hjemmel
+IDP_HOST=""
+IDP_TOKENENDPOINT=""
+IDP_AUDIENCE = ""
+IDP_ISSUER = "" #integrasjon id idp
+CERTPASS = ""
+CERTFILE= "./fil.p12"

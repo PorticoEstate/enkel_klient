@@ -1,0 +1,4 @@
+.env
+*.p12
+/src/vendor/*
+/src/templates_c/*

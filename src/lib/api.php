@@ -59,7 +59,7 @@ Generelt:
 
 			if(!$this->login || !$this->password)
 			{
-				throw new Exception('Missing parametres for webservice');
+				throw new \Exception('Missing parametres for webservice');
 			}
 
 			$post_data = array

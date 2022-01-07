@@ -20,7 +20,7 @@
 	</style>
 
 	<div class="container">
-		<h1>Skjema for innmelding av saker til Kemner</h1>
+		<h1>{$form_header}</h1>
 
 		{if $saved == 1}
 

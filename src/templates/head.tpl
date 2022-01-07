@@ -1,6 +1,6 @@
 {extends file='layout.tpl'}
 
-{block name=title}<title>{$page_title}</title>{/block}
+{block name=title}<title>{$site_title}</title>{/block}
 {block name=head}
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" >

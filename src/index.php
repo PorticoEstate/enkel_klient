@@ -10,23 +10,29 @@
 	require 'lib/api.php';
 	require 'lib/functions.php';
 
+	$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+	$dotenv->load();
+
 	$smarty					 = new Smarty;
-//$smarty->force_compile = true;
-	$smarty->debugging		 = false;
+	$smarty->force_compile	 = true;
+//	$smarty->debugging		 = false;
 	$smarty->caching		 = false;
-	$smarty->cache_lifetime	 = 120;
-	$smarty->assign("page_title", "LRS Hjelper deg", true);
+	$smarty->setCaching(Smarty::CACHING_OFF);
+//	$smarty->cache_lifetime	 = 120;
+	$site_title = !empty($_ENV['site_title']) ? $_ENV['site_title'] : 'sett tittel i .env-filen';
+	$smarty->assign("site_title", $site_title, true);
 	$smarty->assign("action_url", current_page_url(), true);
-	$smarty->assign("description", "LRS Hjelper deg", true);
-	$smarty->assign("keywords", "Helpdesk,Kemner,kommune", true);
+	$smarty->assign("description", $site_title, true);
+	$smarty->assign("keywords", $_ENV['keywords'], true);
+
+	$form_header = !empty($_ENV['form_header']) ? $_ENV['form_header'] : 'sett form_header i .env-filen';
+	$smarty->assign("form_header", $form_header, false);
 
 	$smarty->assign("saved", 0, true);
 	$smarty->assign("error", '', true);
 	$smarty->assign("subject", '', true);
 	$smarty->assign("message", '', true);
 
-	$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-	$dotenv->load();
 
 	$message = sanitizer::get_var('message', 'html');
 	if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST' && $_POST['randcheck'] == $_SESSION['rand'])

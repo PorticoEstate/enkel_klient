@@ -6,7 +6,8 @@
 		"components/font-awesome": "^5.15",
 		"oomphinc/composer-installers-extender": "^2.0",
 		"components/jquery":"^3.6",
-		"ezyang/htmlpurifier":"^4.14"
+		"ezyang/htmlpurifier":"^4.14",
+		"firebase/php-jwt": "^5.5"
 	},
 	"config": {
 		"allow-plugins": {

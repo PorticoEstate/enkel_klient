@@ -15,15 +15,16 @@
 
 	$smarty					 = new Smarty;
 	$smarty->force_compile	 = true;
-//	$smarty->debugging		 = false;
+	$smarty->debugging		 = true;
 	$smarty->caching		 = false;
 	$smarty->setCaching(Smarty::CACHING_OFF);
 //	$smarty->cache_lifetime	 = 120;
+	$smarty->configLoad("test.conf");
 	$site_title = !empty($_ENV['site_title']) ? $_ENV['site_title'] : 'sett tittel i .env-filen';
-	$smarty->assign("site_title", $site_title, true);
+//	$smarty->assign("site_title", $site_title, true);
 	$smarty->assign("action_url", current_page_url(), true);
-	$smarty->assign("description", $site_title, true);
-	$smarty->assign("keywords", $_ENV['keywords'], true);
+//	$smarty->assign("description", $site_title, true);
+//	$smarty->assign("keywords", $_ENV['keywords'], true);
 
 	$form_header = !empty($_ENV['form_header']) ? $_ENV['form_header'] : 'sett form_header i .env-filen';
 	$smarty->assign("form_header", $form_header, false);

@@ -1,4 +1,3 @@
-{config_load file="test.conf" section="setup"}
 {extends file='head.tpl'}
 
 {block name=body}
@@ -20,7 +19,7 @@
 	</style>
 
 	<div class="container">
-		<h1>{$form_header}</h1>
+		<h1>{#form_header#}</h1>
 
 		{if $saved == 1}
 

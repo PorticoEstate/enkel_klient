@@ -21,4 +21,11 @@
 
 		return $page_url;
 	}
+
+	function _debug_array($obj)
+	{
+		echo "<pre>";
+		print_r($obj);
+		echo "</pre>";
+	}
 	

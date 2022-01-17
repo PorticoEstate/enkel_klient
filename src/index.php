@@ -1,18 +1,12 @@
 <?php
-// Start the session
-	session_start();
+	declare(strict_types=1);
 
 	use portico\sanitizer;
 	use portico\api;
 
-	require __DIR__ . '/vendor/autoload.php';
-	require 'lib/sanitizer.php';
 	require 'lib/api.php';
-	require 'lib/functions.php';
 
-	$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-	$dotenv->load();
-
+	$api					 = new api();
 	$smarty					 = new Smarty;
 	$smarty->force_compile	 = true;
 	$smarty->debugging		 = true;
@@ -20,15 +14,7 @@
 	$smarty->setCaching(Smarty::CACHING_OFF);
 //	$smarty->cache_lifetime	 = 120;
 	$smarty->configLoad("test.conf");
-	$site_title = !empty($_ENV['site_title']) ? $_ENV['site_title'] : 'sett tittel i .env-filen';
-//	$smarty->assign("site_title", $site_title, true);
 	$smarty->assign("action_url", current_page_url(), true);
-//	$smarty->assign("description", $site_title, true);
-//	$smarty->assign("keywords", $_ENV['keywords'], true);
-
-	$form_header = !empty($_ENV['form_header']) ? $_ENV['form_header'] : 'sett form_header i .env-filen';
-	$smarty->assign("form_header", $form_header, false);
-
 	$smarty->assign("saved", 0, true);
 	$smarty->assign("error", '', true);
 	$smarty->assign("subject", '', true);
@@ -38,7 +24,6 @@
 	$message = sanitizer::get_var('message', 'html');
 	if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST' && $_POST['randcheck'] == $_SESSION['rand'])
 	{
-		$api			 = new api();
 		$session_info	 = json_decode($api->login(), true);
 
 		$url = $api->backend_url . "/index.php?";

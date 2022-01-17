@@ -1,6 +1,14 @@
 <?php
+
+	declare(strict_types=1);
+
 	namespace portico;
 
+	use Dotenv\Dotenv;
+
+	require dirname(__DIR__,1) . '/vendor/autoload.php';
+	require 'lib/sanitizer.php';
+	require 'lib/functions.php';
 
 /*
 Generelt:
@@ -46,9 +54,16 @@ Generelt:
 
 		function __construct()
 		{
+		// Start the session
+			session_start();
+
+			$up_one = dirname(__DIR__,1);
+			$dotenv = Dotenv::createImmutable($up_one);
+			$dotenv->load();
+
 			$this->login =  $_ENV['login'];
 			$this->password =  $_ENV['password'];
-			$this->backend_url = $_ENV['backend_url'];
+			$this->backend_url = rtrim($_ENV['backend_url'],'/');
 			$this->logindomain = $_ENV['backend_domain'];
 
 		}

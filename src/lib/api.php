@@ -5,6 +5,7 @@
 	namespace portico;
 
 	use Dotenv\Dotenv;
+	use Exception;
 
 	require dirname(__DIR__,1) . '/vendor/autoload.php';
 	require 'lib/sanitizer.php';
@@ -49,14 +50,20 @@ Generelt:
 
 	class api
 	{
-		public $backend_url, $logindomain;
-		private $login, $password;
+		public 
+		 $backend_url,
+		 $logindomain;
+
+		private 
+		 $login,
+		 $password,
+		 $session_info;
 
 		function __construct()
 		{
 		// Start the session
 			session_start();
-
+//phpinfo();
 			$up_one = dirname(__DIR__,1);
 			$dotenv = Dotenv::createImmutable($up_one);
 			$dotenv->load();
@@ -66,10 +73,39 @@ Generelt:
 			$this->backend_url = rtrim($_ENV['backend_url'],'/');
 			$this->logindomain = $_ENV['backend_domain'];
 
+			if(!$this->get_session_info())
+			{
+				try
+				{
+					$session_info	 = $this->login();
+
+				}
+				catch (Exception $e)
+				{
+					_debug_array($e);
+					exit;
+				}
+				$this->session_info	 = json_decode($session_info, true);
+				$_SESSION['session_info']	 = $this->session_info;
+			}
 		}
 
+		function get_session_info()
+		{
+			if(isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
+			{
+				$this->session_info = $_SESSION['session_info'];
+			}
+			return $this->session_info;
+		}
+		
 		function login()
 		{
+			if(isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
+			{
+				return json_encode($_SESSION['session_info']);
+			}
+
 			$url =  $this->backend_url . "/login_api.php";
 
 			if(!$this->login || !$this->password)
@@ -85,7 +121,11 @@ Generelt:
 				'passwd'		=> $this->password
 			);
 
-			return $this->exchange_data($url, $post_data);
+			$session_info = $this->exchange_data($url, $post_data);
+			if(!$session_info)
+			{
+				throw new Exception("login failed");
+			}
 		}
 
 		function exchange_data($url, $post_data = array())

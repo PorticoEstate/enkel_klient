@@ -2,14 +2,14 @@
 
 {block name=body}
     <!-- Main Quill library -->
-    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-    <script src="js/quill-textarea.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js?n={#cache_refresh_token#}"></script>
+    <script src="js/quill-textarea.js?n={#cache_refresh_token#}"></script>
 
+    <script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
 
     <!-- Theme included stylesheets -->
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-    {*<link href="//cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
-	*}
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css?n={#cache_refresh_token#}" rel="stylesheet">
+    <link href="js/autocomplete/css/autoComplete.css?n={#cache_refresh_token#}" type="text/css" rel="StyleSheet">
 
     <style>
         .ql-container {
@@ -34,28 +34,43 @@
                     <p>{$error}</p>
                 </div>
             {/if}
+
             <form method="post" action="{$action_url}">
                 <input type="hidden" value="{$rand}" name="randcheck" />
                 <fieldset>
+                    <div class="form-check mt-2">
+                        <label for="location_name">Lokasjon</label>
+                        <input type="text" id="location_code" name="location_code">
+                        <input type="text" id="location_name" name="location_name" tabindex="1" class="form-control"
+                            autocomplete="off">
+                        <div class="selection"></div>
 
+                    </div>
                     <div class="form-check mt-2">
                         <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_1"
                             value="1">
                         <label class="form-check-label" for="type_br_slokking_1">
-                            Husbrannslange
+                            Inngår i brannvarslingsanlegg
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_2"
-                            value="2">
+                            value="1">
                         <label class="form-check-label" for="type_br_slokking_2">
-                            Pulver
+                            Husbrannslange
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_3"
-                            value="3">
+                            value="2">
                         <label class="form-check-label" for="type_br_slokking_3">
+                            Pulver
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_4"
+                            value="3">
+                        <label class="form-check-label" for="type_br_slokking_4">
                             Skum
                         </label>
                     </div>
@@ -68,13 +83,13 @@
                             required="required">
                     </div>
 
-					<div class="form-check mt-2">
-					<input class="form-check-input" type="checkbox" name="values_attribute[4][value][]" id="id_behov_tilsyn"
-						value="1">
-					<label class="form-check-label" for="id_behov_tilsyn">
-					Behov for utvidet tilsyn
-					</label>
-				</div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="values_attribute[4][value][]" id="id_behov_tilsyn"
+                            value="1">
+                        <label class="form-check-label" for="id_behov_tilsyn">
+                            Behov for utvidet tilsyn
+                        </label>
+                    </div>
 
                     <div class="form-group mt-2">
                         <label for="message">Merknad</label>
@@ -86,4 +101,6 @@
         {/if}
 
     </div>
+    <script src="js/inspection_1.js?n={#cache_refresh_token#}"></script>
+
 {/block}

@@ -6,8 +6,9 @@ services:
       restart: always
       build : .
       container_name: lrs
+ #     image: sigurdne/portico_estate_webserver:latest
       volumes:
-      - ./src:/var/www/html
+      - ./src:/var/www/html/enkel_klient/
       networks:
       - frontend
       ports:

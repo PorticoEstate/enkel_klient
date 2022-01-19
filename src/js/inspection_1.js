@@ -11,8 +11,10 @@ const autoCompleteJS = new autoComplete({
                         .getElementById("location_name")
                         .setAttribute("placeholder", "Loading...");
                     // Fetch External Data Source
+                    var oArgs = {menuaction:'property.bolocation.get_locations', query: query};
+                    var strURL = phpGWLink('index.php', oArgs, true);
                     const source = await fetch(
-                        'https://tarekraafat.github.io/autoComplete.js/demo/db/generic.json?q=' + query
+                        strURL
                     );
                     const data = await source.json();
                     // Post Loading placeholder text

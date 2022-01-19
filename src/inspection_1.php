@@ -9,11 +9,12 @@
 	$api					 = new api();
 	$smarty					 = new Smarty;
 	$smarty->force_compile	 = true;
-	$smarty->debugging		 = true;
+//	$smarty->debugging		 = true;
 	$smarty->caching		 = false;
 	$smarty->setCaching(Smarty::CACHING_OFF);
 //	$smarty->cache_lifetime	 = 120;
 	$smarty->configLoad("test.conf", 'inspection_1');
+	$smarty->assign("str_base_url", $api->backend_url . '/');
 	$smarty->assign("action_url", current_page_url(), true);
 	$smarty->assign("saved", 0, true);
 	$smarty->assign("error", '', true);

@@ -63,7 +63,8 @@ Generelt:
 		{
 		// Start the session
 			session_start();
-//phpinfo();
+			_debug_array($_SESSION);
+
 			$up_one = dirname(__DIR__,1);
 			$dotenv = Dotenv::createImmutable($up_one);
 			$dotenv->load();
@@ -78,7 +79,6 @@ Generelt:
 				try
 				{
 					$session_info	 = $this->login();
-
 				}
 				catch (Exception $e)
 				{
@@ -126,6 +126,7 @@ Generelt:
 			{
 				throw new Exception("login failed");
 			}
+			return $session_info;
 		}
 
 		function exchange_data($url, $post_data = array())
@@ -136,8 +137,8 @@ Generelt:
 			curl_setopt($ch, CURLOPT_POST, true);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 			$result = curl_exec($ch);
-
 			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 			curl_close($ch);
 

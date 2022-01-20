@@ -1,6 +1,7 @@
 {extends file='head.tpl'}
 
 {block name=body}
+	<script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script>
 	<!-- Main Quill library -->
 	<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 	<script src="js/quill-textarea.js"></script>

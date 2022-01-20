@@ -1,3 +1,8 @@
+function showDiv(divId, element)
+{
+    document.getElementById(divId).style.display = element.checked == true ? 'block' : 'none';
+}
+
 // The autoComplete.js Engine instance creator
 const autoCompleteJS = new autoComplete({
     selector: "#location_name",
@@ -11,8 +16,8 @@ const autoCompleteJS = new autoComplete({
                         .getElementById("location_name")
                         .setAttribute("placeholder", "Loading...");
                     // Fetch External Data Source
-                    var oArgs = {menuaction:'property.bolocation.get_locations', query: query};
-                    var strURL = phpGWLink('index.php', oArgs, true);
+                    var oArgs = { menuaction: 'property.bolocation.get_locations', query: query };
+                    var strURL = phpGWLink('inspection_1.php', oArgs, true);
                     const source = await fetch(
                         strURL
                     );
@@ -27,20 +32,19 @@ const autoCompleteJS = new autoComplete({
                     return error;
                 }
             }
-            else
-            {
+            else {
                 return [];
             }
         },
-        keys: ["food", "cities", "animals"],
+        keys: ["name", "id"],
         cache: false,
         filter: (list) => {
             // Filter duplicates
             // incase of multiple data keys usage
             const filteredResults = Array.from(
                 new Set(list.map((value) => value.match))
-            ).map((food) => {
-                return list.find((value) => value.match === food);
+            ).map((name) => {
+                return list.find((value) => value.match === name);
             });
 
             return filteredResults;
@@ -58,7 +62,7 @@ const autoCompleteJS = new autoComplete({
             list.prepend(info);
         },
         noResults: true,
-        maxResults: 15,
+        maxResults: 150,
         tabSelect: true
     },
     resultItem: {
@@ -67,7 +71,7 @@ const autoCompleteJS = new autoComplete({
             item.style = "display: flex; justify-content: space-between;";
             // Modify Results Item Content
             item.innerHTML = `
-      <span style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+      <span style="text-overflow: ellipsis; white-space: nowrap; ">
         ${data.match}
       </span>
       <span style="display: flex; align-items: center; font-size: 13px; font-weight: 100; text-transform: uppercase; color: rgba(0,0,0,.2);">
@@ -80,9 +84,9 @@ const autoCompleteJS = new autoComplete({
         input: {
             selection: (event) => {
                 const selection = event.detail.selection.value;
-                autoCompleteJS.input.value = selection.food;
-                document.getElementById("location_code").value = selection.food;
-                console.log(selection);
+                autoCompleteJS.input.value = selection.name;
+                document.getElementById("location_code").value = selection.id;
+//              console.log(selection);
             },
             focus: () => {
                 if (autoCompleteJS.input.value.length) autoCompleteJS.start();

@@ -50,11 +50,11 @@ Generelt:
 
 	class api
 	{
-		public 
+		public
 		 $backend_url,
 		 $logindomain;
 
-		private 
+		private
 		 $login,
 		 $password,
 		 $session_info;
@@ -63,7 +63,7 @@ Generelt:
 		{
 		// Start the session
 			session_start();
-			_debug_array($_SESSION);
+//			_debug_array($_SESSION);
 
 			$up_one = dirname(__DIR__,1);
 			$dotenv = Dotenv::createImmutable($up_one);
@@ -98,7 +98,7 @@ Generelt:
 			}
 			return $this->session_info;
 		}
-		
+
 		function login()
 		{
 			if(isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))

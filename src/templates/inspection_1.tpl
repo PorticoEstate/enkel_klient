@@ -47,33 +47,36 @@
                         <div class="selection"></div>
                         <input type="hidden" id="location_code" name="location_code">
                     </div>
-                    <div class="form-check mt-2">
-                        <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_1"
-                            value="1" required="required">
-                        <label class="form-check-label" for="type_br_slokking_1">
-                            Inngår i brannvarslingsanlegg
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_2"
-                            value="2" required="required">
-                        <label class="form-check-label" for="type_br_slokking_2">
-                            Husbrannslange
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_3"
-                            value="3" required="required">
-                        <label class="form-check-label" for="type_br_slokking_3">
-                            Pulver
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_4"
-                            value="4" required="required">
-                        <label class="form-check-label" for="type_br_slokking_4">
-                            Skum
-                        </label>
+                    <div class="form-group mt-2">
+                        <label for="location_name">Brannslokkingsapparat</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+                                id="type_br_slokking_1" value="1" required="required">
+                            <label class="form-check-label" for="type_br_slokking_1">
+                                Inngår i brannvarslingsanlegg
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+                                id="type_br_slokking_2" value="2" required="required">
+                            <label class="form-check-label" for="type_br_slokking_2">
+                                Husbrannslange
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+                                id="type_br_slokking_3" value="3" required="required">
+                            <label class="form-check-label" for="type_br_slokking_3">
+                                Pulver
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+                                id="type_br_slokking_4" value="4" required="required">
+                            <label class="form-check-label" for="type_br_slokking_4">
+                                Skum
+                            </label>
+                        </div>
                     </div>
 
                     <div class="form-group mt-2">
@@ -93,7 +96,8 @@
 
                     <div id="hidden_div" class="form-group mt-2" style="display: none;">
                         <label for="merknad">Merknad</label>
-                        <small id="merknadHelp" class="form-text text-muted">Her legger du inn merknader dersom det er behov for utvidet tilsyn.</small>
+                        <small id="merknadHelp" class="form-text text-muted">Her legger du inn merknader dersom det er behov for
+                            utvidet tilsyn.</small>
                         <textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp"
                             name="values_attribute[5][value][]">{$message}</textarea>
                     </div>

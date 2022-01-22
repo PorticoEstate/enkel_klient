@@ -34,8 +34,11 @@ if (isset($_GET['menuaction']) || isset($_POST['menuaction']))
 		$invalid_data = true;
 	}
 }
-
-
+/*
+_debug_array($_GET);
+_debug_array($method);
+die();
+*/
 if($method)
 {
 	$inspection->$method();
@@ -59,7 +62,7 @@ class inspection_1
 		//	$this->smarty->cache_lifetime	 = 120;
 		$smarty->configLoad("test.conf", 'inspection_1');
 
-		$str_base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}" . pathinfo($_SERVER['REQUEST_URI'], PATHINFO_DIRNAME) . '/';
+		$str_base_url = current_page_url();
 
 		$smarty->assign("str_base_url", $str_base_url);
 
@@ -105,19 +108,19 @@ class inspection_1
 			$url = $this->api->backend_url . "/index.php?";
 
 			$get_data = array(
-				'menuaction'					 => 'property.uientity.add',
+				'menuaction'					 => 'property.uientity.save',
 				$session_info['session_name']	 => $session_info['sessionid'],
 				'domain'						 => $this->api->logindomain,
 				'phpgw_return_as'				 => 'json',
-				'api_mode'						 => true
+				'api_mode'						 => true,
+				'entity_id'						 => 2,
+				'cat_id'						 => 20,
+				'type'							 =>'entity',
 			);
 
 			$post_data = array(
 				'values'	 => array(
 					'location_code'	 => sanitizer::get_var('location_code', 'string'),
-					'entity_id'	 => 2,
-					'cat_id'	 => 20,
-					'type'		 =>'entity',
 					'apply'		 => true
 				),
 				'values_attribute' => sanitizer::get_var('values_attribute')
@@ -133,7 +136,7 @@ class inspection_1
 			} else {
 				$error = 'Noe gikk galt med innsendingen';
 				$this->smarty->assign("error", $error, true);
-				$this->smarty->assign("message", $message, true);
+				$this->smarty->assign("remark", $remark, true);
 				$this->smarty->assign("subject", sanitizer::get_var('subject', 'string'), true);
 			}
 		}
@@ -141,7 +144,10 @@ class inspection_1
 	}
 	public function display_form()
 	{
-		$this->smarty->assign("action_url", current_page_url(), true);
+		$get_data = array(
+			'menuaction' => 'enkel_klient.inspection_1.save_form',
+		);
+		$this->smarty->assign("action_url", current_page_url() . '?' . http_build_query($get_data) , true);
 		$this->smarty->assign("saved", 0, true);
 		$this->smarty->assign("error", '', true);
 		$this->smarty->assign("subject", '', true);

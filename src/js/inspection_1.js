@@ -17,7 +17,7 @@ const autoCompleteJS = new autoComplete({
                         .setAttribute("placeholder", "Loading...");
                     // Fetch External Data Source
                     var oArgs = { menuaction: 'property.bolocation.get_locations', query: query };
-                    var strURL = phpGWLink('inspection_1.php', oArgs, true);
+                    var strURL = phpGWLink('', oArgs, true);
                     const source = await fetch(
                         strURL
                     );
@@ -86,6 +86,8 @@ const autoCompleteJS = new autoComplete({
                 const selection = event.detail.selection.value;
                 autoCompleteJS.input.value = selection.name;
                 document.getElementById("location_code").value = selection.id;
+                document.getElementById('details').style.display = 'block';
+
 //              console.log(selection);
             },
             focus: () => {

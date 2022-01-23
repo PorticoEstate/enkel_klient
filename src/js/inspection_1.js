@@ -3,6 +3,12 @@ function showDiv(divId, element)
     document.getElementById(divId).style.display = element.checked == true ? 'block' : 'none';
 }
 
+function refresh_form()
+{
+    var strURL = phpGWLink('', {});
+    window.location.replace(strURL);
+}
+
 // The autoComplete.js Engine instance creator
 const autoCompleteJS = new autoComplete({
     selector: "#location_name",

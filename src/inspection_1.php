@@ -62,7 +62,7 @@ class inspection_1
 		//	$this->smarty->cache_lifetime	 = 120;
 		$smarty->configLoad("test.conf", 'inspection_1');
 
-		$str_base_url = current_page_url();
+		$str_base_url = current_page_url() . 'inspection_1.php';
 
 		$smarty->assign("str_base_url", $str_base_url);
 
@@ -101,6 +101,9 @@ class inspection_1
 
 	public function save_form()
 	{
+		$error = '';
+		$saved = false;
+
 		if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST' && $_POST['randcheck'] == $_SESSION['rand'])
 		{
 			$session_info	 = $this->api->get_session_info();
@@ -132,28 +135,26 @@ class inspection_1
 
 			if ($ret['status'] == 'saved')
 			{
-				$this->smarty->assign("saved", 1, true);
-				$this->smarty->assign("ticket_id", $ret['id'], true);
+				$saved = true;
 			}
 			else
 			{
 				$error = 'Noe gikk galt med innsendingen';
-				$this->smarty->assign("error", $error, true);
 			}
-			$this->display_form();
 		}
 
+		$this->display_form($saved, $error, !empty($ret['id']) ? $ret['id'] : null);
+
 	}
-	public function display_form()
+	public function display_form($saved = false, $error = '', $id = null)
 	{
 		$get_data = array(
 			'menuaction' => 'enkel_klient.inspection_1.save_form',
 		);
-		$this->smarty->assign("action_url", current_page_url() . '?' . http_build_query($get_data) , true);
-		$this->smarty->assign("saved", 0, true);
-		$this->smarty->assign("error", '', true);
-		$this->smarty->assign("subject", '', true);
-		$this->smarty->assign("message", '', true);
+		$this->smarty->assign("action_url", current_page_url() . 'inspection_1.php?' . http_build_query($get_data) , true);
+		$this->smarty->assign("saved", $saved, true);
+		$this->smarty->assign("error", $error, true);
+		$this->smarty->assign("id", $id, true);
 
 		$rand				 = rand();
 		$_SESSION['rand']	 = $rand;

@@ -23,7 +23,7 @@
 */
 
 		$page_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}" . pathinfo($_SERVER['REQUEST_URI'], PATHINFO_DIRNAME) . '/';
-		$page_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}" . $_SERVER['REQUEST_URI'];
+//		$page_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://{$_SERVER['HTTP_HOST']}" . $_SERVER['REQUEST_URI'];
 
 		return $page_url;
 	}

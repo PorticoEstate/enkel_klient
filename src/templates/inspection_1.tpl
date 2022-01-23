@@ -25,8 +25,10 @@
         {if $saved == 1}
 
             <div class="alert alert-success">
-                <p>Saken er registrert og har fått referanse #{$ticket_id}</p>
+                <p>Saken er registrert og har fått referanse #{$id}</p>
             </div>
+            <button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">Lag ny registrering</button>
+
         {else}
 
             {if $error != '' }
@@ -37,7 +39,7 @@
                 </div>
             {/if}
 
-            <form method="post" action="{$action_url}">
+            <form id="inspection_1" method="post" action="{$action_url}">
                 <input type="hidden" value="{$rand}" name="randcheck" />
                 <fieldset>
                     <div class="form-group mt-2">
@@ -129,7 +131,7 @@
                                 for
                                 utvidet tilsyn.</small>
                             <textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp"
-                                name="values_attribute[5][value]">{$message}</textarea>
+                                name="values_attribute[5][value]"></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary mt-2">Send</button>
                     </div>

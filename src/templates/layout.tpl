@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="no">
 	<head>
 	{block name=title}{/block}
 	{block name=head}{/block}

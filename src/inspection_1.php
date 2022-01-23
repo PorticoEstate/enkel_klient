@@ -121,7 +121,7 @@ class inspection_1
 			$post_data = array(
 				'values'	 => array(
 					'location_code'	 => sanitizer::get_var('location_code', 'string'),
-					'apply'		 => true
+					'save'		 => true
 				),
 				'values_attribute' => sanitizer::get_var('values_attribute')
 			);
@@ -130,15 +130,17 @@ class inspection_1
 
 			$ret = json_decode($this->api->exchange_data($url, $post_data), true);
 
-			if ($ret['status'] == 'saved') {
+			if ($ret['status'] == 'saved')
+			{
 				$this->smarty->assign("saved", 1, true);
 				$this->smarty->assign("ticket_id", $ret['id'], true);
-			} else {
+			}
+			else
+			{
 				$error = 'Noe gikk galt med innsendingen';
 				$this->smarty->assign("error", $error, true);
-				$this->smarty->assign("remark", $remark, true);
-				$this->smarty->assign("subject", sanitizer::get_var('subject', 'string'), true);
 			}
+			$this->display_form();
 		}
 
 	}

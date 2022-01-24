@@ -144,4 +144,10 @@ Generelt:
 
 			return $result;
 		}
+
+		public static function link($url, $extravars = array())
+		{
+			return current_site_url() . "{$url}?" . http_build_query($extravars);
+		}
+
 	}

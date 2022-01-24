@@ -8,52 +8,16 @@
 
 declare(strict_types=1);
 
-namespace portico;
-
 use portico\sanitizer;
 use portico\api;
 
-require 'lib/api.php';
-
-$inspection = new inspection_1();
-
-$method = '';
-$invalid_data = false;
-if (isset($_GET['menuaction']) || isset($_POST['menuaction']))
-{
-	if (isset($_GET['menuaction']))
-	{
-		list($app, $class, $method) = explode('.', $_GET['menuaction']);
-	}
-	else
-	{
-		list($app, $class, $method) = explode('.', $_POST['menuaction']);
-	}
-	if (!$app || !$class || !$method)
-	{
-		$invalid_data = true;
-	}
-}
-/*
-_debug_array($_GET);
-_debug_array($method);
-die();
-*/
-if($method)
-{
-	$inspection->$method();
-}
-else
-{
-	$inspection->display_form();
-}
 
 class inspection_1
 {
 	private $api, $smarty;
 	function __construct()
 	{
-		$api					 = new api();
+		$this->api				 = & $GLOBALS['api'];
 		$smarty					 = new \Smarty;
 		$smarty->force_compile	 = true;
 		//	$smarty->debugging		 = true;
@@ -62,11 +26,8 @@ class inspection_1
 		//	$this->smarty->cache_lifetime	 = 120;
 		$smarty->configLoad("test.conf", 'inspection_1');
 
-		$str_base_url = current_page_url() . 'inspection_1.php';
+		$smarty->assign("str_base_url", current_site_url());
 
-		$smarty->assign("str_base_url", $str_base_url);
-
-		$this->api = $api;
 		$this->smarty = $smarty;
 	}
 
@@ -151,7 +112,7 @@ class inspection_1
 		$get_data = array(
 			'menuaction' => 'enkel_klient.inspection_1.save_form',
 		);
-		$this->smarty->assign("action_url", current_page_url() . 'inspection_1.php?' . http_build_query($get_data) , true);
+		$this->smarty->assign("action_url", api::link('index.php',$get_data) , true);
 		$this->smarty->assign("saved", $saved, true);
 		$this->smarty->assign("error", $error, true);
 		$this->smarty->assign("id", $id, true);

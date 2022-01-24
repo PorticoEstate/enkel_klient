@@ -22,8 +22,8 @@ const autoCompleteJS = new autoComplete({
                         .getElementById("location_name")
                         .setAttribute("placeholder", "Loading...");
                     // Fetch External Data Source
-                    var oArgs = { menuaction: 'property.bolocation.get_locations', query: query };
-                    var strURL = phpGWLink('', oArgs, true);
+                    var oArgs = { menuaction: 'enkel_klient.inspection_1.get_locations', query: query };
+                    var strURL = phpGWLink('index.php', oArgs, true);
                     const source = await fetch(
                         strURL
                     );

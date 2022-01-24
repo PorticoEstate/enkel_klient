@@ -1,72 +1,57 @@
 <?php
-	declare(strict_types=1);
 
-	use portico\sanitizer;
-	use portico\api;
+/**
+ * @author Sigurd Nes <sigurd.nes@bergen.kommune.no>
+ * Skjema for rapportering av vekter-inspeksjon for Bergen kommune, Etat for boligforvaltning
+ * - legges bak ID-porten
+ */
 
-	require 'lib/api.php';
+declare(strict_types=1);
 
-	$api					 = new api();
-	$smarty					 = new Smarty;
-	$smarty->force_compile	 = true;
-	$smarty->debugging		 = true;
-	$smarty->caching		 = false;
-	$smarty->setCaching(Smarty::CACHING_OFF);
-//	$smarty->cache_lifetime	 = 120;
-	$smarty->configLoad("test.conf");
-	$smarty->assign("action_url", current_page_url(), true);
-	$smarty->assign("saved", 0, true);
-	$smarty->assign("error", '', true);
-	$smarty->assign("subject", '', true);
-	$smarty->assign("message", '', true);
+require 'lib/api.php';
 
+$GLOBALS['api']	= new portico\api();
 
-	$message = sanitizer::get_var('message', 'html');
-	if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST' && $_POST['randcheck'] == $_SESSION['rand'])
+$class = $_ENV['default_form'];
+
+$method = '';
+$invalid_data = false;
+if (isset($_GET['menuaction']) || isset($_POST['menuaction']))
+{
+	if (isset($_GET['menuaction']))
 	{
-		$session_info	 = json_decode($api->login(), true);
-
-		$url = $api->backend_url . "/index.php?";
-
-		$get_data = array
-			(
-			'menuaction'					 => 'helpdesk.uitts.add',
-			$session_info['session_name']	 => $session_info['sessionid'],
-			'domain'						 => $api->logindomain,
-			'phpgw_return_as'				 => 'json',
-			'api_mode'						 => true
-		);
-
-		$post_data = array(
-			'values'	 => array(
-				'subject'	 => sanitizer::get_var('subject', 'string'),
-				'cat_id'	 => 248,
-				'priority'	 => 3,
-				'apply'		 => true
-			),
-			'details'	 => $message
-		);
-
-		$url .= http_build_query($get_data);
-
-		$ret = json_decode($api->exchange_data($url, $post_data), true);
-
-		if ($ret['status'] == 'saved')
-		{
-			$smarty->assign("saved", 1, true);
-			$smarty->assign("ticket_id", $ret['id'], true);
-		}
-		else
-		{
-			$error = 'Noe gikk galt med innsendingen';
-			$smarty->assign("error", $error, true);
-			$smarty->assign("message", $message, true);
-			$smarty->assign("subject", sanitizer::get_var('subject', 'string'), true);
-		}
+		list($app, $class, $method) = explode('.', $_GET['menuaction']);
 	}
+	else
+	{
+		list($app, $class, $method) = explode('.', $_POST['menuaction']);
+	}
+	if (!$app || !$class || !$method)
+	{
+		$invalid_data = true;
+	}
+}
 
-	$rand				 = rand();
-	$_SESSION['rand']	 = $rand;
-	$smarty->assign("rand", $rand, true);
+switch ($class)
+{
+    case 'helpdesk':
+    case 'inspection_1':
+        require_once "{$class}.php";
+        $object = new $class;
+        break;
 
-	$smarty->display('index.tpl');
+    default:
+        throw new Exception('Not supported');
+        break;
+}
+
+
+
+if($method)
+{
+	$object->$method();
+}
+else
+{
+	$object->display_form();
+}

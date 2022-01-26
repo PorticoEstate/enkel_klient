@@ -60,6 +60,34 @@ class inspection_1
 		echo json_encode($ret);
 	}
 
+	/**
+	 * Hjelpefunksjon for å mappe inputfelt mot riktig atributt på hovedsystemet
+	 * Eksempel url:
+	 * http://localhost/~hc483/enkel_klient/src/index.php?menuaction=enkel_klient.inspection_1.get_attributes
+	 */
+	public function get_attributes()
+	{
+		$session_info	 = $this->api->get_session_info();
+		$url = $this->api->backend_url . "/index.php?";
+
+		$get_data = array(
+			'menuaction'					 => 'property.boentity.get_attributes',
+			$session_info['session_name']	 => $session_info['sessionid'],
+			'domain'						 => $this->api->logindomain,
+			'phpgw_return_as'				 => 'json',
+			'api_mode'						 => true,
+			'entity_id'						 => 2,
+			'cat_id'						 => 19,
+			'type'							 => 'entity',
+		);
+
+		$url .= http_build_query($get_data);
+
+		$result = json_decode($this->api->exchange_data($url), true);
+
+		_debug_array($result);
+	}
+
 	public function save_form()
 	{
 		$error = '';
@@ -79,7 +107,7 @@ class inspection_1
 				'api_mode'						 => true,
 				'entity_id'						 => 2,
 				'cat_id'						 => 20,
-				'type'							 =>'entity',
+				'type'							 => 'entity',
 			);
 
 			$post_data = array(

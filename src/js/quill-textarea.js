@@ -78,7 +78,7 @@ $(document).ready(function ()
 		placeholder: 'Detaljer....',
 		theme: 'snow'
 	});
-	if(typeof(editors) !== 'undefined')
+	if (typeof (editors) !== 'undefined')
 	{
 		quill.message = editors.message;
 	}

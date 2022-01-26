@@ -68,8 +68,6 @@
 
 			$clean_html = $purifier->purify($html);
 
-
-
 			return $clean_html;
 		}
 
@@ -316,12 +314,12 @@
 					break;
 
 				case 'html':
-					$value	 = self::clean_html($value);
+					$value		 = self::clean_html($value);
 					break;
 				case 'date':
-					$timezone = $_ENV['timezone'] ? $_ENV['timezone'] : 'UTC';
-					$value = new DateTime($value, new DateTimeZone($timezone));
-					$value = $value->getTimestamp();
+					$timezone	 = $_ENV['timezone'] ? $_ENV['timezone'] : 'UTC';
+					$value		 = new DateTime($value, new DateTimeZone($timezone));
+					$value		 = $value->getTimestamp();
 					break;
 			}
 			return $value;

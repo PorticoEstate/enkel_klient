@@ -4,7 +4,6 @@
 	 * Skjema for rapportering av vekter-inspeksjon for Bergen kommune, Etat for boligforvaltning
 	 * - legges bak ID-porten
 	 */
-
 	declare(strict_types=1);
 
 	if (!is_file(__DIR__ . '/.env'))

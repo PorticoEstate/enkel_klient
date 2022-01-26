@@ -28,7 +28,7 @@ function phpGWLink(strURL, oArgs, bAsJSON)
 		strNewURL += obj + '=' + oArgs[obj] + '&';
 	}
 
-	if(typeof(arURLParts[1]) !=='undefined')
+	if (typeof (arURLParts[1]) !== 'undefined')
 	{
 		strNewURL += arURLParts[1];
 	}

@@ -35,6 +35,11 @@
 		}
 	}
 
+	if(empty($_ENV["actvate_{$class}"]))
+	{
+		die("skjema '{$class}' er ikke aktivert");
+	}
+
 	switch ($class)
 	{
 		case 'helpdesk':
@@ -56,5 +61,5 @@
 	}
 	else
 	{
-		throw new Exception('metode ikke angitt');
+		die('metode ikke angitt');
 	}

@@ -1,8 +1,7 @@
-version: '2'
+version: '3.9'
 
 services:
-
-    fiks:
+    web:
       restart: always
       build : .
       container_name: lrs

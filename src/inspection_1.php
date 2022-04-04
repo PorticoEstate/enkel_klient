@@ -104,7 +104,7 @@
 					'phpgw_return_as'				 => 'json',
 					'api_mode'						 => true,
 					'entity_id'						 => 2,
-					'cat_id'						 => 20,
+					'cat_id'						 => 19,
 					'type'							 => 'entity',
 				);
 
@@ -120,7 +120,7 @@
 
 				$ret = json_decode($this->api->exchange_data($url, $post_data), true);
 
-				if ($ret['status'] == 'saved')
+				if (isset($ret['status']) && $ret['status'] == 'saved')
 				{
 					$saved = true;
 				}

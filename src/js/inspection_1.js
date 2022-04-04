@@ -61,7 +61,7 @@ const autoCompleteJS = new autoComplete({
 			return filteredResults;
 		}
 	},
-	placeHolder: "Søk etter lokasjon",
+	placeHolder: "Søk etter lokasjon, minst 4 tegn",
 	resultsList: {
 		element: (list, data) => {
 			const info = document.createElement("p");

@@ -1,7 +1,6 @@
 .env
 *.p12
 launch.json
-/src/vendor/*
 /src/templates_c/*
 /src/composer.lock
 /nbproject

@@ -88,7 +88,7 @@
 
 		public function save_form()
 		{
-			$error	 = '';
+			$error	 = array();
 			$saved	 = false;
 
 			if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST' && $_POST['randcheck'] == $_SESSION['rand'])
@@ -126,14 +126,24 @@
 				}
 				else
 				{
-					$error = 'Noe gikk galt med innsendingen';
+					if(!empty($ret['receipt']['error']))
+					{
+						foreach ($ret['receipt']['error'] as $_error => $message)
+						{
+							$error[] = $message['msg'];
+						}
+					}
+					else
+					{
+						$error[] = 'Noe gikk galt med innsendingen';
+					}
 				}
 			}
 
 			$this->display_form($saved, $error, !empty($ret['id']) ? $ret['id'] : null);
 		}
 
-		public function display_form( $saved = false, $error = '', $id = null )
+		public function display_form( $saved = false, $error = array(), $id = null )
 		{
 			$get_data = array(
 				'menuaction' => 'enkel_klient.inspection_1.save_form',

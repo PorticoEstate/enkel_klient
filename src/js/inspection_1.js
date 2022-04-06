@@ -3,18 +3,31 @@ function showDiv(divId, element)
 	document.getElementById(divId).style.display = element.checked == true ? 'block' : 'none';
 }
 
-function refresh_form()
-{
-	var strURL = phpGWLink('', {});
-	window.location.replace(strURL);
-}
 
+function handleChangeSlukkeutstyr(src)
+{
+	//datestamp
+	const input = document.getElementById('datestamp');
+
+	if (src.value == 2)
+	{
+		input.removeAttribute('required');
+		document.getElementById('dateblock').style.display = 'none';
+	}
+	else
+	{
+		input.setAttribute('required', '');
+		document.getElementById('dateblock').style.display = 'block';
+	}
+
+//  alert(src.value);
+}
 // The autoComplete.js Engine instance creator
 const autoCompleteJS = new autoComplete({
 	selector: "#location_name",
 	data: {
 		src: async (query) => {
-			//          https://tarekraafat.github.io/autoComplete.js/#/configuration?id=src-required
+			//https://tarekraafat.github.io/autoComplete.js/#/configuration?id=src-required
 			if (query.length > 3)
 			{
 				try
@@ -106,38 +119,11 @@ const autoCompleteJS = new autoComplete({
 			},
 			focus: () => {
 				if (autoCompleteJS.input.value.length)
-
 					autoCompleteJS.start();
 			}
 		}
 	}
 });
-
-// autoCompleteJS.input.addEventListener("init", function (event) {
-//   console.log(event);
-// });
-
-// autoCompleteJS.input.addEventListener("response", function (event) {
-//   console.log(event.detail);
-// });
-
-// autoCompleteJS.input.addEventListener("results", function (event) {
-//   console.log(event.detail);
-// });
-
-// autoCompleteJS.input.addEventListener("open", function (event) {
-//   console.log(event.detail);
-// });
-
-// autoCompleteJS.input.addEventListener("navigate", function (event) {
-//   console.log(event.detail);
-// });
-
-
-// autoCompleteJS.input.addEventListener("close", function (event) {
-//   console.log(event.detail);
-// });
-
 
 // Blur/unBlur page elements
 const action = (action) => {

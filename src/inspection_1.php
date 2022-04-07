@@ -108,12 +108,21 @@
 					'type'							 => 'entity',
 				);
 
+				$values_attribute	 = sanitizer::get_var('values_attribute');
+
+				//Who is responsible for posting data
+				$headers = getallheaders();
+				if(!empty($headers['uid']))
+				{
+					$values_attribute[6] = array('value' => $headers['uid'], 'disabled' => 0);
+				}
+
 				$post_data = array(
 					'values'			 => array(
 						'location_code'	 => sanitizer::get_var('location_code', 'string'),
 						'save'			 => true
 					),
-					'values_attribute'	 => sanitizer::get_var('values_attribute')
+					'values_attribute'	 => $values_attribute
 				);
 
 				$url .= http_build_query($get_data);

@@ -63,6 +63,13 @@
 									Skum
 								</label>
 							</div>
+							<div class="form-check">
+								<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+									   id="type_br_slokking_1" value="1" required="required" onchange="handleChangeSlukkeutstyr(this);" />
+								<label class="form-check-label" for="type_br_slokking_1">
+									Skiftet brannslokkingsapparat
+								</label>
+							</div>
 						</div>
 
 						<div id="dateblock" class="form-group mt-2" style="display: none;">
@@ -77,7 +84,7 @@
 								<input class="form-check-input" type="radio" name="values_attribute[3][value][]"
 									   id="rokvarsler_1" value="1" required="required" />
 								<label class="form-check-label" for="rokvarsler_1">
-									OK - med nytt batteri
+									Kontrollert - OK
 								</label>
 							</div>
 							<div class="form-check">
@@ -107,17 +114,17 @@
                             <label>OBS!!</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="values_attribute[4][value]"
-									   id="id_behov_tilsyn" value="1" onchange="showDiv('hidden_div', this);" />
+									   id="id_behov_tilsyn" value="1" />
                                 <label class="form-check-label" for="id_behov_tilsyn">
                                     Behov for utvidet tilsyn
                                 </label>
                             </div>
                         </div>
 
-                        <div id="hidden_div" class="form-group mt-2" style="display: none;">
+                        <div id="hidden_div" class="form-group mt-2">
                             <label for="merknad">Merknad</label>
                             <small id="merknadHelp" class="form-text text-muted">Her legger du inn merknader dersom det er behov
-                                for utvidet tilsyn.</small>
+                                for utvidet tilsyn, eller andre kommentarer.</small>
                             <textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp"
 									  name="values_attribute[5][value]"></textarea>
                         </div>

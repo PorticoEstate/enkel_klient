@@ -10,8 +10,8 @@
 	<meta name="keywords" content="{#keywords#}">
 	<meta name="robots" content="none">
 
-	<link href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css?n={#cache_refresh_token#}" type="text/css" rel="StyleSheet">
-	<link href="vendor/components/font-awesome/css/all.min.css?n={#cache_refresh_token#}" type="text/css" rel="StyleSheet">
+	<link href="/vendor/twbs/bootstrap/dist/css/bootstrap.min.css?n={#cache_refresh_token#}" type="text/css" rel="StyleSheet">
+	<link href="/vendor/components/font-awesome/css/all.min.css?n={#cache_refresh_token#}" type="text/css" rel="StyleSheet">
 
 	<script>
 		var strBaseURL = '{$str_base_url}';
@@ -20,8 +20,8 @@
 
 
 
-	<script src="js/base.js?n={#cache_refresh_token#}"></script>
+	<script src="/js/base.js?n={#cache_refresh_token#}"></script>
 	<!--script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script-->
-	<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js?n={#cache_refresh_token#}"></script>
+	<script src="/vendor/twbs/bootstrap/dist/js/bootstrap.min.js?n={#cache_refresh_token#}"></script>
 {/block}
 

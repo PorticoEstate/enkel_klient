@@ -4,8 +4,7 @@
 #hide a Specifuc File
 
 <Files ~ .env|.p12>
-Require all denied
-#order allow,deny
-#Deny from all
+order allow,deny
+Deny from all
 </Files>
 

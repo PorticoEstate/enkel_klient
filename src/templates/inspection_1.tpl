@@ -138,13 +138,13 @@
 	<script>
 		function refresh_form()
 		{
-			var strURL = phpGWLink('', {});
+			var strURL = phpGWLink('index.php', {});
 			window.location.replace(strURL);
 		}
 	</script>
 	{if $saved != 1}
-		<script src="./js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
-		<script src="./js/inspection_1.js?n={#cache_refresh_token#}"></script>
+		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
+		<script src="js/inspection_1.js?n={#cache_refresh_token#}"></script>
 	{/if}
 
 {/block}

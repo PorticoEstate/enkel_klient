@@ -17,6 +17,14 @@
 
 	$class = $_ENV['default_form'];
 
+	/**
+	 * Unngå problemer med regler i reverse-proxy
+	 */
+	if(!preg_match('/index.php/', $_SERVER['REQUEST_URI']))
+	{
+		header('Location: '.$_SERVER['REQUEST_URI'] .'index.php');
+	}
+
 	$method			 = 'display_form';
 	$invalid_data	 = false;
 	if (isset($_GET['menuaction']) || isset($_POST['menuaction']))

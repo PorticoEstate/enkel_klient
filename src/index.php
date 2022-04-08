@@ -6,7 +6,7 @@
 	 */
 	declare(strict_types=1);
 
-	if (!is_file(__DIR__ . '/.env'))
+	if (!is_file(__DIR__ . '/configs/.env'))
 	{
 		die('missing settings: ".env"');
 	}

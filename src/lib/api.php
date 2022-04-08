@@ -63,8 +63,8 @@
 			session_start();
 //			_debug_array($_SESSION);
 
-			$up_one	 = dirname(__DIR__, 1);
-			$dotenv	 = Dotenv::createImmutable($up_one);
+			$configs_dir = dirname(__DIR__, 1) . '/configs';
+			$dotenv	 = Dotenv::createImmutable($configs_dir);
 			$dotenv->load();
 
 			$this->login		 = $_ENV['login'];

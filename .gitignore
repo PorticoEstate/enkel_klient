@@ -1,4 +1,4 @@
-.env
+/src/configs/.env
 *.p12
 launch.json
 /src/templates_c/*

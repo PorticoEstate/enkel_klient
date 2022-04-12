@@ -1,0 +1,15 @@
+{
+    "background_color": "purple",
+    "description": "Enkelt skjema for registrering av informasjon relatert til boliger tilhørened Etat for boligforvaltning",
+    "display": "standalone",
+    "icons": [
+      {
+        "src": "icon/icons8-city-buildings-96.png",
+        "sizes": "96x96",
+        "type": "image/png"
+      }
+    ],
+    "name": "BoligReg",
+    "short_name": "BoligReg",
+    "start_url": "index.php"
+  }

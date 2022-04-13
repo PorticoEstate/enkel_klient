@@ -20,6 +20,6 @@
 	<script src="js/base.js?n={#cache_refresh_token#}"></script>
 	<!--script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script-->
 	<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js?n={#cache_refresh_token#}"></script>
-	<link rel="manifest" href="/manifest.json">
+	<link rel="manifest" href="manifest.json">
 {/block}
 

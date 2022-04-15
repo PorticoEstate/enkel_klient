@@ -60,6 +60,7 @@
 		function __construct()
 		{
 			// Start the session
+			ini_set('session.cookie_samesite', 'Lax');
 			session_start();
 //			_debug_array($_SESSION);
 

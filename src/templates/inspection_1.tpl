@@ -145,6 +145,7 @@
 	{if $saved != 1}
 		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
 		<script src="js/inspection_1.js?n={#cache_refresh_token#}"></script>
+		<script src="js/location.js?n={#cache_refresh_token#}"></script>
 	{/if}
 
 {/block}

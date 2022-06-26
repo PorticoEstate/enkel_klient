@@ -26,11 +26,10 @@
 
 			$smarty->assign("str_base_url", $str_base_url);
 			$smarty->force_compile	 = true;
-			$smarty->debugging		 = true;
+//			$smarty->debugging		 = true;
 			$smarty->caching		 = false;
 			$smarty->setCaching(Smarty::CACHING_OFF);
 			//	$smarty->cache_lifetime	 = 120;
-			$smarty->configLoad("test.conf");
 			$smarty->assign("action_url", current_site_url(), true);
 			$smarty->assign("saved", 0, true);
 			$smarty->assign("error", '', true);
@@ -38,6 +37,34 @@
 			$smarty->assign("message", '', true);
 
 			$this->smarty = $smarty;
+		}
+
+		public function get_locations()
+		{
+			$session_info	 = $this->api->get_session_info();
+			$url			 = $this->api->backend_url . "/index.php?";
+
+			$get_data = array(
+				'menuaction'					 => 'property.bolocation.get_locations',
+				$session_info['session_name']	 => $session_info['sessionid'],
+				'domain'						 => $this->api->logindomain,
+				'phpgw_return_as'				 => 'json',
+				'api_mode'						 => true,
+				'query'							 => sanitizer::get_var('query', 'string'),
+				'level'							 => 4
+			);
+
+			$post_data = array(
+			);
+
+			$url .= http_build_query($get_data);
+
+			$result = json_decode($this->api->exchange_data($url, $post_data), true);
+
+			$ret = empty($result['ResultSet']['Result']) ? array() : $result['ResultSet']['Result'];
+
+			header('Content-Type: application/json');
+			echo json_encode($ret);
 		}
 
 		public function save_form()
@@ -51,7 +78,7 @@
 				$url = $this->api->backend_url . "/index.php?";
 
 				$get_data = array(
-					'menuaction'					 => 'helpdesk.uitts.add',
+					'menuaction'					 => 'property.uitts.add',
 					$session_info['session_name']	 => $session_info['sessionid'],
 					'domain'						 => $this->api->logindomain,
 					'phpgw_return_as'				 => 'json',

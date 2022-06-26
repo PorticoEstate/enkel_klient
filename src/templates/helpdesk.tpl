@@ -16,7 +16,6 @@
 		.ql-container {
 			height: 300px;
 		}
-
 	</style>
 
 	<div class="container">
@@ -27,7 +26,7 @@
 			<div class="alert alert-success">
 				<p>Saken er registrert og har fått referanse #{$ticket_id}</p>
 			</div>
-        {else}
+		{else}
 
 			{if $error != '' }
 
@@ -36,26 +35,39 @@
 					<p>{$error}</p>
 				</div>
 			{else}
-				<p>Saken vil bli registrert - behandlet - og videre tilgjengeliggjort som historikk på <a href="https://www.bergen.kommune.no/minside">Min side</a></p>
+				<p>{#form_info#}</p>
 			{/if}
 			<form method="post" action="{$action_url}">
 				<input type="hidden" value="{$rand}" name="randcheck" />
 				<fieldset>
-
-					<div class="form-group">
-						<label for="subject">Overskrift</label>
-						<small id="subjectHelp" class="form-text text-muted">Her legger du inn hva saken gjelder.</small>
-						<input type="text" class="form-control" id="title" name ="subject" value="{$subject}" aria-describedby="subjectHelp" required="required">
+					<div class="form-group mt-2">
+						<label for="location_name">Lokasjon</label>
+						<input type="text" id="location_name" name="values[location_name]" tabindex="1" class="form-control"
+							autocomplete="off" required="required" />
+						<div class="selection"></div>
+						<input type="hidden" id="location_code" name="location_code">
 					</div>
-					<div class="form-group mt-4">
-						<label for="message">Melding</label>
-						<textarea  class="form-control" id="message" name="message" required="required">{$message}</textarea>
+					<div id="details" style="display: none;">
+						<div class="form-group">
+							<label for="subject">Overskrift</label>
+							<small id="subjectHelp" class="form-text text-muted">Her legger du inn hva saken gjelder.</small>
+							<input type="text" class="form-control" id="title" name="subject" value="{$subject}"
+								aria-describedby="subjectHelp" required="required">
+						</div>
+						<div class="form-group mt-4">
+							<label for="message">Melding</label>
+							<textarea class="form-control" id="message" name="message" required="required">{$message}</textarea>
+						</div>
+						<button type="submit" class="btn btn-primary">Send</button>
 					</div>
-					<button type="submit" class="btn btn-primary">Send</button>
 				</fieldset>
 			</form>
-        {/if}
+		{/if}
 
 	</div>
-{/block}
+	{if $saved != 1}
+		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
+		<script src="js/location.js?n={#cache_refresh_token#}"></script>
+	{/if}
 
+{/block}

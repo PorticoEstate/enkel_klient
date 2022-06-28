@@ -40,74 +40,84 @@
 						<input type="hidden" id="location_code" name="location_code">
 					</div>
 					<div id="details" style="display: none;">
-						<div id="slukkeutstyr" class="form-group mt-2">
-							<label for="location_name">Slukkeutstyr</label>
-							<div class="form-check">
-								<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
-									   id="type_br_slokking_2" value="2" required="required" onchange="handleChangeSlukkeutstyr(this);" />
-								<label class="form-check-label" for="type_br_slokking_2">
-									Husbrannslange
-								</label>
-							</div>
-							<div class="form-check">
-								<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
-									   id="type_br_slokking_3" value="3" required="required" onchange="handleChangeSlukkeutstyr(this);" />
-								<label class="form-check-label" for="type_br_slokking_3">
-									Pulver
-								</label>
-							</div>
-							<div class="form-check">
-								<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
-									   id="type_br_slokking_4" value="4" required="required" onchange="handleChangeSlukkeutstyr(this);" />
-								<label class="form-check-label" for="type_br_slokking_4">
-									Skum
-								</label>
-							</div>
-							<div class="form-check">
-								<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
-									   id="type_br_slokking_1" value="1" required="required" onchange="handleChangeSlukkeutstyr(this);" />
-								<label class="form-check-label" for="type_br_slokking_1">
-									Skiftet brannslokkingsapparat
-								</label>
-							</div>
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" name="values_attribute[7][value]"
+								   id="tilgang" value="1"  onchange="handleChangeTilgang(this);" />
+							<label class="form-check-label" for="tilgang">
+								Manglende tilgang
+							</label>
 						</div>
+						<div id="inner_details">
 
-						<div id="dateblock" class="form-group mt-2" style="display: none;">
-							<label for="subject">Datostempel for Brannslokkingsapparatet</label>
-							<!--the parsed value is always formatted yyyy-mm-dd.-->
-							<input id="datestamp" type="date" class="form-control" id="title" name="values_attribute[1][value]" />
-						</div>
-
-						<div class="form-group mt-2">
-							<label>Røykvarsler</label>
-							<div class="form-check">
-								<input class="form-check-input" type="radio" name="values_attribute[3][value][]"
-									   id="rokvarsler_1" value="1" required="required" />
-								<label class="form-check-label" for="rokvarsler_1">
-									Kontrollert - OK
-								</label>
+							<div id="slukkeutstyr" class="form-group mt-2">
+								<label for="location_name">Slukkeutstyr</label>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+										   id="type_br_slokking_2" value="2" required="required" onchange="handleChangeSlukkeutstyr(this);" />
+									<label class="form-check-label" for="type_br_slokking_2">
+										Husbrannslange
+									</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+										   id="type_br_slokking_3" value="3" required="required" onchange="handleChangeSlukkeutstyr(this);" />
+									<label class="form-check-label" for="type_br_slokking_3">
+										Pulver
+									</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+										   id="type_br_slokking_4" value="4" required="required" onchange="handleChangeSlukkeutstyr(this);" />
+									<label class="form-check-label" for="type_br_slokking_4">
+										Skum
+									</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]"
+										   id="type_br_slokking_1" value="1" required="required" onchange="handleChangeSlukkeutstyr(this);" />
+									<label class="form-check-label" for="type_br_slokking_1">
+										Skiftet brannslokkingsapparat
+									</label>
+								</div>
 							</div>
-							<div class="form-check">
-								<input class="form-check-input" type="radio" name="values_attribute[3][value][]"
-									   id="rokvarsler_2" value="2" required="required" />
-                                <label class="form-check-label" for="rokvarsler_2">
-                                    Skiftet batteri
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="values_attribute[3][value][]"
-									   id="rokvarsler_3" value="3" required="required" />
-                                <label class="form-check-label" for="rokvarsler_3">
-                                    Skiftet røykvarsler
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="values_attribute[3][value][]"
-									   id="type_br_slokking_1" value="1" required="required" />
-                                <label class="form-check-label" for="rokvarsler_4">
-                                    Inngår i brannvarslingsanlegg
-                                </label>
-                            </div>
+
+							<div id="dateblock" class="form-group mt-2" style="display: none;">
+								<label for="subject">Datostempel for Brannslokkingsapparatet</label>
+								<!--the parsed value is always formatted yyyy-mm-dd.-->
+								<input id="datestamp" type="date" class="form-control" id="title" name="values_attribute[1][value]" />
+							</div>
+
+							<div class="form-group mt-2">
+								<label>Røykvarsler</label>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]"
+										   id="rokvarsler_1" value="1" required="required" />
+									<label class="form-check-label" for="rokvarsler_1">
+										Kontrollert - OK
+									</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]"
+										   id="rokvarsler_2" value="2" required="required" />
+									<label class="form-check-label" for="rokvarsler_2">
+										Skiftet batteri
+									</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]"
+										   id="rokvarsler_3" value="3" required="required" />
+									<label class="form-check-label" for="rokvarsler_3">
+										Skiftet røykvarsler
+									</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]"
+										   id="rokvarsler_4" value="1" required="required" />
+									<label class="form-check-label" for="rokvarsler_4">
+										Inngår i brannvarslingsanlegg
+									</label>
+								</div>
+							</div>
                         </div>
 
                         <div class="form-group mt-2">

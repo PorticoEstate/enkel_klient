@@ -149,7 +149,7 @@
 									  name="values_attribute[5][value]"></textarea>
                         </div>
 
-						<div class="form-group mt-2">
+						<!--div class="form-group mt-2">
 							<label>Last opp fil</label>
 							<div id="drop-area" class="">
 								<div style="border: 2px dashed #ccc; padding: 20px;">
@@ -157,7 +157,6 @@
 									<div class="fileupload-buttonbar">
 										<div class="fileupload-buttons">
 											<span class="fileinput-button btn btn-success">
-												<!-- <i class="glyphicon glyphicon-plus"></i>-->
 												<span>Legg til filer...</span>
 												<input id="fileupload" type="file" name="files[]" multiple="" data-url="/~hc483/github_trunk/index.php?menuaction=property.uitts.handle_multi_upload_file" capture="camera"></span>
 											<span class="fileupload-process"></span>
@@ -174,7 +173,7 @@
 								</div>
 
 							</div>
-						</div>
+						</div-->
                         <button id="submit" type="submit" class="btn btn-primary mt-2">Send</button>
                     </div>
                 </fieldset>

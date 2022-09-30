@@ -6,6 +6,7 @@
 	use Dotenv\Dotenv;
 	use Exception;
 
+	define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 	require_once dirname(__DIR__, 1) . '/vendor/autoload.php';
 	require_once 'lib/sanitizer.php';
 	require_once 'lib/functions.php';
@@ -99,6 +100,88 @@
 			return $this->session_info;
 		}
 
+		/**
+		 * Clear a value from the session cache
+		 *
+		 * @param string $module the module to store the data
+		 * @param string $id the identifier for the data
+		 */
+		public static function session_clear($module, $id)
+		{
+			$key = self::_gen_key($module, $id);
+			if ( isset($_SESSION['phpgw_cache'][$key]) )
+			{
+				unset($_SESSION['phpgw_cache'][$key]);
+			}
+			// we don't really care if it is already not set
+			return true;
+		}
+
+		/**
+		 * Retreive data from session cache
+		 *
+		 * @param string $module the module name the data belongs to
+		 * @param string $id the internal module id for the data
+		 * @return mixed the data from session cache
+		 */
+		public static function session_get($module, $id)
+		{
+			$key = self::_gen_key($module, $id);
+			if ( isset($_SESSION['phpgw_cache'][$key]) )
+			{
+				return self::_value_return($_SESSION['phpgw_cache'][$key]);
+			}
+			return null;
+		}
+
+		/**
+		 * Store data in the session cache
+		 *
+		 * @param string $module the module name the data belongs to
+		 * @param string $id the internal module id for the data
+		 * @param mixed $data the data to store
+		 * @return bool was the data stored in the session cache?
+		 */
+		public static function session_set($module, $id, $data)
+		{
+			$key = self::_gen_key($module, $id);
+			$_SESSION['phpgw_cache'][$key] = self::_value_prepare($data);
+			return true;
+		}
+
+		/**
+		 * Generate the key for the data to be stored/retreived
+		 *
+		 * @param string $module the module name the data belongs to
+		 * @param string $id the internal module id for the data
+		 * @return string a unique hash for the data
+		 */
+		protected static function _gen_key($module, $id)
+		{
+			return sha1("{$module}::{$id}");
+		}
+
+		protected static function _value_prepare($value)
+		{
+			return serialize($value);
+		}
+
+		/**
+		 * Returns a value is a usable form - all values must be run through here before returning to the user
+		 *
+		 * @param string $str the string to process
+		 * @param bool $bypass to skip encryption
+		 * @return mixed the unserialized string
+		 */
+		protected static function _value_return($str)
+		{
+			if ( is_null($str) )
+			{
+				return null;
+			}
+			return unserialize($str);
+		}
+
 		function login()
 		{
 			if (isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
@@ -128,12 +211,40 @@
 			return $session_info;
 		}
 
-		function exchange_data( $url, $post_data = array() )
+		function exchange_data( $url, $post_data = array(), $range = null, $content_type = null, $content_length = null, $content_disposition = null )
 		{
 
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
 			curl_setopt($ch, CURLOPT_POST, true);
+
+			if($range)
+			{
+				curl_setopt($ch, CURLOPT_RANGE, $range);
+				curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+			}
+
+			$http_header = array();
+
+			if($content_type)
+			{
+				$http_header[] = "Content-Type: {$content_type}";
+			}
+			if($content_length)
+			{
+				$http_header[] = "Content-Length: {$content_length}";
+			}
+
+			if($content_disposition)
+			{
+				$http_header[] = "Content-Disposition: {$content_disposition}";
+			}
+
+			if($http_header)
+			{
+				curl_setopt($ch, CURLOPT_HTTPHEADER, $http_header);
+			}
+
 			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);

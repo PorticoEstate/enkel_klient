@@ -149,11 +149,44 @@
 				}
 			}
 
-			$this->display_form($saved, $error, !empty($ret['id']) ? $ret['id'] : null);
+			if(sanitizer::get_var('phpgw_return_as', 'string') == 'json')
+			{
+				api::session_set('inspection_1', 'id', !empty($ret['id']) ? $ret['id'] : null);
+				api::session_set('inspection_1', 'error', $error);
+				api::session_set('inspection_1', 'saved', $saved);
+				$return_data =  array(
+					'id' => !empty($ret['id']) ? $ret['id'] : null,
+					'status' => $saved ? 'saved' : 'error',
+					'message' => $error
+				);
+				header('Content-Type: application/json');
+				echo json_encode($return_data);
+			}
+			else
+			{
+				$this->display_form($saved, $error, !empty($ret['id']) ? $ret['id'] : null);
+			}
 		}
 
 		public function display_form( $saved = false, $error = array(), $id = null )
 		{
+			if(!$saved)
+			{
+				$saved = api::session_get('inspection_1', 'saved');
+				api::session_clear('inspection_1', 'saved');
+			}
+
+			if(!$error)
+			{
+				$error = (array)api::session_get('inspection_1', 'error');
+				api::session_clear('inspection_1', 'error');
+			}
+			if(!$id)
+			{
+				$id = api::session_get('inspection_1', 'id');
+				api::session_clear('inspection_1', 'id');
+			}
+
 			$get_data = array(
 				'menuaction' => 'enkel_klient.inspection_1.save_form',
 			);
@@ -167,5 +200,51 @@
 			$this->smarty->assign("rand", $rand, true);
 
 			$this->smarty->display('inspection_1.tpl');
+		}
+
+		protected function get_server_var($id)
+		{
+			return isset($_SERVER[$id]) ? $_SERVER[$id] : null;
+		}
+
+		public function handle_multi_upload_file(  )
+		{
+			$id = sanitizer::get_var('id', 'int', 'GET');
+
+			$session_info = $this->api->get_session_info();
+
+			$url = $this->api->backend_url . "/index.php?";
+
+			$get_data = array(
+				'menuaction'					 => 'property.uientity.handle_multi_upload_file',
+				$session_info['session_name']	 => $session_info['sessionid'],
+				'domain'						 => $this->api->logindomain,
+				'phpgw_return_as'				 => 'json',
+				'api_mode'						 => true,
+				'entity_id'						 => 2,
+				'cat_id'						 => 19,
+				'type'							 => 'entity',
+				'id'							 => $id
+			);
+
+			// [HTTP_CONTENT_RANGE] => bytes 10000000-17679248/17679249 - last chunk looks like this
+			$content_range_header = $this->get_server_var('HTTP_CONTENT_RANGE_');
+			$content_type = $this->get_server_var('CONTENT_TYPE_');
+			$content_length = $this->get_server_var('CONTENT_LENGTH');
+
+			$headers = getallheaders();
+
+			//_debug_array($headers);
+			$content_disposition = isset($headers['Content-Disposition']) ? $headers['Content-Disposition'] : null;
+
+			$post_data = $_POST;
+			$post_data['files'] = $_FILES;
+			$url .= http_build_query($get_data);
+
+			$return_data = $this->api->exchange_data($url, $post_data, $content_range_header, $content_type, $content_length, $content_disposition);
+
+			header('Content-Type: application/json');
+			echo $return_data;
+
 		}
 	}

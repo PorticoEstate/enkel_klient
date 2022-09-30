@@ -2,11 +2,21 @@
 
 {block name=body}
 
+
+	<link href="css/jquery-ui.min.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="js/file-upload/css/jquery.fileupload.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="js/file-upload/css/jquery.fileupload-custom.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
 	<style>
 		.ql-container {
 			height: 300px;
 		}
-
+		.error {
+			background-color: #fcc;
+			border: 1px solid #f00;
+			color: #c10000;
+		}
 	</style>
 
 	<div class="container">
@@ -138,7 +148,34 @@
                             <textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp"
 									  name="values_attribute[5][value]"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary mt-2">Send</button>
+
+						<div class="form-group mt-2">
+							<label>Last opp fil</label>
+							<div id="drop-area" class="">
+								<div style="border: 2px dashed #ccc; padding: 20px;">
+									<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene direkte.</p>
+									<div class="fileupload-buttonbar">
+										<div class="fileupload-buttons">
+											<span class="fileinput-button btn btn-success">
+												<!-- <i class="glyphicon glyphicon-plus"></i>-->
+												<span>Legg til filer...</span>
+												<input id="fileupload" type="file" name="files[]" multiple="" data-url="/~hc483/github_trunk/index.php?menuaction=property.uitts.handle_multi_upload_file" capture="camera"></span>
+											<span class="fileupload-process"></span>
+										</div>
+										<div class="fileupload-count">
+											Antall filer: <span id="files-count"></span>
+										</div>
+										<div class="fileupload-progress" style="display:none">
+											<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+											<div class="progress-extended"></div>
+										</div>
+									</div>
+									<div class="content_upload_download"><div class="presentation files" style="display: inline-table;"></div></div>
+								</div>
+
+							</div>
+						</div>
+                        <button id="submit" type="submit" class="btn btn-primary mt-2">Send</button>
                     </div>
                 </fieldset>
             </form>
@@ -154,6 +191,11 @@
 	</script>
 	{if $saved != 1}
 		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
+		<script src="js/jquery-3.6.0.min.js?n={#cache_refresh_token#}"></script>
+		<script src="js/jquery-ui-1.13.1.min.js?n={#cache_refresh_token#}"></script>
+		<script src="js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
+		<script src="js/file-upload/js/jquery.fileupload-process.js?n={#cache_refresh_token#}"></script>
+		<script src="js/file-upload/js/jquery.fileupload-validate.js?n={#cache_refresh_token#}"></script>
 		<script src="js/inspection_1.js?n={#cache_refresh_token#}"></script>
 		<script src="js/location.js?n={#cache_refresh_token#}"></script>
 	{/if}

@@ -265,7 +265,7 @@ $(document).ready(function ()
 				data.context
 					.removeClass("file")
 					.addClass("error")
-					.append($('<span>').text(' Error: ' + result.files[0].error));
+					.append($('<span>').text(' Error: ' + error_message));
 				 error = true;
 			}
 			else

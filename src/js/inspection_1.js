@@ -251,7 +251,7 @@ $(document).ready(function ()
 
 			var error_message = '';
 
-			if(typeof(result.files[0].error) !== 'undefined')
+			if(typeof (result.files) !== 'undefined')
 			{
 				error_message = result.files[0].error;
 			}

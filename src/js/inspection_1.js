@@ -249,7 +249,18 @@ $(document).ready(function ()
 			var result = data.result;
 			var error = false;
 
-			if (result.files[0].error)
+			var error_message = '';
+
+			if(typeof(result.files[0].error) !== 'undefined')
+			{
+				error_message = result.files[0].error;
+			}
+			else
+			{
+				error_message = 'Noe gikk galt med filopplastingen';
+			}
+
+			if (error_message)
 			{
 				data.context
 					.removeClass("file")

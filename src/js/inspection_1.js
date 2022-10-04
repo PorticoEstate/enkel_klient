@@ -239,6 +239,7 @@ $(document).ready(function ()
 		},
 		progress: function (e, data)
 		{
+//console.log(data);
 			var progress = parseInt((data.loaded / data.total) * 100, 10);
 			data.context.css("background-position-x", 100 - progress + "%");
 		},

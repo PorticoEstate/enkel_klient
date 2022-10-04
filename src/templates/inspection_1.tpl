@@ -17,6 +17,18 @@
 			border: 1px solid #f00;
 			color: #c10000;
 		}
+		.file {
+			position: relative;
+			background: linear-gradient(to right, lightblue 50%, transparent 50%);
+			background-size: 200% 100%;
+			background-position: right bottom;
+			transition:all 1s ease;
+			/*	background: lightgrey;*/
+		}
+		.file.done {
+			background: lightgreen;
+		}
+
 	</style>
 
 	<div class="container">
@@ -39,7 +51,7 @@
 				</div>
 			{/if}
 
-			<form id="inspection_1" name="inspection_1" method="post" action="{$action_url}">
+			<form id="inspection_1" name="inspection_1" method="post" action="{$action_url}" enctype="multipart/form-data">
 				<input type="hidden" value="{$rand}" name="randcheck" />
 				<fieldset>
 					<div class="form-group mt-2">
@@ -148,32 +160,33 @@
                             <textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp"
 									  name="values_attribute[5][value]"></textarea>
                         </div>
-
-						<!--div class="form-group mt-2">
-							<label>Last opp fil</label>
-							<div id="drop-area" class="">
-								<div style="border: 2px dashed #ccc; padding: 20px;">
-									<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene direkte.</p>
-									<div class="fileupload-buttonbar">
-										<div class="fileupload-buttons">
-											<span class="fileinput-button btn btn-success">
-												<span>Legg til filer...</span>
-												<input id="fileupload" type="file" name="files[]" multiple="" data-url="/~hc483/github_trunk/index.php?menuaction=property.uitts.handle_multi_upload_file" capture="camera"></span>
-											<span class="fileupload-process"></span>
+						{if $enable_fileupload == 1}
+							<div class="form-group mt-2">
+								<label>Last opp fil</label>
+								<div id="drop-area" class="">
+									<div style="border: 2px dashed #ccc; padding: 20px;">
+										<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene direkte.</p>
+										<div class="fileupload-buttonbar">
+											<div class="fileupload-buttons">
+												<span class="fileinput-button btn btn-success">
+													<span>Legg til filer...</span>
+													<input id="fileupload" type="file" name="files[]" multiple="" data-url="/~hc483/github_trunk/index.php?menuaction=property.uitts.handle_multi_upload_file" capture="camera"></span>
+												<span class="fileupload-process"></span>
+											</div>
+											<div class="fileupload-count">
+												Antall filer: <span id="files-count"></span>
+											</div>
+											<div class="fileupload-progress" style="display:none">
+												<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+												<div class="progress-extended"></div>
+											</div>
 										</div>
-										<div class="fileupload-count">
-											Antall filer: <span id="files-count"></span>
-										</div>
-										<div class="fileupload-progress" style="display:none">
-											<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-											<div class="progress-extended"></div>
-										</div>
+										<div class="content_upload_download"><div class="presentation files" style="display: inline-table;"></div></div>
 									</div>
-									<div class="content_upload_download"><div class="presentation files" style="display: inline-table;"></div></div>
-								</div>
 
+								</div>
 							</div>
-						</div-->
+						{/if}
                         <button id="submit" type="submit" class="btn btn-primary mt-2">Send</button>
                     </div>
                 </fieldset>

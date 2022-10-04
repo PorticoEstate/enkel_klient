@@ -6,7 +6,7 @@
 	use Dotenv\Dotenv;
 	use Exception;
 
-	define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
+define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 	require_once dirname(__DIR__, 1) . '/vendor/autoload.php';
 	require_once 'lib/sanitizer.php';
 	require_once 'lib/functions.php';
@@ -66,7 +66,7 @@
 //			_debug_array($_SESSION);
 
 			$configs_dir = dirname(__DIR__, 1) . '/configs';
-			$dotenv	 = Dotenv::createImmutable($configs_dir);
+			$dotenv		 = Dotenv::createImmutable($configs_dir);
 			$dotenv->load();
 
 			$this->login		 = $_ENV['login'];
@@ -106,10 +106,10 @@
 		 * @param string $module the module to store the data
 		 * @param string $id the identifier for the data
 		 */
-		public static function session_clear($module, $id)
+		public static function session_clear( $module, $id )
 		{
 			$key = self::_gen_key($module, $id);
-			if ( isset($_SESSION['phpgw_cache'][$key]) )
+			if (isset($_SESSION['phpgw_cache'][$key]))
 			{
 				unset($_SESSION['phpgw_cache'][$key]);
 			}
@@ -124,10 +124,10 @@
 		 * @param string $id the internal module id for the data
 		 * @return mixed the data from session cache
 		 */
-		public static function session_get($module, $id)
+		public static function session_get( $module, $id )
 		{
 			$key = self::_gen_key($module, $id);
-			if ( isset($_SESSION['phpgw_cache'][$key]) )
+			if (isset($_SESSION['phpgw_cache'][$key]))
 			{
 				return self::_value_return($_SESSION['phpgw_cache'][$key]);
 			}
@@ -142,10 +142,10 @@
 		 * @param mixed $data the data to store
 		 * @return bool was the data stored in the session cache?
 		 */
-		public static function session_set($module, $id, $data)
+		public static function session_set( $module, $id, $data )
 		{
-			$key = self::_gen_key($module, $id);
-			$_SESSION['phpgw_cache'][$key] = self::_value_prepare($data);
+			$key							 = self::_gen_key($module, $id);
+			$_SESSION['phpgw_cache'][$key]	 = self::_value_prepare($data);
 			return true;
 		}
 
@@ -156,12 +156,12 @@
 		 * @param string $id the internal module id for the data
 		 * @return string a unique hash for the data
 		 */
-		protected static function _gen_key($module, $id)
+		protected static function _gen_key( $module, $id )
 		{
 			return sha1("{$module}::{$id}");
 		}
 
-		protected static function _value_prepare($value)
+		protected static function _value_prepare( $value )
 		{
 			return serialize($value);
 		}
@@ -173,9 +173,9 @@
 		 * @param bool $bypass to skip encryption
 		 * @return mixed the unserialized string
 		 */
-		protected static function _value_return($str)
+		protected static function _value_return( $str )
 		{
-			if ( is_null($str) )
+			if (is_null($str))
 			{
 				return null;
 			}
@@ -220,32 +220,57 @@
 
 			if($range)
 			{
-				curl_setopt($ch, CURLOPT_RANGE, $range);
-				curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+//				curl_setopt($ch, CURLOPT_RANGE, $range);
+//				curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+//				curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+//				curl_setopt($ch, CURLOPT_REFERER, $_SERVER['HTTP_REFERER']);
 			}
+
+			if (!empty($_FILES['files']['tmp_name'][0]))
+			{
+				// Assign POST data
+				$post_data = array
+				(
+					'files' => curl_file_create(
+						$_FILES['files']['tmp_name'][0],
+						$_FILES['files']['type'][0],
+						$_FILES['files']['name'][0])
+				);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+			}
+			else
+			{
+				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+			}
+
 
 			$http_header = array();
 
-			if($content_type)
+			if ($range)
 			{
-				$http_header[] = "Content-Type: {$content_type}";
+				$http_header[] = "Content-Range: {$range}";
 			}
-			if($content_length)
+			if ($content_type)
+			{
+//				$http_header[] = "Content-Type: {$content_type}";
+			}
+
+			if ($content_length && $range)
 			{
 				$http_header[] = "Content-Length: {$content_length}";
 			}
 
-			if($content_disposition)
+			if ($content_disposition)
 			{
 				$http_header[] = "Content-Disposition: {$content_disposition}";
 			}
 
-			if($http_header)
+			if ($http_header)
 			{
+//				_debug_array($http_header);
 				curl_setopt($ch, CURLOPT_HTTPHEADER, $http_header);
 			}
 
-			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 

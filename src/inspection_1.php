@@ -195,6 +195,10 @@
 			$this->smarty->assign("error", $error, true);
 			$this->smarty->assign("id", $id, true);
 
+			$enable_fileupload = $this->smarty->getConfigVars('enable_fileupload');
+
+			$this->smarty->assign("enable_fileupload", $enable_fileupload, true);
+
 			$rand				 = rand();
 			$_SESSION['rand']	 = $rand;
 			$this->smarty->assign("rand", $rand, true);
@@ -228,17 +232,22 @@
 			);
 
 			// [HTTP_CONTENT_RANGE] => bytes 10000000-17679248/17679249 - last chunk looks like this
-			$content_range_header = $this->get_server_var('HTTP_CONTENT_RANGE_');
-			$content_type = $this->get_server_var('CONTENT_TYPE_');
+			$content_range_header = $this->get_server_var('HTTP_CONTENT_RANGE');
+			$content_type = $this->get_server_var('CONTENT_TYPE');
 			$content_length = $this->get_server_var('CONTENT_LENGTH');
+			$content_disposition = $this->get_server_var('HTTP_CONTENT_DISPOSITION');
 
 			$headers = getallheaders();
 
-			//_debug_array($headers);
-			$content_disposition = isset($headers['Content-Disposition']) ? $headers['Content-Disposition'] : null;
+//			$content_range_header = $headers['Content-Range'];
+
+//			_debug_array($headers);
 
 			$post_data = $_POST;
-			$post_data['files'] = $_FILES;
+//			$post_data['files'] = $_FILES;
+
+//			_debug_array($post_data);
+
 			$url .= http_build_query($get_data);
 
 			$return_data = $this->api->exchange_data($url, $post_data, $content_range_header, $content_type, $content_length, $content_disposition);

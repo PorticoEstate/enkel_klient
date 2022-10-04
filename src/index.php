@@ -43,7 +43,7 @@
 		}
 	}
 
-	if(empty($_ENV["actvate_{$class}"]))
+	if(empty($_ENV["activate_{$class}"]))
 	{
 		die("skjema '{$class}' er ikke aktivert");
 	}

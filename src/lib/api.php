@@ -211,7 +211,7 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 			return $session_info;
 		}
 
-		function exchange_data( $url, $post_data = array(), $range = null, $content_type = null, $content_length = null, $content_disposition = null )
+		function exchange_data( $url, $post_data = array(), $content_range = null, $content_disposition = null )
 		{
 
 			$ch = curl_init();
@@ -235,21 +235,11 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
 			}
 
-
 			$http_header = array();
 
-			if ($range)
+			if ($content_range)
 			{
-				$http_header[] = "Content-Range: {$range}";
-			}
-			if ($content_type)
-			{
-//				$http_header[] = "Content-Type: {$content_type}";
-			}
-
-			if ($content_length && $range)
-			{
-				$http_header[] = "Content-Length: {$content_length}";
+				$http_header[] = "Content-Range: {$content_range}";
 			}
 
 			if ($content_disposition)
@@ -259,7 +249,6 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 
 			if ($http_header)
 			{
-//				_debug_array($http_header);
 				curl_setopt($ch, CURLOPT_HTTPHEADER, $http_header);
 			}
 

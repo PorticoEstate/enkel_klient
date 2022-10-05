@@ -87,6 +87,7 @@ this.confirm_session = function (action)
 	 * Block doubleclick
 	 */
 	$('#submit').prop('disabled', true);
+	$('#fileupload').prop('disabled', true);
 
 	var form = document.getElementById('inspection_1');
 	$('<div id="spinner" class="d-flex align-items-center">')
@@ -152,6 +153,7 @@ ajax_submit_form = function (action)
 				else
 				{
 					$('#submit').prop('disabled', false);
+					$('#fileupload').prop('disabled', false);
 
 					var element = document.getElementById('spinner');
 					if (element)
@@ -221,15 +223,15 @@ $(document).ready(function ()
 			{
 				var file_size = formatFileSize(file.size);
 
-				if (file.size > 8388000)
-				{
-					alert("Filen \"" + data.files[0].name + "\" er for stor! Max 8 MB");
-
-					data.context = $('<p class="file error">')
-						.append($('<span>').text(data.files[0].name + ' ' + file_size))
-						.appendTo($(".content_upload_download"));
-					return;
-				}
+//				if (file.size > 8388000)
+//				{
+//					alert("Filen \"" + data.files[0].name + "\" er for stor! Max 8 MB");
+//
+//					data.context = $('<p class="file error">')
+//						.append($('<span>').text(data.files[0].name + ' ' + file_size))
+//						.appendTo($(".content_upload_download"));
+//					return;
+//				}
 
 				data.context = $('<p class="file">')
 					.append($('<span>').text(data.files[0].name + ' ' + file_size))

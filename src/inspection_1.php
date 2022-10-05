@@ -232,16 +232,14 @@
 			);
 
 			// [HTTP_CONTENT_RANGE] => bytes 10000000-17679248/17679249 - last chunk looks like this
-			$content_range_header = $this->get_server_var('HTTP_CONTENT_RANGE');
-			$content_type = $this->get_server_var('CONTENT_TYPE');
-			$content_length = $this->get_server_var('CONTENT_LENGTH');
+			$content_range = $this->get_server_var('HTTP_CONTENT_RANGE');
 			$content_disposition = $this->get_server_var('HTTP_CONTENT_DISPOSITION');
 
 			$post_data = array();
 
 			$url .= http_build_query($get_data);
 
-			$return_data = $this->api->exchange_data($url, $post_data, $content_range_header, $content_type, $content_length, $content_disposition);
+			$return_data = $this->api->exchange_data($url, $post_data, $content_range, $content_disposition);
 
 			header('Content-Type: application/json');
 			echo $return_data;

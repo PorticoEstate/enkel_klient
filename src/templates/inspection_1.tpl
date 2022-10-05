@@ -55,7 +55,10 @@
 				<input type="hidden" value="{$rand}" name="randcheck" />
 				<fieldset>
 					<div class="form-group mt-2">
-						<label for="location_name">Lokasjon</label>
+						<label for="location_name">
+							<i class="fas fa-search"></i>
+							Lokasjon
+						</label>
 						<input type="text" id="location_name" name="values[location_name]" tabindex="1" class="form-control"
 							   autocomplete="off" required="required" />
 						<div class="selection"></div>
@@ -169,6 +172,7 @@
 										<div class="fileupload-buttonbar">
 											<div class="fileupload-buttons">
 												<span class="fileinput-button btn btn-success">
+													<i class="fas fa-plus"></i>
 													<span>Legg til filer...</span>
 													<input id="fileupload" type="file" name="files[]" multiple="" data-url="" capture="camera"></span>
 												<span class="fileupload-process"></span>
@@ -187,7 +191,12 @@
 								</div>
 							</div>
 						{/if}
-                        <button id="submit" type="submit" class="btn btn-primary mt-2">Send</button>
+                        <button id="submit" type="submit" class="btn btn-primary mt-2">
+							<i class="far fa-paper-plane"></i>
+
+
+							Send
+						</button>
                     </div>
                 </fieldset>
             </form>
@@ -203,7 +212,7 @@
 	</script>
 	{if $saved != 1}
 		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
-		<script src="js/jquery-3.6.0.min.js?n={#cache_refresh_token#}"></script>
+		<script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script>
 		<script src="js/jquery-ui-1.13.1.min.js?n={#cache_refresh_token#}"></script>
 		<script src="js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
 		<script src="js/file-upload/js/jquery.fileupload-process.js?n={#cache_refresh_token#}"></script>

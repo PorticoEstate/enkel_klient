@@ -170,7 +170,7 @@
 											<div class="fileupload-buttons">
 												<span class="fileinput-button btn btn-success">
 													<span>Legg til filer...</span>
-													<input id="fileupload" type="file" name="files[]" multiple="" data-url="/~hc483/github_trunk/index.php?menuaction=property.uitts.handle_multi_upload_file" capture="camera"></span>
+													<input id="fileupload" type="file" name="files[]" multiple="" data-url="" capture="camera"></span>
 												<span class="fileupload-process"></span>
 											</div>
 											<div class="fileupload-count">

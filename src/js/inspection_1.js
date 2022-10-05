@@ -221,6 +221,16 @@ $(document).ready(function ()
 			{
 				var file_size = formatFileSize(file.size);
 
+				if (file.size > 8388000)
+				{
+					alert("Filen \"" + data.files[0].name + "\" er for stor! Max 8 MB");
+
+					data.context = $('<p class="file error">')
+						.append($('<span>').text(data.files[0].name + ' ' + file_size))
+						.appendTo($(".content_upload_download"));
+					return;
+				}
+
 				data.context = $('<p class="file">')
 					.append($('<span>').text(data.files[0].name + ' ' + file_size))
 					.appendTo($(".content_upload_download"))
@@ -239,7 +249,6 @@ $(document).ready(function ()
 		},
 		progress: function (e, data)
 		{
-//console.log(data);
 			var progress = parseInt((data.loaded / data.total) * 100, 10);
 			data.context.css("background-position-x", 100 - progress + "%");
 		},
@@ -252,7 +261,7 @@ $(document).ready(function ()
 
 			var error_message = '';
 
-			if(typeof (result.files) !== 'undefined')
+			if (typeof (result.files) !== 'undefined')
 			{
 				error_message = result.files[0].error;
 			}
@@ -267,7 +276,7 @@ $(document).ready(function ()
 					.removeClass("file")
 					.addClass("error")
 					.append($('<span>').text(' Error: ' + error_message));
-				 error = true;
+				error = true;
 			}
 			else
 			{
@@ -279,7 +288,7 @@ $(document).ready(function ()
 			{
 				window.location.href = redirect_action;
 			}
-			else
+			else if (file_count === pendingList)
 			{
 				window.setTimeout(function ()
 				{

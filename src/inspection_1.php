@@ -237,16 +237,7 @@
 			$content_length = $this->get_server_var('CONTENT_LENGTH');
 			$content_disposition = $this->get_server_var('HTTP_CONTENT_DISPOSITION');
 
-			$headers = getallheaders();
-
-//			$content_range_header = $headers['Content-Range'];
-
-//			_debug_array($headers);
-
-			$post_data = $_POST;
-//			$post_data['files'] = $_FILES;
-
-//			_debug_array($post_data);
+			$post_data = array();
 
 			$url .= http_build_query($get_data);
 

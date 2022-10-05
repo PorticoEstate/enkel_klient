@@ -218,14 +218,6 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 			curl_setopt($ch, CURLOPT_URL, $url);
 			curl_setopt($ch, CURLOPT_POST, true);
 
-			if($range)
-			{
-//				curl_setopt($ch, CURLOPT_RANGE, $range);
-//				curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
-//				curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-//				curl_setopt($ch, CURLOPT_REFERER, $_SERVER['HTTP_REFERER']);
-			}
-
 			if (!empty($_FILES['files']['tmp_name'][0]))
 			{
 				// Assign POST data

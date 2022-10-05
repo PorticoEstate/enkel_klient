@@ -174,7 +174,7 @@
 												<span class="fileinput-button btn btn-success">
 													<i class="fas fa-plus"></i>
 													<span>Legg til filer...</span>
-													<input id="fileupload" type="file" name="files[]" multiple="" data-url="" capture="camera"></span>
+													<input id="fileupload" type="file" name="files[]" multiple="" data-url=""></span>
 												<span class="fileupload-process"></span>
 											</div>
 											<div class="fileupload-count">

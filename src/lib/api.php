@@ -64,6 +64,14 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 			ini_set('session.cookie_samesite', 'Lax');
 			session_start();
 //			_debug_array($_SESSION);
+			//restrict session lifetime to 30 minutes
+			if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 1800))
+			{
+				// last request was more than 10 minutes ago
+				session_unset();	 // unset $_SESSION variable for the run-time
+				session_destroy();   // destroy session data in storage
+			}
+			$_SESSION['LAST_ACTIVITY'] = time(); // update last activity time stamp
 
 			$configs_dir = dirname(__DIR__, 1) . '/configs';
 			$dotenv		 = Dotenv::createImmutable($configs_dir);
@@ -222,11 +230,11 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 			{
 				// Assign POST data
 				$post_data = array
-				(
+					(
 					'files' => curl_file_create(
 						$_FILES['files']['tmp_name'][0],
-						$_FILES['files']['type'][0],
-						$_FILES['files']['name'][0])
+	  $_FILES['files']['type'][0],
+	  $_FILES['files']['name'][0])
 				);
 				curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
 			}

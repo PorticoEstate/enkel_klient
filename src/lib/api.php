@@ -68,7 +68,7 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 			if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 1800))
 			{
 				// last request was more than 10 minutes ago
-				session_unset();	 // unset $_SESSION variable for the run-time
+				session_unset();  // unset $_SESSION variable for the run-time
 				session_destroy();   // destroy session data in storage
 			}
 			$_SESSION['LAST_ACTIVITY'] = time(); // update last activity time stamp
@@ -233,8 +233,8 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 					(
 					'files' => curl_file_create(
 						$_FILES['files']['tmp_name'][0],
-	  $_FILES['files']['type'][0],
-	  $_FILES['files']['name'][0])
+						$_FILES['files']['type'][0],
+						$_FILES['files']['name'][0])
 				);
 				curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
 			}

@@ -272,6 +272,7 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 
 		public static function link( $url, $extravars = array() )
 		{
-			return current_site_url() . "{$url}?" . http_build_query($extravars);
+			$current_site_url = rtrim(current_site_url(), '/');
+			return $current_site_url . '/' . ltrim("{$url}?", '/') . http_build_query($extravars);
 		}
 	}

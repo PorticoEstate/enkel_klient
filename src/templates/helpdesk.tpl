@@ -24,15 +24,17 @@
 		{if $saved == 1}
 
 			<div class="alert alert-success">
-				<p>Saken er registrert og har fått referanse #{$ticket_id}</p>
+				<p>Saken er registrert og har fått referanse #{$id}</p>
 			</div>
+			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">Lag ny registrering</button>
+
 		{else}
 
-			{if $error != '' }
-
+			{if $error|@count gt 0}
 				<div class="alert alert-danger alert-dismissible">
-					<button type="button" class="close" data-dismiss="alert">&times;</button>
-					<p>{$error}</p>
+					{foreach from=$error item=message}
+						<p>{$message}</p>
+					{/foreach}
 				</div>
 			{else}
 				<p>{#form_info#}</p>
@@ -65,6 +67,15 @@
 		{/if}
 
 	</div>
+	<script>
+		function refresh_form()
+		{
+			{literal}
+				var strURL = phpGWLink('index.php', {menuaction:'enkel_klient.helpdesk.display_form'});
+			{/literal}
+			window.location.replace(strURL);
+		}
+	</script>
 	{if $saved != 1}
 		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
 		<script src="js/location.js?n={#cache_refresh_token#}"></script>

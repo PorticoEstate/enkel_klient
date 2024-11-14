@@ -42,11 +42,11 @@
 		public function get_locations()
 		{
 			$session_info	 = $this->api->get_session_info();
-			$url			 = $this->api->backend_url . "/index.php?";
+			$url			 = $this->api->backend_url . "/?";
 
 			$get_data = array(
 				'menuaction'					 => 'property.bolocation.get_locations',
-				$session_info['session_name']	 => $session_info['sessionid'],
+				$session_info['session_name']	 => $session_info['session_id'],
 				'domain'						 => $this->api->logindomain,
 				'phpgw_return_as'				 => 'json',
 				'api_mode'						 => true,
@@ -79,7 +79,7 @@
 
 				$get_data = array(
 					'menuaction'					 => 'property.uitts.add',
-					$session_info['session_name']	 => $session_info['sessionid'],
+					$session_info['session_name']	 => $session_info['session_id'],
 					'domain'						 => $this->api->logindomain,
 					'phpgw_return_as'				 => 'json',
 					'api_mode'						 => true

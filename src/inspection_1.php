@@ -33,17 +33,21 @@
 		public function get_locations()
 		{
 			$session_info	 = $this->api->get_session_info();
-			$url			 = $this->api->backend_url . "/index.php?";
+			$url			 = $this->api->backend_url . "/?";
 
 			$get_data = array(
 				'menuaction'					 => 'property.bolocation.get_locations',
-				$session_info['session_name']	 => $session_info['sessionid'],
 				'domain'						 => $this->api->logindomain,
 				'phpgw_return_as'				 => 'json',
 				'api_mode'						 => true,
 				'query'							 => sanitizer::get_var('query', 'string'),
 				'level'							 => 4
 			);
+
+			if($session_info)
+			{
+				$get_data[$session_info['session_name']] = $session_info['session_id'];
+			}
 
 			$post_data = array(
 			);
@@ -70,7 +74,7 @@
 
 			$get_data = array(
 				'menuaction'					 => 'property.boentity.get_attributes',
-				$session_info['session_name']	 => $session_info['sessionid'],
+				$session_info['session_name']	 => $session_info['session_id'],
 				'domain'						 => $this->api->logindomain,
 				'phpgw_return_as'				 => 'json',
 				'api_mode'						 => true,
@@ -99,7 +103,7 @@
 
 				$get_data = array(
 					'menuaction'					 => 'property.uientity.save',
-					$session_info['session_name']	 => $session_info['sessionid'],
+					$session_info['session_name']	 => $session_info['session_id'],
 					'domain'						 => $this->api->logindomain,
 					'phpgw_return_as'				 => 'json',
 					'api_mode'						 => true,
@@ -221,7 +225,7 @@
 
 			$get_data = array(
 				'menuaction'					 => 'property.uientity.handle_multi_upload_file',
-				$session_info['session_name']	 => $session_info['sessionid'],
+				$session_info['session_name']	 => $session_info['session_id'],
 				'domain'						 => $this->api->logindomain,
 				'phpgw_return_as'				 => 'json',
 				'api_mode'						 => true,

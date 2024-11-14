@@ -56,7 +56,7 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 		private
 			$login,
 			$password,
-			$session_info;
+			$session_info = array();
 
 		function __construct()
 		{
@@ -197,7 +197,7 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 				return json_encode($_SESSION['session_info']);
 			}
 
-			$url = $this->backend_url . "/login_api.php";
+			$url = $this->backend_url . "/login";
 
 			if (!$this->login || !$this->password)
 			{
@@ -205,7 +205,6 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 			}
 
 			$post_data = array(
-				'api_mode'		 => true,
 				'logindomain'	 => $this->logindomain,
 				'login'			 => $this->login,
 				'passwd'		 => $this->password
@@ -221,7 +220,6 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 
 		function exchange_data( $url, $post_data = array(), $content_range = null, $content_disposition = null )
 		{
-
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
 			curl_setopt($ch, CURLOPT_POST, true);

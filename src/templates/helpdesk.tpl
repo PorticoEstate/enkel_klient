@@ -43,9 +43,12 @@
 				<input type="hidden" value="{$rand}" name="randcheck" />
 				<fieldset>
 					<div class="form-group mt-2">
-						<label for="location_name">Lokasjon</label>
+						<label for="location_name">
+							<i class="fas fa-search"></i>
+							Lokasjon
+						</label>
 						<input type="text" id="location_name" name="values[location_name]" tabindex="1" class="form-control"
-							autocomplete="off" required="required" />
+							   autocomplete="off" required="required" />
 						<div class="selection"></div>
 						<input type="hidden" id="location_code" name="location_code">
 					</div>

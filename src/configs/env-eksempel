@@ -6,5 +6,5 @@ backend_url = "http(s)://..."
 backend_domain = "default"
 default_form = "inspection_1"
 # Aktiver skjemaer
-actvate_inspection_1 = 1
-actvate_helpdesk = 0
+activate_inspection_1 = 1
+activate_helpdesk = 0

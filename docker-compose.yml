@@ -1,4 +1,3 @@
-version: '3.9'
 
 services:
     web:
@@ -9,13 +8,11 @@ services:
       volumes:
       - ./src:/var/www/html/enkel_klient/
       networks:
-      - frontend
+        - internal
       ports:
       - "8210:80"
-      labels:
-      - "traefik.enable=false"
+
 
 networks:
-    frontend:
-       external:
-           name: outside
+    internal:
+        driver: bridge

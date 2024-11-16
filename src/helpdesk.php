@@ -166,7 +166,7 @@ class helpdesk
 		$get_data = array(
 			'menuaction' => 'enkel_klient.helpdesk.save_form',
 		);
-		$this->smarty->assign("action_url", api::link('/', $get_data), true);
+		$this->smarty->assign("action_url", api::link('/index.php', $get_data), true);
 		$this->smarty->assign("saved", $saved, true);
 		$this->smarty->assign("error", $error, true);
 		$this->smarty->assign("id", $id, true);

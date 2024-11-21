@@ -78,7 +78,7 @@ class helpdesk
 			'phpgw_return_as'				 => 'json',
 			'api_mode'						 => true,
 			'query'							 => sanitizer::get_var('query', 'string'),
-			'level'							 => 4
+//			'level'							 => 4
 		);
 
 		$post_data = array();

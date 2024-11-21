@@ -209,6 +209,7 @@
 			var strURL = phpGWLink('index.php', {});
 			window.location.replace(strURL);
 		}
+		var schema = 'inspection_1';
 	</script>
 	{if $saved != 1}
 		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>

@@ -13,7 +13,7 @@ const autoCompleteJS = new autoComplete({
 						.getElementById("location_name")
 						.setAttribute("placeholder", "Loading...");
 					// Fetch External Data Source
-					var oArgs = {menuaction: 'enkel_klient.inspection_1.get_locations', query: query};
+					var oArgs = {menuaction: 'enkel_klient.' + schema + '.get_locations', query: query};
 					var strURL = phpGWLink('index.php', oArgs, true);
 					const source = await fetch(
 						strURL
@@ -36,7 +36,7 @@ const autoCompleteJS = new autoComplete({
 				return [];
 			}
 		},
-		keys: ["name", "id"],
+		keys: ["name"],
 		cache: false,
 		filter: (list) => {
 			// Filter duplicates

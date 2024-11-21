@@ -220,9 +220,9 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 
 		function exchange_data( $url, $post_data = array(), $content_range = null, $content_disposition = null )
 		{
+//			_debug_array($url);
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_POST, true);
 
 			if (!empty($_FILES['files']['tmp_name'][0]))
 			{
@@ -236,9 +236,14 @@ define('PHPGW_SERVER_ROOT', dirname(__DIR__, 1));
 				);
 				curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
 			}
-			else
+			else if($post_data)
 			{
 				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+			}
+
+			if($post_data)
+			{
+				curl_setopt($ch, CURLOPT_POST, true);
 			}
 
 			$http_header = array();

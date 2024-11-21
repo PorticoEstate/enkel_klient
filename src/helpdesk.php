@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use portico\sanitizer;
 use portico\api;
+use portico\sanitizer;
 
 
 
@@ -15,11 +15,11 @@ class helpdesk
 	function __construct()
 	{
 		$this->api				 = &$GLOBALS['api'];
-		$smarty					 = new \Smarty;
+		$smarty					 = new Smarty;
 		$smarty->force_compile	 = true;
 		//	$smarty->debugging		 = true;
 		$smarty->caching		 = false;
-		$smarty->setCaching(\Smarty::CACHING_OFF);
+		$smarty->setCaching(Smarty::CACHING_OFF);
 		//	$this->smarty->cache_lifetime	 = 120;
 		$smarty->configLoad("test.conf", 'helpdesk');
 
@@ -38,8 +38,34 @@ class helpdesk
 		$smarty->assign("message", '', true);
 
 		$this->smarty = $smarty;
+		
 	}
 
+	function get_logged_in()
+	{
+		$headers = getallheaders();
+		$ssn = !empty($headers['uid']) ? $headers['uid'] : '25015823421';
+		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
+		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
+
+		$session_info	 = $this->api->get_session_info();
+		$url			 = $this->api->backend_url . "/property/tenant/?";
+
+		$get_data = array(
+			'ssn'							 => $ssn,
+			$session_info['session_name']	 => $session_info['session_id'],
+			'domain'						 => $this->api->logindomain,
+			'phpgw_return_as'				 => 'json',
+		);
+
+		$post_data = array();
+
+		$url .= http_build_query($get_data);
+
+		$result = json_decode($this->api->exchange_data($url, $post_data), true);
+		return $result;
+
+	}
 	public function get_locations()
 	{
 		$session_info	 = $this->api->get_session_info();
@@ -87,14 +113,25 @@ class helpdesk
 			);
 
 			$cat_id = $this->smarty->getConfigVars('cat_id');
+
+			$tenant_info = api::session_get('helpdesk', 'tenant_info');
+
+			$tenant_name = !empty($tenant_info['first_name']) ? "{$tenant_info['first_name']} {$tenant_info['last_name']}" : null;
+			$details	 = sanitizer::get_var('message', 'html');
+
+			if($tenant_name)
+			{
+				$details = "<p>Innmeldt av leietaker: $tenant_name</p>$details";
+			}
 			$post_data = array(
 				'values'	 => array(
 					'cat_id'	 => $cat_id,
 					'priority'	 => 3,
 					'apply'		 => true,
 					'location_code'	 => sanitizer::get_var('location_code', 'string'),
+					'address'	 => sanitizer::get_var('address', 'string'),
 					'subject'	 => sanitizer::get_var('subject', 'string'),
-					'details'	 => sanitizer::get_var('message', 'html'),
+					'details'	 => $details,
 				),
 			);
 
@@ -125,9 +162,9 @@ class helpdesk
 
 		if (sanitizer::get_var('phpgw_return_as', 'string') == 'json')
 		{
-			api::session_set('inspection_1', 'id', !empty($ret['id']) ? $ret['id'] : null);
-			api::session_set('inspection_1', 'error', $error);
-			api::session_set('inspection_1', 'saved', $saved);
+			api::session_set('helpdesk', 'id', !empty($ret['id']) ? $ret['id'] : null);
+			api::session_set('helpdesk', 'error', $error);
+			api::session_set('helpdesk', 'saved', $saved);
 			$return_data =  array(
 				'id' => !empty($ret['id']) ? $ret['id'] : null,
 				'status' => $saved ? 'saved' : 'error',
@@ -145,7 +182,7 @@ class helpdesk
 
 	public function display_form($saved = false, $error = array(), $id = null)
 	{
-		
+
 		if (!$saved)
 		{
 			$saved = api::session_get('helpdesk', 'saved');
@@ -166,6 +203,12 @@ class helpdesk
 		$get_data = array(
 			'menuaction' => 'enkel_klient.helpdesk.save_form',
 		);
+
+		$tenant_info = $this->get_logged_in();
+		api::session_set('helpdesk', 'tenant_info', $tenant_info);
+		$this->smarty->assign("location_code", $tenant_info['location_code'], true);
+		$this->smarty->assign("address", $tenant_info['address'], true);
+		$this->smarty->assign("tenant_name", "{$tenant_info['first_name']} {$tenant_info['last_name']}", true);
 		$this->smarty->assign("action_url", api::link('/index.php', $get_data), true);
 		$this->smarty->assign("saved", $saved, true);
 		$this->smarty->assign("error", $error, true);

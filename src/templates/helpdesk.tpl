@@ -38,7 +38,9 @@
 				</div>
 			{else}
 				<p>{#form_info#}</p>
+				{if $tenant_name}
 				<p>Innmelder: {$tenant_name}</p>
+				{/if}
 			{/if}
 			<form method="post" action="{$action_url}">
 				<input type="hidden" value="{$rand}" name="randcheck" />

@@ -44,7 +44,7 @@ class helpdesk
 	function get_logged_in()
 	{
 		$headers = getallheaders();
-		$ssn = !empty($headers['uid']) ? $headers['uid'] : '25015823421';
+		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
 		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
 
@@ -206,9 +206,13 @@ class helpdesk
 
 		$tenant_info = $this->get_logged_in();
 		api::session_set('helpdesk', 'tenant_info', $tenant_info);
-		$this->smarty->assign("location_code", $tenant_info['location_code'], true);
-		$this->smarty->assign("address", $tenant_info['address'], true);
-		$this->smarty->assign("tenant_name", "{$tenant_info['first_name']} {$tenant_info['last_name']}", true);
+
+		$location_code = !empty($tenant_info['location_code']) ? $tenant_info['location_code'] : '';
+		$address = !empty($tenant_info['address']) ? $tenant_info['address'] : '';
+		$tenant_name = !empty($tenant_info['first_name']) ? "{$tenant_info['first_name']} {$tenant_info['last_name']}" : '';
+		$this->smarty->assign("location_code", $location_code, true);
+		$this->smarty->assign("address", $address, true);
+		$this->smarty->assign("tenant_name", $tenant_name, true);
 		$this->smarty->assign("action_url", api::link('/index.php', $get_data), true);
 		$this->smarty->assign("saved", $saved, true);
 		$this->smarty->assign("error", $error, true);

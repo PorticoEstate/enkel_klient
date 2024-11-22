@@ -12,6 +12,7 @@
 	}
 
 	require 'lib/api.php';
+	require 'lib/fiks.php';
 
 	$GLOBALS['api'] = new portico\api();
 

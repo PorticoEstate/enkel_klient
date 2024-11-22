@@ -5,6 +5,9 @@ password = "..."
 backend_url = "http(s)://..."
 backend_domain = "default"
 default_form = "inspection_1"
+# Fiks integrasjon
+fiks_webservicehost = "http(s)://"
+fiks_apikey  = "..."
 # Aktiver skjemaer
 activate_inspection_1 = 1
 activate_helpdesk = 0

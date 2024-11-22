@@ -38,8 +38,8 @@
 				</div>
 			{else}
 				<p>{#form_info#}</p>
-				{if $tenant_name}
-				<p>Innmelder: {$tenant_name}</p>
+				{if $user_name}
+				<p>Innmelder: {$user_name}</p>
 				{/if}
 			{/if}
 			<form method="post" action="{$action_url}">
@@ -53,7 +53,7 @@
 							<span class="form-control">{$address}</span>
 							<input type="hidden" id="location_code" name="location_code" value="{$location_code}">
 							<input type="hidden" id="address" name="address" value="{$address}">
-							<input type="hidden" id="tenant_name" name="tenant_name" value="{$tenant_name}">
+							<input type="hidden" id="user_name" name="user_name" value="{$user_name}">
 						</div>
                     {else}
 						<div class="form-group mt-2">
@@ -61,7 +61,7 @@
 								<i class="fas fa-search"></i>
 								Lokasjon
 							</label>
-							<input type="text" id="location_name" name="values[location_name]" tabindex="1" class="form-control"
+							<input type="text" id="location_name" name="location_name" tabindex="1" class="form-control"
 								autocomplete="off" required="required" />
 							<div class="selection"></div>
 							<input type="hidden" id="location_code" name="location_code">

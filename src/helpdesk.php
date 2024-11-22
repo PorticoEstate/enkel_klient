@@ -62,10 +62,10 @@ class helpdesk
 
 		$url .= http_build_query($get_data);
 
-		$result = json_decode($this->api->exchange_data($url, $post_data), true);
+		$result = (array)json_decode($this->api->exchange_data($url, $post_data), true);
 		return $result;
-
 	}
+
 	public function get_locations()
 	{
 		$session_info	 = $this->api->get_session_info();
@@ -114,22 +114,30 @@ class helpdesk
 
 			$cat_id = $this->smarty->getConfigVars('cat_id');
 
-			$tenant_info = api::session_get('helpdesk', 'tenant_info');
+			$user_info = api::session_get('helpdesk', 'user_info');
 
-			$tenant_name = !empty($tenant_info['first_name']) ? "{$tenant_info['first_name']} {$tenant_info['last_name']}" : null;
+			$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : null;
 			$details	 = sanitizer::get_var('message', 'html');
 
-			if($tenant_name)
+			if(!empty($user_info['location_code']) && $user_name)
 			{
-				$details = "<p>Innmeldt av leietaker: $tenant_name</p>$details";
+				$details = "<p>Innmeldt av leietaker: $user_name</p>$details";
 			}
+			else if($user_name)
+			{
+				$details = "<p>Innmeldt av: $user_name</p>$details";
+			}
+
+			$location_name = sanitizer::get_var('location_name', 'string');
+			$address = sanitizer::get_var('address', 'string');
+
 			$post_data = array(
 				'values'	 => array(
 					'cat_id'	 => $cat_id,
 					'priority'	 => 3,
 					'apply'		 => true,
 					'location_code'	 => sanitizer::get_var('location_code', 'string'),
-					'address'	 => sanitizer::get_var('address', 'string'),
+					'address'	 => $address ? $address : $location_name,
 					'subject'	 => sanitizer::get_var('subject', 'string'),
 					'details'	 => $details,
 				),
@@ -204,15 +212,21 @@ class helpdesk
 			'menuaction' => 'enkel_klient.helpdesk.save_form',
 		);
 
-		$tenant_info = $this->get_logged_in();
-		api::session_set('helpdesk', 'tenant_info', $tenant_info);
+		$user_info = $this->get_logged_in();
+		$fiks = new fiks();
+		$fiks_data = $fiks->get_name_from_external_service();
 
-		$location_code = !empty($tenant_info['location_code']) ? $tenant_info['location_code'] : '';
-		$address = !empty($tenant_info['address']) ? $tenant_info['address'] : '';
-		$tenant_name = !empty($tenant_info['first_name']) ? "{$tenant_info['first_name']} {$tenant_info['last_name']}" : '';
+		$user_info['first_name'] = !empty($fiks_data['first_name']) ? $fiks_data['first_name'] : $user_info['first_name'];
+		$user_info['last_name'] = !empty($fiks_data['last_name']) ? $fiks_data['last_name'] : $user_info['last_name'];
+
+		api::session_set('helpdesk', 'user_info', $user_info);
+
+		$location_code = !empty($user_info['location_code']) ? $user_info['location_code'] : '';
+		$address = !empty($user_info['address']) ? $user_info['address'] : '';
+		$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
 		$this->smarty->assign("location_code", $location_code, true);
 		$this->smarty->assign("address", $address, true);
-		$this->smarty->assign("tenant_name", $tenant_name, true);
+		$this->smarty->assign("user_name", $user_name, true);
 		$this->smarty->assign("action_url", api::link('/index.php', $get_data), true);
 		$this->smarty->assign("saved", $saved, true);
 		$this->smarty->assign("error", $error, true);

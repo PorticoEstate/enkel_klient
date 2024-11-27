@@ -38,17 +38,19 @@
 				</div>
 			{else}
 				<p>{#form_info#}</p>
-				{if $user_name}
-				<p>Innmelder: {$user_name}</p>
-				{/if}
 			{/if}
 			<form method="post" action="{$action_url}">
 				<input type="hidden" value="{$rand}" name="randcheck" />
 				<fieldset>
+				    <legend>Hvor / Hvem</legend>
+					{if $user_name}
+					<p class="ms-4">Navn: {$user_name}</p>
+					{/if}
+
                     {if $location_code}
-						<div class="form-group mt-2">
+						<div class="form-group mt-2 ms-4">
 							<label for="location_name">
-								Lokasjon
+								Adresse
 							</label>
 							<span class="form-control">{$address}</span>
 							<input type="hidden" id="location_code" name="location_code" value="{$location_code}">
@@ -56,10 +58,10 @@
 							<input type="hidden" id="user_name" name="user_name" value="{$user_name}">
 						</div>
                     {else}
-						<div class="form-group mt-2">
+						<div class="form-group mt-2 ms-4">
 							<label for="location_name">
 								<i class="fas fa-search"></i>
-								Lokasjon
+								Adresse
 							</label>
 							<input type="text" id="location_name" name="location_name" tabindex="1" class="form-control"
 								autocomplete="off" required="required" />
@@ -67,21 +69,40 @@
 							<input type="hidden" id="location_code" name="location_code">
 						</div>
 					   {/if}
-					<div id="details" {if !$location_code}style="display: none;"{/if}>
 
-						<div class="form-group">
-							<label for="subject">Overskrift</label>
-							<small id="subjectHelp" class="form-text text-muted">Her legger du inn hva saken gjelder.</small>
-							<input type="text" class="form-control" id="title" name="subject" value="{$subject}"
-								aria-describedby="subjectHelp" required="required">
+						<div class="form-group mt-2 ms-4">
+							<label for="phone">Telefon/Mobil</label>
+							<small id="contact_infoHelpPhone" class="form-text text-muted">Her legger du inn telefonnummeret til den EBF skal ta kontakt med.</small>
+						<input type="text" id="phone" name="phone" tabindex="2" class="form-control"
+							autocomplete="off" required="required" />
 						</div>
-						<div class="form-group mt-4">
-							<label for="message">Melding</label>
-							<textarea class="form-control" id="message" name="message" required="required">{$message}</textarea>
+						<!--email-->
+						<div class="form-group mt-2 ms-4">
+							<label for="email">E-post</label>
+							<small id="contact_infoHelpEmail" class="form-text text-muted">Her legger du inn E-post til den EBF skal ta kontakt med.</small>
+							<input type="email" id="email" name="email" tabindex="3" class="form-control"
+								autocomplete="off" required="required" />
 						</div>
-						<button type="submit" class="btn btn-primary">Send</button>
-					</div>
+
 				</fieldset>
+
+				<div id="details" {if !$location_code}style="display: none;"{/if}>
+					<fieldset>
+						<legend>Hva</legend>
+
+							<div class="form-group mt-2 ms-4">
+								<label for="subject">Overskrift</label>
+								<small id="subjectHelp" class="form-text text-muted">Her legger du inn hva saken gjelder.</small>
+								<input type="text" class="form-control" id="title" name="subject" value="{$subject}"
+									aria-describedby="subjectHelp" required="required">
+							</div>
+							<div class="form-group mt-4 ms-4">
+								<label for="message">Melding</label>
+								<textarea class="form-control" id="message" name="message" required="required">{$message}</textarea>
+							</div>
+							<button type="submit" class="btn btn-primary mt-4 ms-4">Send</button>
+					</fieldset>
+				</div>
 			</form>
 		{/if}
 
@@ -96,7 +117,7 @@
 		}
 		var schema = 'helpdesk';
 	</script>
-	{if $saved != 1}
+	{if $saved != 1 && !$location_code}
 		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
 		<script src="js/location.js?n={#cache_refresh_token#}"></script>
 	{/if}

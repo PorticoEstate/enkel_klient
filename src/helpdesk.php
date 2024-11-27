@@ -62,8 +62,10 @@ class helpdesk
 
 		$url .= http_build_query($get_data);
 
+		$empty = array('first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => '');
+
 		$result = (array)json_decode($this->api->exchange_data($url, $post_data), true);
-		return $result;
+		return array_merge($empty, $result);
 	}
 
 	public function get_locations()
@@ -116,16 +118,34 @@ class helpdesk
 
 			$user_info = api::session_get('helpdesk', 'user_info');
 
-			$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : null;
+			$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
 			$details	 = sanitizer::get_var('message', 'html');
+			$phone = sanitizer::get_var('phone', 'string');
+			$email = sanitizer::get_var('email', 'string');
 
-			if(!empty($user_info['location_code']) && $user_name)
+			$userinfo = '';
+
+			if (!empty($user_info['location_code']) && $user_name)
 			{
-				$details = "<p>Innmeldt av leietaker: $user_name</p>$details";
+				$userinfo = "<p>Innmeldt av leietaker: $user_name</p>\n";
 			}
-			else if($user_name)
+			else if ($user_name)
 			{
-				$details = "<p>Innmeldt av: $user_name</p>$details";
+				$userinfo = "<p>Innmeldt av: $user_name</p>\n";
+			}
+
+			if($phone)
+			{
+				$userinfo .= "<p>Telefon: $phone</p>\n";
+			}
+			if($email)
+			{
+				$userinfo .= "<p>E-post: $email</p>\n";
+			}
+
+			if ($userinfo)
+			{
+				$details = $userinfo . $details;
 			}
 
 			$location_name = sanitizer::get_var('location_name', 'string');

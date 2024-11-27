@@ -57,7 +57,7 @@
 					<div class="form-group mt-2">
 						<label for="location_name">
 							<i class="fas fa-search"></i>
-							Lokasjon
+							Adresse
 						</label>
 						<input type="text" id="location_name" name="values[location_name]" tabindex="1" class="form-control"
 							   autocomplete="off" required="required" />

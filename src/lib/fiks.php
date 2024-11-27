@@ -19,7 +19,7 @@ class fiks
 	function get_ssn()
 	{
 		$headers = getallheaders();
-		$ssn = !empty($headers['uid']) ? $headers['uid'] : '20056432559';
+		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
 		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
 		return $ssn;

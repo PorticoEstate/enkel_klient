@@ -42,13 +42,12 @@
 			<form method="post" action="{$action_url}">
 				<input type="hidden" value="{$rand}" name="randcheck" />
 				<fieldset>
-				    <legend>Hvor / Hvem</legend>
 					{if $user_name}
-					<p class="ms-4">Navn: {$user_name}</p>
+					<p>Navn: {$user_name}</p>
 					{/if}
 
                     {if $location_code}
-						<div class="form-group mt-2 ms-4">
+						<div class="form-group mt-2">
 							<label for="location_name">
 								Adresse
 							</label>
@@ -58,7 +57,7 @@
 							<input type="hidden" id="user_name" name="user_name" value="{$user_name}">
 						</div>
                     {else}
-						<div class="form-group mt-2 ms-4">
+						<div class="form-group mt-2">
 							<label for="location_name">
 								<i class="fas fa-search"></i>
 								Adresse
@@ -70,14 +69,14 @@
 						</div>
 					   {/if}
 
-						<div class="form-group mt-2 ms-4">
+						<div class="form-group mt-2">
 							<label for="phone">Telefon/Mobil</label>
 							<small id="contact_infoHelpPhone" class="form-text text-muted">Her legger du inn telefonnummeret til den EBF skal ta kontakt med.</small>
 						<input type="text" id="phone" name="phone" tabindex="2" class="form-control"
 							autocomplete="off" required="required" />
 						</div>
 						<!--email-->
-						<div class="form-group mt-2 ms-4">
+						<div class="form-group mt-2">
 							<label for="email">E-post</label>
 							<small id="contact_infoHelpEmail" class="form-text text-muted">Her legger du inn E-post til den EBF skal ta kontakt med.</small>
 							<input type="email" id="email" name="email" tabindex="3" class="form-control"
@@ -88,19 +87,17 @@
 
 				<div id="details" {if !$location_code}style="display: none;"{/if}>
 					<fieldset>
-						<legend>Hva</legend>
-
-							<div class="form-group mt-2 ms-4">
+							<div class="form-group mt-2">
 								<label for="subject">Overskrift</label>
 								<small id="subjectHelp" class="form-text text-muted">Her legger du inn hva saken gjelder.</small>
 								<input type="text" class="form-control" id="title" name="subject" value="{$subject}"
 									aria-describedby="subjectHelp" required="required">
 							</div>
-							<div class="form-group mt-4 ms-4">
+							<div class="form-group mt-4">
 								<label for="message">Melding</label>
 								<textarea class="form-control" id="message" name="message" required="required">{$message}</textarea>
 							</div>
-							<button type="submit" class="btn btn-primary mt-4 ms-4">Send</button>
+							<button type="submit" class="btn btn-primary mt-4">Send</button>
 					</fieldset>
 				</div>
 			</form>

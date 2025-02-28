@@ -221,7 +221,7 @@ class api
 
 	function exchange_data($url, $post_data = array(), $content_range = null, $content_disposition = null)
 	{
-//			_debug_array($url);
+
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 

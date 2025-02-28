@@ -1,11 +1,26 @@
-FROM php:8.0-apache
+FROM php:8.4-apache
+
+
+ARG http_proxy
+ARG https_proxy
+
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
 
 RUN apt-get update -y
 RUN apt-get install -y libpq-dev cron curl git unzip openssl
 
-#RUN pecl install xdebug
-#RUN docker-php-ext-enable xdebug
 #RUN touch $PHP_INI_DIR/conf.d/91-app.ini
+# PHP configuration
+
+RUN if [ "${INSTALL_XDEBUG}" = "true" ]; then \
+    pecl install xdebug && docker-php-ext-enable xdebug; \
+    echo 'xdebug.mode=debug,develop' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo 'xdebug.discover_client_host=1' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo 'xdebug.client_host=host.docker.internal' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo 'xdebug.start_with_request=yes' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo 'xdebug.idekey=netbeans-xdebug' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+   fi
 
 RUN apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

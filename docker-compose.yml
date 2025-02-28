@@ -12,16 +12,18 @@ services:
             INSTALL_XDEBUG: ${INSTALL_XDEBUG}
             http_proxy: ${http_proxy:-false}
             https_proxy: ${https_proxy:-false}
-      container_name: lrs
- #     image: sigurdne/portico_estate_webserver:latest
+      container_name: enkel_klient_webserver
       volumes:
       - ./src:/var/www/html/enkel_klient/
       networks:
         - internal
       ports:
       - "8210:80"
-
+      environment:
+        - no_proxy=portico_api,portico_api:8088
+        - NO_PROXY=portico_api,portico_api:8088
 
 networks:
     internal:
-        driver: bridge
+        name: portico_internal
+        external: true

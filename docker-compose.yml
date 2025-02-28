@@ -9,7 +9,7 @@ services:
         context: .
         dockerfile: Dockerfile
         args:
-            INSTALL_XDEBUG: ${INSTALL_XDEBUG:-false}
+            INSTALL_XDEBUG: ${INSTALL_XDEBUG}
             http_proxy: ${http_proxy:-false}
             https_proxy: ${https_proxy:-false}
       container_name: lrs

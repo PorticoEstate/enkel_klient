@@ -3,6 +3,7 @@ FROM php:8.4-apache
 
 ARG http_proxy
 ARG https_proxy
+ARG INSTALL_XDEBUG=true
 
 ENV http_proxy=${http_proxy}
 ENV https_proxy=${https_proxy}
@@ -13,9 +14,19 @@ RUN apt-get install -y libpq-dev cron curl git unzip openssl
 #RUN touch $PHP_INI_DIR/conf.d/91-app.ini
 # PHP configuration
 
+# Download and install the install-php-extensions script
+# https://github.com/mlocati/docker-php-extension-installer
+RUN curl -sSL https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions -o /usr/local/bin/install-php-extensions \
+    && chmod +x /usr/local/bin/install-php-extensions
+
+# Configure PEAR
+RUN if [ -n "${http_proxy}" ]; then pear config-set http_proxy ${http_proxy}; fi && \
+    pear config-set php_ini $PHP_INI_DIR/php.ini
+
 RUN if [ "${INSTALL_XDEBUG}" = "true" ]; then \
     pecl install xdebug && docker-php-ext-enable xdebug; \
-    echo 'xdebug.mode=debug,develop' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    echo 'zend_extension=xdebug' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo 'xdebug.mode=debug,develop' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo 'xdebug.discover_client_host=1' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo 'xdebug.client_host=host.docker.internal' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo 'xdebug.start_with_request=yes' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \

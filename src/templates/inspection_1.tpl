@@ -193,8 +193,6 @@
 						{/if}
                         <button id="submit" type="submit" class="btn btn-primary mt-2">
 							<i class="far fa-paper-plane"></i>
-
-
 							Send
 						</button>
                     </div>

@@ -53,6 +53,7 @@
 	{
 		case 'helpdesk':
 		case 'inspection_1':
+		case 'nokkelbestilling':
 			require_once "{$class}.php";
 			$object = new $class;
 			break;

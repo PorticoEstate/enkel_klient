@@ -17,20 +17,15 @@ class nokkelbestilling
 		$this->api				 = &$GLOBALS['api'];
 		$smarty					 = new Smarty;
 		$smarty->force_compile	 = true;
-		//	$smarty->debugging		 = true;
 		$smarty->caching		 = false;
 		$smarty->setCaching(Smarty::CACHING_OFF);
 		//	$this->smarty->cache_lifetime	 = 120;
-		$smarty->configLoad("test.conf", 'nokkelbestilling');
+		$smarty->configLoad("site.conf", 'nokkelbestilling');
+		$smarty->configLoad("site.conf", 'services');  // Also load services section
 
 		$str_base_url = current_site_url();
 
 		$smarty->assign("str_base_url", $str_base_url);
-		$smarty->force_compile	 = true;
-		//			$smarty->debugging		 = true;
-		$smarty->caching		 = false;
-		$smarty->setCaching(Smarty::CACHING_OFF);
-		//	$smarty->cache_lifetime	 = 120;
 		$smarty->assign("action_url", current_site_url(), true);
 		$smarty->assign("saved", 0, true);
 		$smarty->assign("error", '', true);

@@ -111,24 +111,36 @@
 
 		<nav id="sidebar" class="sidebar">
 			<ul class="navbar-nav">
+				{assign var="currentAction" value=$smarty.get.menuaction|default:''}
 				<li class="nav-item">
-					<a class="nav-link {if $smarty.get.menuaction == 'enkel_klient.helpdesk.display_form'}active{/if}"
-						href="index.php?menuaction=enkel_klient.helpdesk.display_form">
-						<i class="fas fa-ticket-alt me-2"></i>BrukerØnske
+					<a class="nav-link {if $currentAction == ''}active{/if}" href="index.php">
+						<i class="fas fa-home me-2"></i>Hjem
 					</a>
 				</li>
-				<li class="nav-item">
-					<a class="nav-link {if $smarty.get.menuaction == 'enkel_klient.nokkelbestilling.display_form'}active{/if}"
-						href="index.php?menuaction=enkel_klient.nokkelbestilling.display_form">
-						<i class="fas fa-key me-2"></i>Nøkkelbestilling
-					</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link {if $smarty.get.menuaction == 'enkel_klient.inspection_1.display_form'}active{/if}"
-						href="index.php?menuaction=enkel_klient.inspection_1.display_form">
-						<i class="fas fa-clipboard-check me-2"></i>VekterInspeksjon
-					</a>
-				</li>
+				{if #helpdesk#}
+					<li class="nav-item">
+						<a class="nav-link {if $currentAction == 'enkel_klient.helpdesk.display_form'}active{/if}"
+							href="index.php?menuaction=enkel_klient.helpdesk.display_form">
+							<i class="fas fa-ticket-alt me-2"></i>{#helpdesk#}
+						</a>
+					</li>
+				{/if}
+				{if #nokkelbestilling#}
+					<li class="nav-item">
+						<a class="nav-link {if $currentAction == 'enkel_klient.nokkelbestilling.display_form'}active{/if}"
+							href="index.php?menuaction=enkel_klient.nokkelbestilling.display_form">
+							<i class="fas fa-key me-2"></i>{#nokkelbestilling#}
+						</a>
+					</li>
+				{/if}
+				{if #inspection_1#}
+					<li class="nav-item">
+						<a class="nav-link {if $currentAction == 'enkel_klient.inspection_1.display_form'}active{/if}"
+							href="index.php?menuaction=enkel_klient.inspection_1.display_form">
+							<i class="fas fa-clipboard-check me-2"></i>{#inspection_1#}
+						</a>
+					</li>
+				{/if}
 			</ul>
 		</nav>
 		<div class="content">

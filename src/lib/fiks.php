@@ -9,8 +9,8 @@ class fiks
 
 	public function __construct()
 	{
-		$webservicehost =		$_ENV['fiks_webservicehost'];
-		$apikey = $_ENV['fiks_apikey'];
+		$webservicehost =		$_ENV['fiks_webservicehost'] ?? '';
+		$apikey = $_ENV['fiks_apikey'] ?? '';
 
 		$this->apikey = $apikey;
 		$this->webservicehost = $webservicehost;

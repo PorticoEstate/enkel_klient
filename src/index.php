@@ -28,6 +28,7 @@
 
 	$method			 = 'display_form';
 	$invalid_data	 = false;
+	$app = $class = $method = false;
 	if (isset($_GET['menuaction']) || isset($_POST['menuaction']))
 	{
 		if (isset($_GET['menuaction']))
@@ -38,10 +39,15 @@
 		{
 			list($app, $class, $method) = explode('.', $_POST['menuaction']);
 		}
-		if (!$app || !$class || !$method)
-		{
-			$invalid_data = true;
-		}
+	}
+
+	if (!$app || !$class || !$method)
+	{
+		$invalid_data = true;
+		require_once 'landing.php';
+		$landing = new landing();
+		$landing->display_info();
+		exit;
 	}
 
 	if(empty($_ENV["activate_{$class}"]))

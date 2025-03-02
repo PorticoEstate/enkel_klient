@@ -4,16 +4,21 @@ var pendingList = 0;
 var redirect_action;
 var file_count = 0;
 
-$('#nokkelbestilling').on('submit', function (e)
-{
-	e.preventDefault();
+$('#nokkelbestilling').on('submit', function (e) {
+    e.preventDefault();
 
-	if ($('#nokkelbestilling').get(0).checkValidity() === false)
-	{
-		return false;
-	}
+    // Check form validity
+    var form = this;
+    if (form.checkValidity() === false) {
+        // Find the first invalid field and focus it
+        var invalidFields = $(form).find(':invalid');
+        if (invalidFields.length > 0) {
+            invalidFields[0].focus();
+        }
+        return false;
+    }
 
-	confirm_session('save');
+    confirm_session('save');
 });
 
 this.confirm_session = function (action)

@@ -33,7 +33,6 @@ class nokkelbestilling
 		$smarty->assign("message", '', true);
 
 		$this->smarty = $smarty;
-		
 	}
 
 	function get_logged_in()
@@ -118,24 +117,40 @@ class nokkelbestilling
 			$phone = sanitizer::get_var('phone', 'string');
 			$email = sanitizer::get_var('email', 'string');
 
+			$paavegne_av = sanitizer::get_var('paavegne_av', 'string');
+			$key_number = sanitizer::get_var('key_number', 'string');
+			$number_of_keys = sanitizer::get_var('number_of_keys', 'int');
 			$userinfo = '';
 
 			if (!empty($user_info['location_code']) && $user_name)
 			{
-				$userinfo = "<p>Innmeldt av leietaker: $user_name</p>\n";
+				$userinfo = "<p>Innmeldt av leietaker: {$user_name}</p>\n";
 			}
 			else if ($user_name)
 			{
-				$userinfo = "<p>Innmeldt av: $user_name</p>\n";
+				$userinfo = "<p>Innmeldt av: {$user_name}</p>\n";
 			}
 
-			if($phone)
+			if ($phone)
 			{
-				$userinfo .= "<p>Telefon: $phone</p>\n";
+				$userinfo .= "<p>Telefon: {$phone}</p>\n";
 			}
-			if($email)
+			if ($email)
 			{
-				$userinfo .= "<p>E-post: $email</p>\n";
+				$userinfo .= "<p>E-post: {$email}</p>\n";
+			}
+
+			if ($paavegne_av)
+			{
+				$details .= "<p>På vegne av: {$paavegne_av}</p>\n";
+			}
+			if ($key_number)
+			{
+				$details .= "<p>Nøkkelnummer: {$key_number}</p>\n";
+			}
+			if ($number_of_keys)
+			{
+				$details .= "<p>Antall nøkler: {$number_of_keys}</p>\n";
 			}
 
 			if ($userinfo)
@@ -200,7 +215,6 @@ class nokkelbestilling
 		{
 			$this->display_form($saved, $error, !empty($ret['id']) ? $ret['id'] : null);
 		}
-
 	}
 
 	public function display_form($saved = false, $error = array(), $id = null)
@@ -256,5 +270,41 @@ class nokkelbestilling
 		$this->smarty->assign("rand", $rand, true);
 
 		$this->smarty->display('nokkelbestilling.tpl');
+	}
+
+	protected function get_server_var($id)
+	{
+		return isset($_SERVER[$id]) ? $_SERVER[$id] : null;
+	}
+
+	public function handle_multi_upload_file()
+	{
+		$id = sanitizer::get_var('id', 'int', 'GET');
+
+		$session_info = $this->api->get_session_info();
+
+		$url = $this->api->backend_url . "/?";
+
+		$get_data = array(
+			'menuaction'					 => 'property.uitts.handle_multi_upload_file',
+			$session_info['session_name']	 => $session_info['session_id'],
+			'domain'						 => $this->api->logindomain,
+			'phpgw_return_as'				 => 'json',
+			'api_mode'						 => true,
+			'id'							 => $id
+		);
+
+		// [HTTP_CONTENT_RANGE] => bytes 10000000-17679248/17679249 - last chunk looks like this
+		$content_range = $this->get_server_var('HTTP_CONTENT_RANGE');
+		$content_disposition = $this->get_server_var('HTTP_CONTENT_DISPOSITION');
+
+		$post_data = array();
+
+		$url .= http_build_query($get_data);
+
+		$return_data = $this->api->exchange_data($url, $post_data, $content_range, $content_disposition);
+
+		header('Content-Type: application/json');
+		echo $return_data;
 	}
 }

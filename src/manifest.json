@@ -1,17 +1,32 @@
 {
     "background_color": "#d9d9d9",
     "theme_color": "#d9d9d9",
-    "description": "Enkelt skjema for registrering av informasjon relatert til boliger tilhørened Etat for boligforvaltning",
-    "display": "minimal-ui",
+    "description": "Enkelt side for registrering av informasjon relatert til boliger tilhørende Etat for boligforvaltning",
+    "display": "standalone",
     "icons": [
-      {
-        "src": "icon/skyline-building.svg",
-        "sizes": "any",
-        "type": "image/svg+xml",
-        "purpose": "any"
-      }
+        {
+            "src": "icon/skyline-building.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icon/skyline-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icon/skyline-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
     ],
     "name": "BoligReg",
     "short_name": "BoligReg",
-    "start_url": "index.php"
-  }
+    "start_url": "index.php",
+    "orientation": "any",
+    "scope": "/",
+    "prefer_related_applications": false
+}

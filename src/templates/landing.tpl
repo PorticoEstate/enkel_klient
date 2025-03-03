@@ -11,39 +11,54 @@
 					{config_load file="site.conf" section="services"}
 					{if #helpdesk#}
 						<div class="col-md-4 mb-4">
-							<div class="card h-100">
-								<div class="card-body">
-									<i class="fas fa-ticket-alt fa-2x mb-3 text-primary"></i>
-									<h3 class="h5 card-title text-nowrap">{#helpdesk#}</h3>
-									<p class="card-text">{#helpdesk_description#}</p>
+							<a href="index.php?menuaction=enkel_klient.helpdesk.display_form" class="text-decoration-none">
+								<div class="card h-100 hover-shadow">
+									<div class="card-body">
+										<i class="fas fa-ticket-alt fa-2x mb-3 text-primary"></i>
+										<h3 class="h5 card-title text-nowrap">{#helpdesk#}</h3>
+										<p class="card-text text-dark">{#helpdesk_description#}</p>
+									</div>
 								</div>
-							</div>
+							</a>
 						</div>
 					{/if}
 					{if #nokkelbestilling#}
 						<div class="col-md-4 mb-4">
-							<div class="card h-100">
-								<div class="card-body">
-									<i class="fas fa-key fa-2x mb-3 text-primary"></i>
-									<h3 class="h5 card-title text-nowrap">{#nokkelbestilling#}</h3>
-									<p class="card-text">{#nokkelbestilling_description#}</p>
+							<a href="index.php?menuaction=enkel_klient.nokkelbestilling.display_form"
+								class="text-decoration-none">
+								<div class="card h-100 hover-shadow">
+									<div class="card-body">
+										<i class="fas fa-key fa-2x mb-3 text-primary"></i>
+										<h3 class="h5 card-title text-nowrap">{#nokkelbestilling#}</h3>
+										<p class="card-text text-dark">{#nokkelbestilling_description#}</p>
+									</div>
 								</div>
-							</div>
+							</a>
 						</div>
 					{/if}
 					{if #inspection_1#}
 						<div class="col-md-4 mb-4">
-							<div class="card h-100">
-								<div class="card-body">
-									<i class="fas fa-clipboard-check fa-2x mb-3 text-primary"></i>
-									<h3 class="h5 card-title text-nowrap">{#inspection_1#}</h3>
-									<p class="card-text">{#inspection_1_description#}</p>
+							<a href="index.php?menuaction=enkel_klient.inspection_1.display_form" class="text-decoration-none">
+								<div class="card h-100 hover-shadow">
+									<div class="card-body">
+										<i class="fas fa-clipboard-check fa-2x mb-3 text-primary"></i>
+										<h3 class="h5 card-title text-nowrap">{#inspection_1#}</h3>
+										<p class="card-text text-dark">{#inspection_1_description#}</p>
+									</div>
 								</div>
-							</div>
+							</a>
 						</div>
 					{/if}
 				</div>
 			</div>
 		</div>
 	</div>
+
+	<style>
+		.hover-shadow:hover {
+			box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+			transform: translateY(-3px);
+			transition: all .2s ease-in-out;
+		}
+	</style>
 {/block}

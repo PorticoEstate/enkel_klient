@@ -34,12 +34,25 @@
 			width: 100%;
 			padding: 10px;
 			transition: all 0.3s;
+			border-radius: 4px;
+		}
+
+		.sidebar .nav-link:hover {
+			background-color: #e9ecef;
+			transform: translateX(5px);
+			color: #0d6efd;
 		}
 
 		.sidebar .nav-link.active {
 			background-color: #0d6efd;
 			color: white;
 			border-radius: 4px;
+		}
+
+		.sidebar .nav-link.active:hover {
+			background-color: #0b5ed7;
+			color: white;
+			transform: translateX(5px);
 		}
 
 		.content {

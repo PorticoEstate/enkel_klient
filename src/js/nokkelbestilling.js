@@ -41,15 +41,14 @@ this.confirm_session = function (action)
 		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>')).insertAfter(form);
 	window.scrollBy(0, 100); //
 
-//	document.getElementById(action).value = 1;
 	try
 	{
-		validate_submit();
+		ajax_submit_form(action);
 	}
 	catch (e)
 	{
-		ajax_submit_form(action);
-//						document.form.submit();
+		console.error('Error during AJAX submission:', e);
+		// Optionally alert the user or handle the error further
 	}
 
 };

@@ -204,7 +204,7 @@
 	<script>
 		function refresh_form()
 		{
-			var strURL = phpGWLink('index.php', {});
+			var strURL = phpGWLink('index.php', {ldelim} menuaction:'enkel_klient.inspection_1.display_form' {rdelim});
 			window.location.replace(strURL);
 		}
 		var schema = 'inspection_1';

@@ -160,7 +160,7 @@
 
 						<div class="form-group mt-4">
 							<label for="message">Tillegssopplysninger</label>
-							<textarea class="form-control" id="message" name="message" required="required" tabindex="6">{$message}</textarea>
+							<textarea class="form-control" id="message" name="message" tabindex="6">{$message}</textarea>
 						</div>
 						{if $enable_fileupload == 1}
 							<div class="form-group mt-2">

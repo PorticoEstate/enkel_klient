@@ -57,7 +57,9 @@ class api
 	private
 		$login,
 		$password,
-		$session_info = array();
+		$session_info = array(),
+		$httpCode = 0,
+		$debug = false;
 
 	function __construct()
 	{
@@ -83,6 +85,8 @@ class api
 		$this->backend_url	 = rtrim($_ENV['backend_url'], '/');
 		$this->logindomain	 = $_ENV['backend_domain'];
 
+		$this->debug = $_ENV['debug'] ?? false;
+
 		if (!$this->get_session_info())
 		{
 			try
@@ -101,12 +105,43 @@ class api
 
 	function get_session_info()
 	{
+		$this->check_backend_session();
+
 		if (isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
 		{
 			$this->session_info = $_SESSION['session_info'];
 		}
 
 		return $this->session_info;
+	}
+
+
+	function check_backend_session()
+	{
+		if (isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
+		{
+			$session_info = $_SESSION['session_info'];
+		}
+
+		$url = $this->backend_url . "/refreshsession/?";
+
+		$get_data = array(
+			$session_info['session_name']	 => $session_info['session_id'],
+			'domain'						 => $this->logindomain,
+			'api_mode'						 => true,
+		);
+
+		$url .= http_build_query($get_data);
+
+		$session_info = $this->exchange_data($url, array());
+		if ($this->httpCode != 200)
+		{
+			if (isset($_SESSION['session_info']))
+			{
+				unset($_SESSION['session_info']);
+			}
+			$this->login();
+		}
 	}
 
 	/**
@@ -221,58 +256,78 @@ class api
 
 	function exchange_data($url, $post_data = array(), $content_range = null, $content_disposition = null)
 	{
-
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 
 		if (!empty($_FILES['files']['tmp_name'][0]))
 		{
-			// Assign POST data
-			$post_data = array(
-				'files' => curl_file_create(
-					$_FILES['files']['tmp_name'][0],
-					$_FILES['files']['type'][0],
-					$_FILES['files']['name'][0]
-				)
+			// Don't set Content-Type header - let cURL set it with boundary
+			$http_header = array();
+
+			// Create CURLFile object
+			$post_data['files'] = new \CURLFile(
+				$_FILES['files']['tmp_name'][0],
+				$_FILES['files']['type'][0],
+				$_FILES['files']['name'][0]
 			);
+
+			// Set additional file metadata if needed
+			$post_data['filename'] = $_FILES['files']['name'][0];
+			$post_data['filetype'] = $_FILES['files']['type'][0];
+
+			// Set proper cURL options for file upload
+			curl_setopt($ch, CURLOPT_POST, true);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
 		}
 		else if ($post_data)
 		{
+			curl_setopt($ch, CURLOPT_POST, true);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
 		}
 
-		if ($post_data)
+		// Debug headers
+		if ($this->debug)
 		{
-			curl_setopt($ch, CURLOPT_POST, true);
+			$http_header[] = 'Cookie: XDEBUG_SESSION=VSCODE';
 		}
 
-		$http_header = array();
-
+		// Add range and disposition headers if present
 		if ($content_range)
 		{
 			$http_header[] = "Content-Range: {$content_range}";
 		}
-
 		if ($content_disposition)
 		{
 			$http_header[] = "Content-Disposition: {$content_disposition}";
 		}
 
-		if ($http_header)
+		if (!empty($http_header))
 		{
 			curl_setopt($ch, CURLOPT_HTTPHEADER, $http_header);
 		}
 
+		// Additional necessary options for file upload
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30); // Increased timeout for files
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
 
 		$result = curl_exec($ch);
 
-		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if (curl_errno($ch))
+		{
+			throw new \Exception('Curl error: ' . curl_error($ch));
+		}
+
+		$this->httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+		if ($this->debug)
+		{
+			error_log('Upload response: ' . print_r($result, true));
+			error_log('HTTP Code: ' . $this->httpCode);
+		}
 
 		curl_close($ch);
-
 		return $result;
 	}
 

@@ -94,7 +94,7 @@ class nokkelbestilling
 		$saved = false;
 		$error = array();
 
-		if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST' && $_POST['randcheck'] == $_SESSION['rand'])
+		if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST')// && $_POST['randcheck'] == $_SESSION['rand'])
 		{
 			$session_info = $this->api->get_session_info();
 
@@ -142,15 +142,15 @@ class nokkelbestilling
 
 			if ($paavegne_av)
 			{
-				$details .= "<p>På vegne av: {$paavegne_av}</p>\n";
+				$userinfo .= "<p>På vegne av: {$paavegne_av}</p>\n";
 			}
 			if ($key_number)
 			{
-				$details .= "<p>Nøkkelnummer: {$key_number}</p>\n";
+				$userinfo .= "<p>Nøkkelnummer: {$key_number}</p>\n";
 			}
 			if ($number_of_keys)
 			{
-				$details .= "<p>Antall nøkler: {$number_of_keys}</p>\n";
+				$userinfo .= "<p>Antall nøkler: {$number_of_keys}</p>\n";
 			}
 
 			if ($userinfo)

@@ -1,0 +1,4 @@
+
+# Add MIME types for web manifest files
+AddType application/manifest+json webmanifest
+AddType application/manifest+json json

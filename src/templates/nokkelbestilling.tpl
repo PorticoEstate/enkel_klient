@@ -68,7 +68,7 @@
 				<p>{#form_info#}</p>
 			{/if}
 			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{$action_url}"
-				enctype="multipart/form-data">
+				enctype="multipart/form-data" novalidate>
 				<input type="hidden" value="{$rand}" name="randcheck" />
 				<fieldset>
 					{if $user_name}
@@ -164,18 +164,23 @@
 						</div>
 						{if $enable_fileupload == 1}
 							<div class="form-group mt-2">
-								<label>Last opp fil</label>
+								<label>Last opp fil {if !$location_code}<span class="text-danger">*</span>{/if}</label>
 								<div id="drop-area" class="">
 									<div style="border: 2px dashed #ccc; padding: 20px;">
 										<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene
-											direkte.</p>
+											direkte.
+											{if !$location_code}
+												<br><small class="text-danger">Last opp fullmakt eller vergefullmakt</small>
+											{/if}
+										</p>
 										<div class="fileupload-buttonbar">
 											<div class="fileupload-buttons">
 												<span class="fileinput-button btn btn-success">
 													<i class="fas fa-plus"></i>
 													<span>Legg til filer...</span>
-													<input id="fileupload" type="file" name="files[]" multiple=""
-														data-url=""></span>
+													<input id="fileupload" type="file" name="files[]" multiple="" data-url=""
+														{if !$location_code}required{/if}>
+												</span>
 												<span class="fileupload-process"></span>
 											</div>
 											<div class="fileupload-count">

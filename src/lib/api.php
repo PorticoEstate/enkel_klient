@@ -63,85 +63,122 @@ class api
 
 	function __construct()
 	{
-		// Start the session
 		ini_set('session.cookie_samesite', 'Lax');
 		session_start();
-		//			_debug_array($_SESSION);
-		//restrict session lifetime to 30 minutes
-		if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 1800))
-		{
-			// last request was more than 10 minutes ago
-			session_unset();  // unset $_SESSION variable for the run-time
-			session_destroy();   // destroy session data in storage
-		}
-		$_SESSION['LAST_ACTIVITY'] = time(); // update last activity time stamp
 
-		$configs_dir = dirname(__DIR__, 1) . '/configs';
-		$dotenv		 = Dotenv::createImmutable($configs_dir);
-		$dotenv->load();
-
-		$this->login		 = $_ENV['login'];
-		$this->password		 = $_ENV['password'];
-		$this->backend_url	 = rtrim($_ENV['backend_url'], '/');
-		$this->logindomain	 = $_ENV['backend_domain'];
-
-		$this->debug = $_ENV['debug'] ?? false;
-
-		if (!$this->get_session_info())
-		{
-			try
-			{
-				$session_info = $this->login();
-			}
-			catch (Exception $e)
-			{
-				echo $e->getMessage();
-				die();
-			}
-			$this->session_info			 = json_decode($session_info, true);
-			$_SESSION['session_info']	 = $this->session_info;
-		}
+		$this->initializeConfig();
+		$this->validateAndRefreshSession();
 	}
 
-	function get_session_info()
+	private function initializeConfig()
 	{
-		$this->check_backend_session();
+		$configs_dir = dirname(__DIR__, 1) . '/configs';
+		$dotenv = Dotenv::createImmutable($configs_dir);
+		$dotenv->load();
 
+		$this->login = $_ENV['login'];
+		$this->password = $_ENV['password'];
+		$this->backend_url = rtrim($_ENV['backend_url'], '/');
+		$this->logindomain = $_ENV['backend_domain'];
+		$this->debug = $_ENV['debug'] ?? false;
+	}
+
+	private function validateAndRefreshSession()
+	{
+		// First check if we have session info stored
 		if (isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
 		{
 			$this->session_info = $_SESSION['session_info'];
 		}
 
-		return $this->session_info;
+		// Check session timeout
+		if ($this->isSessionExpired())
+		{
+			$this->clearSession();
+		}
+		$_SESSION['LAST_ACTIVITY'] = time();
+
+		// Try to refresh existing session or create new one
+		if (!$this->refreshSession())
+		{
+			$this->performLogin();
+		}
 	}
 
-
-	function check_backend_session()
+	private function isSessionExpired(): bool
 	{
-		if (isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
+		return isset($_SESSION['LAST_ACTIVITY'])
+			&& (time() - $_SESSION['LAST_ACTIVITY'] > 1800);
+	}
+
+	private function clearSession(): void
+	{
+		session_unset();
+		session_destroy();
+		$this->session_info = [];
+	}
+
+	private function refreshSession(): bool
+	{
+		if (empty($this->session_info) || !isset($this->session_info['session_name']))
 		{
-			$session_info = $_SESSION['session_info'];
+			return false;
 		}
 
 		$url = $this->backend_url . "/refreshsession/?";
 
-		$get_data = array(
-			$session_info['session_name']	 => $session_info['session_id'],
-			'domain'						 => $this->logindomain,
-			'api_mode'						 => true,
-		);
+		$get_data = [
+			$this->session_info['session_name'] => $this->session_info['session_id'],
+			'domain' => $this->logindomain,
+			'api_mode' => true,
+		];
 
 		$url .= http_build_query($get_data);
+		$response = $this->exchange_data($url, []);
 
-		$session_info = $this->exchange_data($url, array());
-		if ($this->httpCode != 200)
+		return $this->httpCode === 200;
+	}
+
+	private function performLogin(): void
+	{
+		try
 		{
-			if (isset($_SESSION['session_info']))
-			{
-				unset($_SESSION['session_info']);
-			}
-			$this->login();
+			$session_info = $this->login();
+			$this->session_info = json_decode($session_info, true);
+			$_SESSION['session_info'] = $this->session_info;
 		}
+		catch (Exception $e)
+		{
+			echo $e->getMessage();
+			die();
+		}
+	}
+
+	function login()
+	{
+		if (!$this->login || !$this->password)
+		{
+			throw new Exception('Missing parameters for webservice');
+		}
+
+		$url = $this->backend_url . "/login";
+		$post_data = [
+			'logindomain' => $this->logindomain,
+			'login' => $this->login,
+			'passwd' => $this->password
+		];
+
+		$session_info = $this->exchange_data($url, $post_data);
+		if (!$session_info)
+		{
+			throw new Exception("Login to backend failed");
+		}
+		return $session_info;
+	}
+
+	function get_session_info()
+	{
+		return $this->session_info ?? null;
 	}
 
 	/**
@@ -226,33 +263,6 @@ class api
 		return unserialize($str);
 	}
 
-	function login()
-	{
-		if (isset($_SESSION['session_info']) && is_array($_SESSION['session_info']))
-		{
-			return json_encode($_SESSION['session_info']);
-		}
-
-		$url = $this->backend_url . "/login";
-
-		if (!$this->login || !$this->password)
-		{
-			throw new Exception('Missing parametres for webservice');
-		}
-
-		$post_data = array(
-			'logindomain'	 => $this->logindomain,
-			'login'			 => $this->login,
-			'passwd'		 => $this->password
-		);
-
-		$session_info = $this->exchange_data($url, $post_data);
-		if (!$session_info)
-		{
-			throw new Exception("login to backend failed");
-		}
-		return $session_info;
-	}
 
 	function exchange_data($url, $post_data = array(), $content_range = null, $content_disposition = null)
 	{

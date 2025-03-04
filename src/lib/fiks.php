@@ -34,13 +34,19 @@ class fiks
 			return;
 		}
 
+		//return data from session if it exists
+		if (!empty($_SESSION['fiks_data']))
+		{
+			return $_SESSION['fiks_data'];
+		}
+
 		$apikey = $this->apikey;
 
 		$webservicehost = !empty($this->webservicehost) ? $this->webservicehost : 'http://fiks/get.php:8210';
 
 		if (!$webservicehost || !$apikey)
 		{
-			throw new Exception('Missing parametres for webservice');
+			throw new Exception('Missing parameters for webservice');
 		}
 
 		$post_data = array(
@@ -98,6 +104,9 @@ class fiks
 		$data['adressebeskyttelse'] = $ret['adressebeskyttelse']; //"fortrolig"
 		$data['status'] = $ret['status'];
 		$data['doedsdato'] = !empty($ret['doedsdato']) ? $ret['doedsdato'] : '';
+
+		//store in session
+		$_SESSION['fiks_data'] = $data;
 
 		return $data;
 	}

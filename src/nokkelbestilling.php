@@ -42,6 +42,8 @@ class nokkelbestilling
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
 		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
 
+		api::session_set('nokkelbestilling', 'ssn', $ssn);
+
 		$session_info	 = $this->api->get_session_info();
 		$url			 = $this->api->backend_url . "/property/tenant/?";
 
@@ -94,7 +96,7 @@ class nokkelbestilling
 		$saved = false;
 		$error = array();
 
-		if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST')// && $_POST['randcheck'] == $_SESSION['rand'])
+		if (sanitizer::get_var('REQUEST_METHOD', 'string', 'SERVER') == 'POST') // && $_POST['randcheck'] == $_SESSION['rand'])
 		{
 			$session_info = $this->api->get_session_info();
 
@@ -161,6 +163,8 @@ class nokkelbestilling
 			$location_name = sanitizer::get_var('location_name', 'string');
 			$address = sanitizer::get_var('address', 'string');
 
+			$ssn = api::session_get('nokkelbestilling', 'ssn');
+
 			$post_data = array(
 				'values'	 => array(
 					'cat_id'	 => $cat_id,
@@ -170,7 +174,11 @@ class nokkelbestilling
 					'address'	 => $address ? $address : $location_name,
 					'subject'	 => sanitizer::get_var('subject', 'string'),
 					'details'	 => $details,
-				),
+					'extra'		=> array(
+						'tenant_id' => $user_info['id'],
+						'external_owner_ssn' => $ssn,
+					)
+				)
 			);
 
 			$url .= http_build_query($get_data);

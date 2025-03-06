@@ -254,7 +254,7 @@
 			} catch (error) {}
 		{/if}
 		{if $location_code}
-			$('#title').val(summarytext + $('#location_name').val());
+			$('#title').val(summarytext + $('#address').val());
 			//set focus on first input field
 			try {
 				document.getElementById("phone").focus();

@@ -20,8 +20,8 @@ services:
       ports:
       - "8210:80"
       environment:
-        - no_proxy=portico_api,portico_api:8088
-        - NO_PROXY=portico_api,portico_api:8088
+        - no_proxy=portico_api,portico_api:8088,fdvapp01e.srv.bergenkom.no,fdvapp01e.srv.bergenkom.no:8210
+        - NO_PROXY=portico_api,portico_api:8088,fdvapp01e.srv.bergenkom.no,fdvapp01e.srv.bergenkom.no:8210
 
 networks:
     internal:

@@ -45,6 +45,19 @@
 			background-position: right calc(0.375em + 0.1875rem) center;
 			background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
 		}
+
+		/* Add a subtle left border to required fields */
+		input[required],
+		select[required],
+		textarea[required] {
+			border-left: 3px solid #dc3545;
+		}
+
+		/* Add a "required" pseudo-element to labels of required fields */
+		label.required::after {
+			content: " *";
+			color: #dc3545;
+		}
 	</style>
 	<div class="container">
 		<h1>{#form_header#}</h1>
@@ -70,141 +83,142 @@
 			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{$action_url}"
 				enctype="multipart/form-data" novalidate>
 				<input type="hidden" value="{$rand}" name="randcheck" />
-				<fieldset>
-					{if $user_name}
-						<p>Navn: {$user_name}</p>
-					{/if}
-
-					{if $location_code}
-						<div class="form-group mt-2">
-							<label for="location_name">
-								Adresse
-							</label>
-							<span class="form-control">{$address}</span>
-							<input type="hidden" id="location_code" name="location_code" value="{$location_code}">
-							<input type="hidden" id="address" name="address" value="{$address}">
-							<input type="hidden" id="user_name" name="user_name" value="{$user_name}">
-						</div>
-					{else}
-						<!--paavegne av-->
-						<div class="form-group mt-2">
-							<label for="paavegne_av">
-								På vegne av
-							</label>
-							<small id="contact_paavegne_av" class="form-text text-muted d-block mb-2">Vi fant ikke kontrakten din.
-								Legg inn navnet på den du bestiller på vegne av. Du må også laste opp fullmakt eller
-								vergefullmakt</small>
-							<input type="text" id="paavegne_av" name="paavegne_av" tabindex="1" class="form-control"
-								autocomplete="off" required="required" />
-						</div>
-						<div class="form-group mt-2">
-							<label for="location_name">
-								<i class="fas fa-search"></i>
-								Adresse
-							</label>
-							<input type="text" id="location_name" name="location_name" tabindex="1" class="form-control"
-								autocomplete="off" required="required" />
-							<div class="selection"></div>
-							<input type="hidden" id="location_code" name="location_code">
-						</div>
-					{/if}
-
+				{if $user_name}
+					<p>Navn: {$user_name}</p>
+				{/if}
+				<p class="text-muted small mb-3">Felt markert med <span class="text-danger">*</span> er obligatoriske</p>
+				{if $location_code}
 					<div class="form-group mt-2">
-						<label for="phone">Telefon/Mobil</label>
-						<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">Her legger du inn
-							telefonnummeret til den
-							EBF skal ta kontakt med.</small>
-						<input type="text" id="phone" name="phone" tabindex="2" class="form-control" autocomplete="off"
+						<label for="location_name">
+							Adresse
+						</label>
+						<small id="contact_infoHelpLocation" class="form-text text-muted d-block mb-2">Adresse til
+							Hvilken bolig du trenger nøkkel til?</small>
+						<span class="form-control">{$address}</span>
+						<input type="hidden" id="location_code" name="location_code" value="{$location_code}">
+						<input type="hidden" id="address" name="address" value="{$address}">
+						<input type="hidden" id="user_name" name="user_name" value="{$user_name}">
+					</div>
+				{else}
+					<!--paavegne av-->
+					<div class="form-group mt-2">
+						<label for="paavegne_av">
+							På vegne av
+						</label>
+						<small id="contact_paavegne_av" class="form-text text-muted d-block mb-2">Vi fant ikke kontrakten din.
+							Legg inn navnet på den du bestiller på vegne av. Du må også laste opp fullmakt eller
+							vergefullmakt</small>
+						<input type="text" id="paavegne_av" name="paavegne_av" tabindex="1" class="form-control" autocomplete="off"
 							required="required" />
 					</div>
-					<!--email-->
 					<div class="form-group mt-2">
-						<label for="email">E-post</label>
-						<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">
-							Her legger du inn E-post til den EBF skal ta kontakt med.
-						</small>
-						<input type="email" id="email" name="email" tabindex="3" class="form-control" autocomplete="off"
-							required="required" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{ldelim}2,{rdelim}"
-							oninvalid="this.setCustomValidity('Vennligst skriv inn en gyldig e-postadresse')"
-							oninput="this.setCustomValidity('')" />
-					</div>
-					<!--Nøkkelnummer-->
-					<div class="form-group mt-2">
-						<label for="key_number">Nøkkelnummer</label>
-						<small id="contact_Nøkkelnummer" class="form-text text-muted d-block mb-2">Nummeret står på nøkkel og
-							inneholder
-							bokstaver og tall.</small>
-						<input type="text" id="key_number" name="key_number" tabindex="4" class="form-control"
+						<label for="location_name">
+							<i class="fas fa-search"></i>
+							Adresse
+						</label>
+						<input type="text" id="location_name" name="location_name" tabindex="2" class="form-control"
 							autocomplete="off" required="required" />
+						<div class="selection"></div>
+						<input type="hidden" id="location_code" name="location_code">
 					</div>
-					<!--Antall nøkler-->
-					<div class="form-group mt-2">
-						<label for="number_of_keys">Antall nøkler</label>
-						<small id="contact_infoHelpNumberOfKeys" class="form-text text-muted d-block mb-2">Her legger du inn
-							antall nøkler
-							som skal bestilles. Kr 800,- for første nøkkel, deretter kr 500,- pr stk. utover dette</small>
-						<input type="number" id="number_of_keys" name="number_of_keys" tabindex="5" class="form-control"
-							autocomplete="off" required="required" min="1" />
-					</div>
-				</fieldset>
+				{/if}
+
+				<div class="form-group mt-2">
+					<label for="phone">Telefon/Mobil</label>
+					<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">Her legger du inn
+						telefonnummeret til den
+						EBF skal ta kontakt med.</small>
+					<input type="text" id="phone" name="phone" tabindex="3" class="form-control" autocomplete="off"
+						required="required" />
+				</div>
+				<!--email-->
+				<div class="form-group mt-2">
+					<label for="email">E-post</label>
+					<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">
+						Her legger du inn E-post til den EBF skal ta kontakt med.
+					</small>
+					<input type="email" id="email" name="email" tabindex="4" class="form-control" autocomplete="off"
+						required="required" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{ldelim}2,{rdelim}"
+						oninvalid="this.setCustomValidity('Vennligst skriv inn en gyldig e-postadresse')"
+						oninput="this.setCustomValidity('')" />
+				</div>
+				<!--Nøkkelnummer-->
+				<div class="form-group mt-2">
+					<label for="key_number">Nøkkelnummer</label>
+					<small id="contact_Nøkkelnummer" class="form-text text-muted d-block mb-2">Nummeret står på nøkkel og
+						For at EBF skal kunne bestille nøkkel trenger vi at du oppgir nummeret står på nøkkel (inneholder
+						bokstaver og
+						tall).</small>
+					<input type="text" id="key_number" name="key_number" tabindex="5" class="form-control" autocomplete="off"
+						required="required" />
+				</div>
+				<!--Antall nøkler-->
+				<div class="form-group mt-2">
+					<label for="number_of_keys">Antall nøkler</label>
+					<small id="contact_infoHelpNumberOfKeys" class="form-text text-muted d-block mb-2">Her legger du inn
+						antall nøkler
+						som skal bestilles. Kr 800,- for første nøkkel, deretter kr 500,- pr stk. utover dette</small>
+					<input type="number" id="number_of_keys" name="number_of_keys" tabindex="6" class="form-control"
+						autocomplete="off" required="required" min="1" />
+				</div>
 
 				<div id="details">
-					<fieldset>
-						<div class="form-group mt-2">
-							<label for="subject">Overskrift</label>
-							<small id="subjectHelp" class="form-text text-muted d-block mb-2">Sammendrag</small>
-							<input type="text" class="form-control" id="title" name="subject" readonly value="{$subject}"
-								style="background-color: #e9ecef; cursor: not-allowed;" aria-describedby="subjectHelp"
-								required="required" />
-						</div>
+					<div class="form-group mt-2">
+						<label for="subject">Overskrift</label>
+						<small id="subjectHelp" class="form-text text-muted d-block mb-2">Sammendrag</small>
+						<input type="text" class="form-control" id="title" name="subject" readonly value="{$subject}"
+							style="background-color: #e9ecef; cursor: not-allowed;" aria-describedby="subjectHelp"
+							required="required" />
+					</div>
 
-						<div class="form-group mt-4">
-							<label for="message">Tillegssopplysninger</label>
-							<textarea class="form-control" id="message" name="message" tabindex="6">{$message}</textarea>
-						</div>
-						{if $enable_fileupload == 1}
-							<div class="form-group mt-2">
-								<label>Last opp fil {if !$location_code}<span class="text-danger">*</span>{/if}</label>
-								<div id="drop-area" class="">
-									<div style="border: 2px dashed #ccc; padding: 20px;">
-										<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene
-											direkte.
-											{if !$location_code}
-												<br><small class="text-danger">Last opp fullmakt eller vergefullmakt</small>
-											{/if}
-										</p>
-										<div class="fileupload-buttonbar">
-											<div class="fileupload-buttons">
-												<span class="fileinput-button btn btn-success">
-													<i class="fas fa-plus"></i>
-													<span>Legg til filer...</span>
-													<input id="fileupload" type="file" name="files[]" multiple="" data-url=""
-														{if !$location_code}required{/if}>
-												</span>
-												<span class="fileupload-process"></span>
-											</div>
-											<div class="fileupload-count">
-												Antall filer: <span id="files-count"></span>
-											</div>
-											<div class="fileupload-progress" style="display:none">
-												<div id="progress" class="progress" role="progressbar" aria-valuemin="0"
-													aria-valuemax="100"></div>
-												<div class="progress-extended"></div>
-											</div>
+					<div class="form-group mt-4">
+						<label for="message">Tillegssopplysninger</label>
+						<small id="messageHelp" class="form-text text-muted d-block mb-2">Skal nøkkel sendes annen adresse
+							enn boligadresse eller eventuelt andre nyttige opplysninger du vil formidle til EBF?</small>
+						<textarea class="form-control" id="message" name="message" tabindex="7">{$message}</textarea>
+					</div>
+					{if $enable_fileupload == 1}
+						<div class="form-group mt-2">
+							<label>Last opp fil {if !$location_code}<span class="text-danger">*</span>{/if}</label>
+							<div id="drop-area" class="">
+								<div style="border: 2px dashed #ccc; padding: 20px;">
+									<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene
+										direkte.
+										{if !$location_code}
+											<br><small class="text-danger">Last opp fullmakt eller vergefullmakt</small>
+										{/if}
+									</p>
+									<div class="fileupload-buttonbar">
+										<div class="fileupload-buttons">
+											<span class="fileinput-button btn btn-success">
+												<i class="fas fa-plus"></i>
+												<span>Legg til filer...</span>
+												<input id="fileupload" type="file" name="files[]" multiple="" data-url=""
+													{if !$location_code}required{/if}>
+											</span>
+											<span class="fileupload-process"></span>
 										</div>
-										<div class="content_upload_download">
-											<div class="presentation files" style="display: inline-table;"></div>
+										<div class="fileupload-count">
+											Antall filer: <span id="files-count"></span>
+										</div>
+										<div class="fileupload-progress" style="display:none">
+											<div id="progress" class="progress" role="progressbar" aria-valuemin="0"
+												aria-valuemax="100"></div>
+											<div class="progress-extended"></div>
 										</div>
 									</div>
-
+									<div class="content_upload_download">
+										<div class="presentation files" style="display: inline-table;"></div>
+									</div>
 								</div>
+
 							</div>
-						{/if}
-						<button id="submit" type="submit" class="btn btn-primary mt-4">
-							<i class="far fa-paper-plane"></i>
-							Send
-						</button>
-					</fieldset>
+						</div>
+					{/if}
+					<button id="submit" type="submit" class="btn btn-primary mt-4">
+						<i class="far fa-paper-plane"></i>
+						Send
+					</button>
 				</div>
 			</form>
 		{/if}
@@ -234,9 +248,17 @@
 				const selection = event.detail.selection.value;
 				$('#title').val(summarytext + selection.name);
 			});
+			//set focus on first input field
+			try {
+				document.getElementById("paavegne_av").focus();
+			} catch (error) {}
 		{/if}
 		{if $location_code}
 			$('#title').val(summarytext + $('#location_name').val());
+			//set focus on first input field
+			try {
+				document.getElementById("phone").focus();
+			} catch (error) {}
 		{/if}
 
 		// Email validation
@@ -255,7 +277,7 @@
 			});
 		</script>
 	{/literal}
-	{if $saved != 1 && !$location_code}
+	{if $saved != 1 }
 		<script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script>
 		<script src="js/jquery-ui-1.13.1.min.js?n={#cache_refresh_token#}"></script>
 		<script src="js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
@@ -264,10 +286,6 @@
 		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
 		<script src="js/location.js?n={#cache_refresh_token#}"></script>
 		<script src="js/nokkelbestilling.js?n={#cache_refresh_token#}"></script>
-		<script>
-			//set focus on first input field
-			document.getElementById("location_name").focus();
-		</script>
 	{/if}
 
 {/block}

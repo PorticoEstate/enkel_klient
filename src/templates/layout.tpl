@@ -116,59 +116,56 @@
 </head>
 
 <body>
-	{if !isset($location_code) || !$location_code}
-		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar"
-			aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
+	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar"
+		aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
 
-		<nav id="sidebar" class="sidebar">
-			<ul class="navbar-nav">
-				{assign var="currentAction" value=$smarty.get.menuaction|default:''}
+	<nav id="sidebar" class="sidebar">
+		<ul class="navbar-nav">
+			{assign var="currentAction" value=$smarty.get.menuaction|default:''}
+			<li class="nav-item">
+				<a class="nav-link {if $currentAction == ''}active{/if}" href="index.php">
+					<i class="fas fa-home me-2"></i>Hjem
+				</a>
+			</li>
+			{if #helpdesk#}
 				<li class="nav-item">
-					<a class="nav-link {if $currentAction == ''}active{/if}" href="index.php">
-						<i class="fas fa-home me-2"></i>Hjem
+					<a class="nav-link {if $currentAction == 'enkel_klient.helpdesk.display_form'}active{/if}"
+						href="index.php?menuaction=enkel_klient.helpdesk.display_form">
+						<i class="fas fa-ticket-alt me-2"></i>{#helpdesk#}
 					</a>
 				</li>
-				{if #helpdesk#}
-					<li class="nav-item">
-						<a class="nav-link {if $currentAction == 'enkel_klient.helpdesk.display_form'}active{/if}"
-							href="index.php?menuaction=enkel_klient.helpdesk.display_form">
-							<i class="fas fa-ticket-alt me-2"></i>{#helpdesk#}
-						</a>
-					</li>
-				{/if}
-				{if #nokkelbestilling#}
-					<li class="nav-item">
-						<a class="nav-link {if $currentAction == 'enkel_klient.nokkelbestilling.display_form'}active{/if}"
-							href="index.php?menuaction=enkel_klient.nokkelbestilling.display_form">
-							<i class="fas fa-key me-2"></i>{#nokkelbestilling#}
-						</a>
-					</li>
-				{/if}
-				{if #inspection_1#}
-					<li class="nav-item">
-						<a class="nav-link {if $currentAction == 'enkel_klient.inspection_1.display_form'}active{/if}"
-							href="index.php?menuaction=enkel_klient.inspection_1.display_form">
-							<i class="fas fa-clipboard-check me-2"></i>{#inspection_1#}
-						</a>
-					</li>
-				{/if}
-			</ul>
-		</nav>
-		<div class="content">
-			{block name=body}{/block}
-		</div>
-
-		<script>
-			document.querySelector('.navbar-toggler').addEventListener('click', function() {
-				document.querySelector('.sidebar').classList.toggle('active');
-				document.querySelector('.content').classList.toggle('active');
-			});
-		</script>
-	{else}
+			{/if}
+			{if #nokkelbestilling#}
+				<li class="nav-item">
+					<a class="nav-link {if $currentAction == 'enkel_klient.nokkelbestilling.display_form'}active{/if}"
+						href="index.php?menuaction=enkel_klient.nokkelbestilling.display_form">
+						<i class="fas fa-key me-2"></i>{#nokkelbestilling#}
+					</a>
+				</li>
+			{/if}
+			{if #inspection_1#}
+				<li class="nav-item">
+					<a class="nav-link {if $currentAction == 'enkel_klient.inspection_1.display_form'}active{/if}"
+						href="index.php?menuaction=enkel_klient.inspection_1.display_form">
+						<i class="fas fa-clipboard-check me-2"></i>{#inspection_1#}
+					</a>
+				</li>
+			{/if}
+		</ul>
+	</nav>
+	<div class="content">
 		{block name=body}{/block}
-	{/if}
+	</div>
+
+	<script>
+		document.querySelector('.navbar-toggler').addEventListener('click', function() {
+			document.querySelector('.sidebar').classList.toggle('active');
+			document.querySelector('.content').classList.toggle('active');
+		});
+	</script>
+
 </body>
 
 </html>

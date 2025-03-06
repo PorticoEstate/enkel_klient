@@ -2,18 +2,43 @@
 	var redirect_action;
 	var file_count = 0;
 	var filesRequired = !$('#location_code').val();
-
+	$(document).ready(function() {
+		// Add asterisk to all labels of required fields
+		$('form :required').each(function() {
+			var id = $(this).attr('id');
+			$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
+		});
+	});
 	$('#nokkelbestilling').on('submit', function (e) {
 		e.preventDefault();
 
 		// Check form validity including file requirement
 		var form = this;
 		if (form.checkValidity() === false || (filesRequired && pendingList === 0)) {
-			// Find the first invalid field and focus it
-			var invalidFields = $(form).find(':invalid');
+			// Find the first visible invalid field and focus it
+			var invalidFields = $(form).find(':invalid').filter(':visible');
+			
 			if (invalidFields.length > 0) {
+				// Focus on first visible invalid field
 				invalidFields[0].focus();
+				// Scroll element into view if needed
+				invalidFields[0].scrollIntoView({behavior: 'smooth', block: 'center'});
+			} else {
+				// If no visible invalid fields, check if there are any hidden invalid fields
+				var hiddenInvalidFields = $(form).find(':invalid:not(:visible)');
+				if (hiddenInvalidFields.length > 0) {
+					// Try to find and show the container of the hidden field
+					var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
+					if (container.length > 0) {
+						container.show();
+						// After showing container, try to focus the field
+						setTimeout(function() {
+							hiddenInvalidFields[0].focus();
+						}, 100);
+					}
+				}
 			}
+			
 			if (filesRequired && pendingList === 0) {
 				alert('Du må laste opp fullmakt eller vergefullmakt');
 			}

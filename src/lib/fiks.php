@@ -73,7 +73,7 @@ class fiks
 		curl_close($ch);
 
 		$ret = json_decode($result, true);
-_debug_array($ret);die();
+
 		if ($httpCode != 200)
 		{
 			return array();

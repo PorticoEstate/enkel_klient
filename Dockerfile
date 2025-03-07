@@ -36,20 +36,28 @@ RUN if [ "${INSTALL_XDEBUG}" = "true" ]; then \
 RUN apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-#RUN echo "xdebug.mode = debug,develop" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "xdebug.start_with_request=yes" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "xdebug.idekey=netbeans-xdebug" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "xdebug.remote_connect_back=On" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "xdebug.discover_client_host = 1" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "xdebug.client_host=''" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "xdebug.client_port=9005" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "session.cookie_secure=Off" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "session.use_cookies=On" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "session.use_only_cookies=On" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "short_open_tag=Off" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "request_order = 'GPCS'" >> $PHP_INI_DIR/conf.d/91-app.ini
-#RUN echo "variables_order = 'GPCS'" >> $PHP_INI_DIR/conf.d/91-app.ini
+# Enable Apache modules
+RUN a2enmod proxy_fcgi setenvif
+RUN a2enmod rewrite
+RUN a2enmod headers
+RUN a2enmod ssl
+RUN a2enmod proxy
+RUN a2enmod proxy_http
 
+
+# Configure Apache to write logs to files instead of stdout/stderr
+RUN rm -f /var/log/apache2/access.log && \
+    rm -f /var/log/apache2/error.log && \
+    rm -f /var/log/apache2/other_vhosts_access.log && \
+    touch /var/log/apache2/access.log && \
+    touch /var/log/apache2/error.log && \
+    touch /var/log/apache2/other_vhosts_access.log && \
+    chown -R www-data:www-data /var/log/apache2
+
+# Make sure apache can write to the log directory
+RUN mkdir -p /var/log/apache2 && \
+    chmod -R 755 /var/log/apache2 && \
+    chown -R www-data:www-data /var/log/apache2
 
 COPY startup.sh /usr/local/bin/
 RUN chmod +x  /usr/local/bin/startup.sh

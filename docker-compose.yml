@@ -14,7 +14,9 @@ services:
             https_proxy: ${https_proxy:-false}
       container_name: enkel_klient_webserver
       volumes:
-      - ./src:/var/www/html/enkel_klient/
+        - ./:/var/www/html/app/
+        - ./public:/var/www/html/
+        - ./logs:/var/log/apache2/
       networks:
         - internal
       ports:

@@ -103,11 +103,11 @@
 					<!--paavegne av-->
 					<div class="form-group mt-2">
 						<label for="paavegne_av">
-							På vegne av
+							Jeg bestiller på vegne av leietaker
 						</label>
-						<small id="contact_paavegne_av" class="form-text text-muted d-block mb-2">Vi fant ikke kontrakten din.
-							Legg inn navnet på den du bestiller på vegne av. Du må også laste opp fullmakt eller
-							vergefullmakt</small>
+						<small id="contact_paavegne_av" class="form-text text-muted d-block mb-2">Vi fant ikke husleiekontrakten din.
+						Vi trenger derfor navn på leietaker du bestiller på vegne av. Husk at du også må laste opp fullmakt fra
+						leietaker eller en vergefullmakt.</small>
 						<input type="text" id="paavegne_av" name="paavegne_av" tabindex="1" class="form-control" autocomplete="off"
 							required="required" />
 					</div>

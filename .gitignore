@@ -4,3 +4,7 @@ launch.json
 /src/templates_c/*
 /src/composer.lock
 /nbproject
+composer.lock
+logs/*
+public/
+vendor/

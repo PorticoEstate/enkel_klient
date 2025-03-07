@@ -4,15 +4,15 @@
 	<script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script>
 	<!-- Main Quill library -->
 	<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-	<script src="js/quill-textarea.js"></script>
+	<script src="src/js/quill-textarea.js"></script>
 
 
 	<!-- Theme included stylesheets -->
 	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload-custom.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-custom.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css" rel="stylesheet">
 
 	<style>
 		.ql-container {
@@ -279,13 +279,13 @@
 	{/literal}
 	{if $saved != 1 }
 		<script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script>
-		<script src="js/jquery-ui-1.13.1.min.js?n={#cache_refresh_token#}"></script>
-		<script src="js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
-		<script src="js/file-upload/js/jquery.fileupload-process.js?n={#cache_refresh_token#}"></script>
-		<script src="js/file-upload/js/jquery.fileupload-validate.js?n={#cache_refresh_token#}"></script>
-		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
-		<script src="js/location.js?n={#cache_refresh_token#}"></script>
-		<script src="js/nokkelbestilling.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/jquery-ui-1.13.1.min.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-upload/js/jquery.fileupload-process.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-upload/js/jquery.fileupload-validate.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/location.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/nokkelbestilling.js?n={#cache_refresh_token#}"></script>
 	{/if}
 
 {/block}

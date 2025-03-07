@@ -4,7 +4,7 @@
 	<script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script>
 	<!-- Main Quill library -->
 	<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-	<script src="js/quill-textarea.js"></script>
+	<script src="src/js/quill-textarea.js"></script>
 
 
 	<!-- Theme included stylesheets -->
@@ -115,8 +115,8 @@
 		var schema = 'helpdesk';
 	</script>
 	{if $saved != 1 && !$location_code}
-		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
-		<script src="js/location.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/location.js?n={#cache_refresh_token#}"></script>
 	{/if}
 
 {/block}

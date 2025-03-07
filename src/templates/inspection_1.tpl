@@ -3,11 +3,11 @@
 {block name=body}
 
 
-	<link href="css/jquery-ui.min.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload-custom.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
-	<link href="js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="src/css/jquery-ui.min.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-custom.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-ui.css?n={#cache_refresh_token#}" type="text/css"  rel="stylesheet">
 	<style>
 		.ql-container {
 			height: 300px;
@@ -210,14 +210,14 @@
 		var schema = 'inspection_1';
 	</script>
 	{if $saved != 1}
-		<script src="js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
 		<script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script>
-		<script src="js/jquery-ui-1.13.1.min.js?n={#cache_refresh_token#}"></script>
-		<script src="js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
-		<script src="js/file-upload/js/jquery.fileupload-process.js?n={#cache_refresh_token#}"></script>
-		<script src="js/file-upload/js/jquery.fileupload-validate.js?n={#cache_refresh_token#}"></script>
-		<script src="js/inspection_1.js?n={#cache_refresh_token#}"></script>
-		<script src="js/location.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/jquery-ui-1.13.1.min.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-upload/js/jquery.fileupload-process.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-upload/js/jquery.fileupload-validate.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/inspection_1.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/location.js?n={#cache_refresh_token#}"></script>
 	{/if}
 
 {/block}

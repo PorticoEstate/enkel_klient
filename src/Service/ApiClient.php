@@ -3,6 +3,10 @@
 
 namespace App\Service;
 
+use Exception;
+use App\Traits\UtilityTrait;
+
+
 class ApiClient
 {
     private $backend_url;
@@ -13,7 +17,9 @@ class ApiClient
     private $httpCode;
     private $debug;
 
-    public function __construct()
+	use UtilityTrait;
+    
+	public function __construct()
     {
         ini_set('session.cookie_samesite', 'Lax');
         session_start();
@@ -133,6 +139,15 @@ class ApiClient
 		return $this->session_info ?? null;
 	}
 
+	function get_backend_url()
+	{
+		return $this->backend_url;
+	}
+
+	function get_logindomain()
+	{
+		return $this->logindomain;
+	}
 	/**
 	 * Clear a value from the session cache
 	 *
@@ -295,7 +310,8 @@ class ApiClient
 
 	public static function link($url, $extravars = array())
 	{
-		$current_site_url = rtrim(current_site_url(), '/');
+		$current_site_url = rtrim(self::current_site_url(), '/');
 		return $current_site_url . '/' . ltrim("{$url}?", '/') . http_build_query($extravars);
 	}
+
 }

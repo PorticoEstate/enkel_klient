@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 // Set base paths for the application
-define('APP_ROOT', '/var/www/html/app');
+define('APP_ROOT', '/var/www/html');
 define('SRC_ROOT', APP_ROOT . '/src');
 
 // Include the Composer autoloader
@@ -25,6 +25,10 @@ $containerBuilder->addDefinitions([
 		$smarty = new \Smarty();
 		$smarty->setTemplateDir(SRC_ROOT . '/templates');
 		$smarty->setCompileDir(SRC_ROOT . '/templates_c');
+		// Add config directory - this is what's missing
+		$smarty->setConfigDir(SRC_ROOT . '/configs');
+
+		
 		// Make sure templates_c is writable
 		if (!is_writable(SRC_ROOT . '/templates_c'))
 		{

@@ -53,7 +53,7 @@
 	{
 		if (action === 'cancel')
 		{
-			window.location.href = phpGWLink('index.php', {menuaction: 'enkel_klient.nokkelbestilling.display_form'});
+	        window.location.href = `${strBaseURL}/nokkelbestilling`;
 			return;
 		}
 
@@ -94,7 +94,7 @@
 			}
 			catch (e)
 			{
-
+	            console.error('FormData error:', e);
 			}
 		}
 
@@ -103,7 +103,7 @@
 			contentType: false,
 			processData: false,
 			type: 'POST',
-			url: requestUrl + '&phpgw_return_as=json',
+	        url: `${requestUrl}`,
 			data: formdata ? formdata : thisForm.serialize(),
 			success: function (data, textStatus, jqXHR)
 			{
@@ -113,7 +113,7 @@
 					{
 						var id = data.id;
 
-						redirect_action = phpGWLink('index.php', {menuaction: 'enkel_klient.nokkelbestilling.display_form'});
+	                    redirect_action = `${strBaseURL}/nokkelbestilling`;
 						if (pendingList === 0)
 						{
 							window.location.href = redirect_action;
@@ -143,6 +143,12 @@
 						alert(error_message);
 					}
 				}
+			},
+			error: function(jqXHR, textStatus, errorThrown) {
+				console.error('Ajax error:', textStatus, errorThrown);
+				$('#submit').prop('disabled', false);
+				$('#fileupload').prop('disabled', false);
+				alert('Det oppstod en feil ved sending av skjemaet');
 			}
 		});
 	};
@@ -172,10 +178,7 @@
 			$('#fileupload').fileupload(
 				'option',
 				'url',
-				phpGWLink('index.php',{
-					menuaction: 'enkel_klient.nokkelbestilling.handle_multi_upload_file',
-					id: id
-				})
+				`${strBaseURL}/nokkelbestilling/upload?id=${id}`
 			);
 
 			$.each($('.start_file_upload'), function (index, file_start)

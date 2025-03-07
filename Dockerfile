@@ -5,9 +5,6 @@ ARG http_proxy
 ARG https_proxy
 ARG INSTALL_XDEBUG=true
 
-ENV http_proxy=${http_proxy}
-ENV https_proxy=${https_proxy}
-
 RUN apt-get update -y
 RUN apt-get install -y libpq-dev cron curl git unzip openssl
 
@@ -18,6 +15,9 @@ RUN apt-get install -y libpq-dev cron curl git unzip openssl
 # https://github.com/mlocati/docker-php-extension-installer
 RUN curl -sSL https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions -o /usr/local/bin/install-php-extensions \
     && chmod +x /usr/local/bin/install-php-extensions
+
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
 
 # Configure PEAR
 RUN if [ -n "${http_proxy}" ]; then pear config-set http_proxy ${http_proxy}; fi && \

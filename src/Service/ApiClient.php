@@ -310,8 +310,7 @@ class ApiClient
 
 	public static function link($url, $extravars = array())
 	{
-		$current_site_url = rtrim(self::current_site_url(), '/');
-		return $current_site_url . '/' . ltrim("{$url}?", '/') . http_build_query($extravars);
+		$route_url = self::get_route_url($url, $extravars);
+		return $route_url;
 	}
-
 }

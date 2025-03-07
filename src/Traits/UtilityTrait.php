@@ -5,16 +5,38 @@ namespace App\Traits;
 trait UtilityTrait
 {
     /**
-     * Get the current site URL
+     * Get the current site URL with proper route handling
      *
      * @return string
      */
-	protected static function current_site_url(): string
+    protected static function current_site_url(): string
     {
-        $page_url = pathinfo($_SERVER['SCRIPT_NAME'], PATHINFO_DIRNAME) . '/';
-        return $page_url;
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
+        $host = $_SERVER['HTTP_HOST'];
+        $baseUrl = pathinfo($_SERVER['SCRIPT_NAME'], PATHINFO_DIRNAME);
+        
+        // Ensure we have a trailing slash but no double slashes
+        return rtrim($protocol . $host . $baseUrl, '/') . '/';
     }
     
+    /**
+     * Get route URL for specific endpoint
+     *
+     * @param string $route The route name (e.g. 'locations', 'nokkelbestilling')
+     * @param array $params Optional query parameters
+     * @return string
+     */
+    protected static function get_route_url(string $route, array $params = []): string
+    {
+        $url = self::current_site_url() . $route;
+        
+        if (!empty($params)) {
+            $url .= '?' . http_build_query($params);
+        }
+        
+        return $url;
+    }
+
     /**
      * Debug an array or object with formatted output
      *

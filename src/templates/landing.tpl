@@ -11,7 +11,7 @@
 					{config_load file="site.conf" section="services"}
 					{if #helpdesk#}
 						<div class="col-md-4 mb-4">
-							<a href="index.php?menuaction=enkel_klient.helpdesk.display_form" class="text-decoration-none">
+							<a href="/helpdesk" class="text-decoration-none">
 								<div class="card h-100 hover-shadow">
 									<div class="card-body">
 										<i class="fas fa-ticket-alt fa-2x mb-3 text-primary"></i>
@@ -24,7 +24,7 @@
 					{/if}
 					{if #nokkelbestilling#}
 						<div class="col-md-4 mb-4">
-							<a href="index.php?menuaction=enkel_klient.nokkelbestilling.display_form"
+							<a href="/nokkelbestilling"
 								class="text-decoration-none">
 								<div class="card h-100 hover-shadow">
 									<div class="card-body">
@@ -38,7 +38,7 @@
 					{/if}
 					{if #inspection_1#}
 						<div class="col-md-4 mb-4">
-							<a href="index.php?menuaction=enkel_klient.inspection_1.display_form" class="text-decoration-none">
+							<a href="/inspection_1" class="text-decoration-none">
 								<div class="card h-100 hover-shadow">
 									<div class="card-body">
 										<i class="fas fa-clipboard-check fa-2x mb-3 text-primary"></i>

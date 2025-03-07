@@ -123,32 +123,30 @@
 
 	<nav id="sidebar" class="sidebar">
 		<ul class="navbar-nav">
-			{assign var="currentAction" value=$smarty.get.menuaction|default:''}
+			{assign var="currentRoute" value=$smarty.server.REQUEST_URI|regex_replace:'/^.*\//':''|default:''}
 			<li class="nav-item">
-				<a class="nav-link {if $currentAction == ''}active{/if}" href="index.php">
+				<a class="nav-link {if $currentRoute == ''}active{/if}" href="{$str_base_url}">
 					<i class="fas fa-home me-2"></i>Hjem
 				</a>
 			</li>
 			{if #helpdesk#}
 				<li class="nav-item">
-					<a class="nav-link {if $currentAction == 'enkel_klient.helpdesk.display_form'}active{/if}"
-						href="index.php?menuaction=enkel_klient.helpdesk.display_form">
+					<a class="nav-link {if $currentRoute == 'helpdesk'}active{/if}" href="{$str_base_url}/helpdesk">
 						<i class="fas fa-ticket-alt me-2"></i>{#helpdesk#}
 					</a>
 				</li>
 			{/if}
 			{if #nokkelbestilling#}
 				<li class="nav-item">
-					<a class="nav-link {if $currentAction == 'enkel_klient.nokkelbestilling.display_form'}active{/if}"
-						href="index.php?menuaction=enkel_klient.nokkelbestilling.display_form">
+					<a class="nav-link {if $currentRoute == 'nokkelbestilling'}active{/if}"
+						href="{$str_base_url}/nokkelbestilling">
 						<i class="fas fa-key me-2"></i>{#nokkelbestilling#}
 					</a>
 				</li>
 			{/if}
 			{if #inspection_1#}
 				<li class="nav-item">
-					<a class="nav-link {if $currentAction == 'enkel_klient.inspection_1.display_form'}active{/if}"
-						href="index.php?menuaction=enkel_klient.inspection_1.display_form">
+					<a class="nav-link {if $currentRoute == 'inspection_1'}active{/if}" href="{$str_base_url}/inspection_1">
 						<i class="fas fa-clipboard-check me-2"></i>{#inspection_1#}
 					</a>
 				</li>

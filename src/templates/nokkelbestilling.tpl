@@ -226,10 +226,7 @@
 	</div>
 	<script>
 		function refresh_form() {
-			{literal}
-				var strURL = phpGWLink('index.php', {menuaction:'enkel_klient.nokkelbestilling.display_form'});
-			{/literal}
-			window.location.replace(strURL);
+			window.location.replace(`{$str_base_url}/nokkelbestilling`);
 		}
 		var schema = 'nokkelbestilling';
 

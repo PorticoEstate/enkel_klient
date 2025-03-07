@@ -58,6 +58,15 @@ $containerBuilder->addDefinitions([
 	},
 
 	// Controller definitions
+	\App\Controller\LandingController::class => function ($container)
+	{
+		return new \App\Controller\LandingController(
+			$container->get(\Smarty::class),
+			$container->get(\App\Service\ApiClient::class)
+		);
+	},
+
+	// Controller definitions
 	\App\Controller\NokkelbestillingController::class => function ($container)
 	{
 		return new \App\Controller\NokkelbestillingController(
@@ -66,6 +75,7 @@ $containerBuilder->addDefinitions([
 		);
 	}
 ]);
+
 
 // Build PHP-DI Container instance
 $container = $containerBuilder->build();
@@ -106,6 +116,8 @@ $app->get('/debug', function (Request $request, Response $response) use ($contai
 });
 
 // Define application routes
+$app->get('/', \App\Controller\LandingController::class . ':displayInfo');
+$app->get('/locations', \App\Controller\NokkelbestillingController::class . ':getLocations');
 $app->get('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':displayForm');
 $app->post('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':saveForm');
 $app->post('/nokkelbestilling/upload', \App\Controller\NokkelbestillingController::class . ':handleMultiUploadFile');

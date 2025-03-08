@@ -88,7 +88,6 @@ class NokkelbestillingController
 		}
 
 		$get_data = array(
-			'menuaction' => 'enkel_klient.nokkelbestilling.save_form',
 		);
 
 		$user_info = $this->get_logged_in();

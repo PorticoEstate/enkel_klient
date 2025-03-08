@@ -1,5 +1,4 @@
 <?php
-// filepath: /home/hc483/public_html/enkel_klient/public/index.php
 
 use DI\ContainerBuilder;
 use Slim\Factory\AppFactory;
@@ -25,19 +24,30 @@ $containerBuilder->addDefinitions([
 		$smarty = new \Smarty();
 		$smarty->setTemplateDir(SRC_ROOT . '/templates');
 		$smarty->setCompileDir(SRC_ROOT . '/templates_c');
-		// Add config directory - this is what's missing
 		$smarty->setConfigDir(SRC_ROOT . '/configs');
+		$smarty->setCacheDir(SRC_ROOT . '/cache');
 
-		
-		// Make sure templates_c is writable
-		if (!is_writable(SRC_ROOT . '/templates_c'))
+		// Create directories if they don't exist
+		$dirs = ['templates_c', 'cache'];
+		foreach ($dirs as $dir)
 		{
-			@mkdir(SRC_ROOT . '/templates_c', 0777, true);
+			$path = SRC_ROOT . '/' . $dir;
+			if (!is_dir($path))
+			{
+				mkdir($path, 0777, true);
+			}
+			if (!is_writable($path))
+			{
+				chmod($path, 0777);
+			}
 		}
-		// Debug settings
+
+		// Debug and performance settings
 		$smarty->debugging = false;
 		$smarty->force_compile = true;
 		$smarty->caching = false;
+		$smarty->setCaching(Smarty::CACHING_OFF);
+
 		return $smarty;
 	},
 
@@ -66,7 +76,6 @@ $containerBuilder->addDefinitions([
 		);
 	},
 
-	// Controller definitions
 	\App\Controller\NokkelbestillingController::class => function ($container)
 	{
 		return new \App\Controller\NokkelbestillingController(
@@ -75,7 +84,6 @@ $containerBuilder->addDefinitions([
 		);
 	}
 ]);
-
 
 // Build PHP-DI Container instance
 $container = $containerBuilder->build();
@@ -86,6 +94,16 @@ $app = Bridge::create($container);
 // Add error handling middleware
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
+// Add CORS middleware
+$app->add(function (Request $request, $handler)
+{
+	$response = $handler->handle($request);
+	return $response
+		->withHeader('Access-Control-Allow-Origin', '*')
+		->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+		->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+});
+
 // Add legacy router middleware
 $legacyRouter = new \App\LegacyRouter($app);
 $app->add(function ($request, $handler) use ($legacyRouter)
@@ -93,7 +111,7 @@ $app->add(function ($request, $handler) use ($legacyRouter)
 	return $legacyRouter->route($request, $handler);
 });
 
-// Define routes
+// Define debug route
 $app->get('/debug', function (Request $request, Response $response) use ($container)
 {
 	$response->getBody()->write('<h1>Debug Information</h1>');
@@ -104,19 +122,22 @@ $app->get('/debug', function (Request $request, Response $response) use ($contai
 	$response->getBody()->write("Template directories:\n");
 	$response->getBody()->write(print_r($smarty->getTemplateDir(), true));
 
-	// Show important paths
-	$response->getBody()->write("\nImportant paths:\n");
+	// Show important paths and system information
+	$response->getBody()->write("\nSystem Information:\n");
+	$response->getBody()->write("PHP Version: " . PHP_VERSION . "\n");
 	$response->getBody()->write("APP_ROOT: " . APP_ROOT . "\n");
 	$response->getBody()->write("SRC_ROOT: " . SRC_ROOT . "\n");
 	$response->getBody()->write("templates_c writable: " . (is_writable(SRC_ROOT . '/templates_c') ? 'Yes' : 'No') . "\n");
+	$response->getBody()->write("cache writable: " . (is_writable(SRC_ROOT . '/cache') ? 'Yes' : 'No') . "\n");
 
 	$response->getBody()->write('</pre>');
-
 	return $response;
 });
 
 // Define application routes
 $app->get('/', \App\Controller\LandingController::class . ':displayInfo');
+
+// Nokkelbestilling routes
 $app->get('/locations', \App\Controller\NokkelbestillingController::class . ':getLocations');
 $app->get('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':displayForm');
 $app->post('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':saveForm');

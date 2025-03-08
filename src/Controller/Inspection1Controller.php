@@ -1,8 +1,7 @@
 <?php
-// src/Controller/Inspection1Controller.php
 namespace App\Controller;
 
-use Smarty;
+use Slim\Views\Twig;
 use App\Service\ApiClient;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -11,35 +10,25 @@ use App\Service\Sanitizer;
 
 class Inspection1Controller
 {
-    private $smarty;
+    private $twig;
     private $api;
 
     use UtilityTrait;
 
-    public function __construct(Smarty $smarty, ApiClient $api)
+    public function __construct(Twig $twig, ApiClient $api)
     {
-        // Configure Smarty
-        $smarty->force_compile = true;
-        $smarty->caching = false;
-        $smarty->setCaching(Smarty::CACHING_OFF);
-        
         // Load configurations
-        $smarty->configLoad("site.conf", 'inspection_1');
-        $smarty->configLoad("site.conf", 'services');  // Also load services section
-
         $str_base_url = self::current_site_url();
 
-        // Basic assignments
-        $smarty->assign([
-            "str_base_url" => $str_base_url,
-            "action_url" => $str_base_url,
-            "saved" => 0,
-            "error" => '',
-            "subject" => '',
-            "message" => ''
-        ]);
+        // Basic assignments as globals
+        $twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
+        $twig->getEnvironment()->addGlobal('action_url', $str_base_url);
+        $twig->getEnvironment()->addGlobal('saved', 0);
+        $twig->getEnvironment()->addGlobal('error', []);
+        $twig->getEnvironment()->addGlobal('subject', '');
+        $twig->getEnvironment()->addGlobal('message', '');
 
-        $this->smarty = $smarty;
+        $this->twig = $twig;
         $this->api = $api;
     }
 
@@ -175,23 +164,26 @@ class Inspection1Controller
         }
 
         $get_data = [];
-        $this->smarty->assign("action_url", self::get_route_url('inspection_1', $get_data), true);
-        $this->smarty->assign("saved", $saved, true);
-        $this->smarty->assign("error", $error, true);
-        $this->smarty->assign("id", $id, true);
-
-        $enable_fileupload = $this->smarty->getConfigVars('enable_fileupload');
-        $this->smarty->assign("enable_fileupload", $enable_fileupload, true);
-
+        
+        // Get config from Twig globals
+        $config = $this->twig->getEnvironment()->getGlobals()['config'];
+        $enable_fileupload = $config['inspection_1']['enable_fileupload'] ?? 0;
+        
         // Generate and set CSRF token
         $rand = rand();
         $_SESSION['rand'] = $rand;
-        $this->smarty->assign("rand", $rand, true);
 
         try {
-            $html = $this->smarty->fetch('inspection_1.tpl');
-            $response->getBody()->write($html);
-            return $response;
+            // Render with Twig
+            return $this->twig->render($response, 'inspection_1.twig', [
+                'action_url' => self::get_route_url('inspection_1', $get_data),
+                'saved' => $saved,
+                'error' => $error,
+                'id' => $id,
+                'enable_fileupload' => $enable_fileupload,
+                'rand' => $rand,
+                'currentRoute' => 'inspection_1'
+            ]);
         } catch (\Exception $e) {
             // Fall back to rendering minimal content
             $response->getBody()->write('<h1>Error loading template: ' . $e->getMessage() . '</h1>');

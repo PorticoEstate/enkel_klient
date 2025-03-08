@@ -4,6 +4,9 @@ use DI\ContainerBuilder;
 use Slim\Factory\AppFactory;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Views\Twig;
+use Slim\Views\TwigMiddleware;
+use Twig\Loader\FilesystemLoader;
 
 // Set base paths for the application
 define('APP_ROOT', '/var/www/html');
@@ -17,37 +20,45 @@ $containerBuilder = new ContainerBuilder();
 
 // Add container definitions
 $containerBuilder->addDefinitions([
-	// Smarty template engine
-	\Smarty::class => function ()
+	// Twig template engine (replacing Smarty)
+	Twig::class => function ()
 	{
-		$smarty = new \Smarty();
-		$smarty->setTemplateDir(SRC_ROOT . '/templates');
-		$smarty->setCompileDir(SRC_ROOT . '/templates_c');
-		$smarty->setConfigDir(SRC_ROOT . '/configs');
-		$smarty->setCacheDir(SRC_ROOT . '/cache');
-
-		// Create directories if they don't exist
-		$dirs = ['templates_c', 'cache'];
-		foreach ($dirs as $dir)
+		// Create directory if it doesn't exist
+		$cacheDir = SRC_ROOT . '/cache/twig';
+		if (!is_dir($cacheDir))
 		{
-			$path = SRC_ROOT . '/' . $dir;
-			if (!is_dir($path))
-			{
-				mkdir($path, 0777, true);
-			}
-			if (!is_writable($path))
-			{
-				chmod($path, 0777);
-			}
+			mkdir($cacheDir, 0777, true);
+		}
+		if (!is_writable($cacheDir))
+		{
+			chmod($cacheDir, 0777);
 		}
 
-		// Debug and performance settings
-		$smarty->debugging = false;
-		$smarty->force_compile = true;
-		$smarty->caching = false;
-		$smarty->setCaching(Smarty::CACHING_OFF);
+		// Pass the path directly instead of creating a FilesystemLoader first
+		$twig = Twig::create(SRC_ROOT . '/templates', [
+			'cache' => $cacheDir,
+			'debug' => true,
+			'auto_reload' => true,
+		]);
 
-		return $smarty;
+		// Add extensions if needed
+		$twig->addExtension(new \Twig\Extension\DebugExtension());
+
+		// Load configuration
+		$config = [];
+		if (file_exists(SRC_ROOT . '/configs/site.conf'))
+		{
+			$config = parse_ini_file(SRC_ROOT . '/configs/site.conf', true);
+		}
+
+		// Add global variables equivalent to Smarty config
+		$twig->getEnvironment()->addGlobal('config', $config);
+		$twig->getEnvironment()->addGlobal('cache_refresh_token', time());
+
+		// Add base URL for consistent links
+		$twig->getEnvironment()->addGlobal('str_base_url', '');
+
+		return $twig;
 	},
 
 	// API Client service
@@ -56,21 +67,11 @@ $containerBuilder->addDefinitions([
 		return new \App\Service\ApiClient();
 	},
 
-	// Legacy named dependencies
-	'smarty' => function ($container)
-	{
-		return $container->get(\Smarty::class);
-	},
-	'api' => function ($container)
-	{
-		return $container->get(\App\Service\ApiClient::class);
-	},
-
 	// Controller definitions
 	\App\Controller\LandingController::class => function ($container)
 	{
 		return new \App\Controller\LandingController(
-			$container->get(\Smarty::class),
+			$container->get(Twig::class),
 			$container->get(\App\Service\ApiClient::class)
 		);
 	},
@@ -78,7 +79,7 @@ $containerBuilder->addDefinitions([
 	\App\Controller\NokkelbestillingController::class => function ($container)
 	{
 		return new \App\Controller\NokkelbestillingController(
-			$container->get(\Smarty::class),
+			$container->get(Twig::class),
 			$container->get(\App\Service\ApiClient::class)
 		);
 	},
@@ -86,7 +87,7 @@ $containerBuilder->addDefinitions([
 	\App\Controller\HelpdeskController::class => function ($container)
 	{
 		return new \App\Controller\HelpdeskController(
-			$container->get(\Smarty::class),
+			$container->get(Twig::class),
 			$container->get(\App\Service\ApiClient::class)
 		);
 	},
@@ -94,7 +95,7 @@ $containerBuilder->addDefinitions([
 	\App\Controller\Inspection1Controller::class => function ($container)
 	{
 		return new \App\Controller\Inspection1Controller(
-			$container->get(\Smarty::class),
+			$container->get(Twig::class),
 			$container->get(\App\Service\ApiClient::class)
 		);
 	}
@@ -103,11 +104,14 @@ $containerBuilder->addDefinitions([
 // Build PHP-DI Container instance
 $container = $containerBuilder->build();
 
-// Set container to create App from AppFactory instead of Bridge
+// Set container to create App from AppFactory
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-// Add routing middleware (needed for AppFactory)
+// Add Twig-View Middleware
+$app->add(TwigMiddleware::createFromContainer($app, Twig::class));
+
+// Add routing middleware
 $app->addRoutingMiddleware();
 
 // Add error handling middleware

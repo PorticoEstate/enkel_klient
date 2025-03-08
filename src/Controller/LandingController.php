@@ -1,8 +1,8 @@
 <?php
-
+// filepath: /home/hc483/enkel_klient/src/Controller/LandingController.php
 namespace App\Controller;
 
-use Smarty;
+use Slim\Views\Twig;
 use App\Service\ApiClient;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -10,35 +10,25 @@ use App\Traits\UtilityTrait;
 
 class LandingController
 {
-	private $smarty;
+	private $twig;
 	private $api;
 
 	use UtilityTrait;
 
-	public function __construct(Smarty $smarty, ApiClient $api)
+	public function __construct(Twig $twig, ApiClient $api)
 	{
-		// Configure Smarty
-		$smarty->force_compile = true;
-		$smarty->caching = false;
-		$smarty->setCaching(Smarty::CACHING_OFF);
-
 		// Load configurations
-		$smarty->configLoad("site.conf", 'landing');
-		$smarty->configLoad("site.conf", 'services');
-
 		$str_base_url = self::current_site_url();
 
 		// Basic assignments
-		$smarty->assign([
-			"str_base_url" => $str_base_url,
-			"action_url" => $str_base_url,
-			"saved" => 0,
-			"error" => '',
-			"subject" => '',
-			"message" => ''
-		]);
+		$twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('action_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('saved', 0);
+		$twig->getEnvironment()->addGlobal('error', '');
+		$twig->getEnvironment()->addGlobal('subject', '');
+		$twig->getEnvironment()->addGlobal('message', '');
 
-		$this->smarty = $smarty;
+		$this->twig = $twig;
 		$this->api = $api;
 	}
 
@@ -46,18 +36,19 @@ class LandingController
 	{
 		$rand = rand();
 		$_SESSION['rand'] = $rand;
-		$this->smarty->assign("rand", $rand, true);
+		$this->twig->getEnvironment()->addGlobal('rand', $rand);
 
 		try
 		{
-			$html = $this->smarty->fetch('landing.tpl');
-			$response->getBody()->write($html);
-			return $response;
+			return $this->twig->render($response, 'landing.twig',[
+				'currentRoute' => 'home'
+			]);
 		}
 		catch (\Exception $e)
 		{
 			// Fall back to rendering minimal content
 			$response->getBody()->write('<h1>Error loading landing page</h1>');
+			$response->getBody()->write('<p>' . $e->getMessage() . '</p>');
 			return $response;
 		}
 	}

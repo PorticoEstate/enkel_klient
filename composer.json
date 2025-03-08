@@ -16,7 +16,9 @@
 		"twbs/bootstrap": "^5.3",
 		"jumbojett/openid-connect-php": "^1.0",
 		"php-di/slim-bridge": "^3.4",
-		"firebase/php-jwt": "^6.11"
+		"firebase/php-jwt": "^6.11",
+		"slim/twig-view": "^3.4",
+		"twig/twig": "^3.20"
 	},
 	"config": {
 		"allow-plugins": {

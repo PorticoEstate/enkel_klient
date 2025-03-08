@@ -2,6 +2,7 @@
 *.p12
 launch.json
 /src/templates_c/*
+/src/cache/*
 /src/composer.lock
 /nbproject
 /vendor

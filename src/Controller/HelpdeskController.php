@@ -1,8 +1,8 @@
 <?php
-// src/Controller/HelpdeskController.php
+// filepath: /home/hc483/enkel_klient/src/Controller/HelpdeskController.php
 namespace App\Controller;
 
-use Smarty;
+use Slim\Views\Twig;
 use App\Service\ApiClient;
 use App\Service\Fiks;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -12,33 +12,25 @@ use App\Service\Sanitizer;
 
 class HelpdeskController
 {
-	private $smarty;
+	private $twig;
 	private $api;
 
 	use UtilityTrait;
 
-	public function __construct(Smarty $smarty, ApiClient $api)
+	public function __construct(Twig $twig, ApiClient $api)
 	{
-		// Configure Smarty
-		$smarty->force_compile = true;
-		$smarty->caching = false;
-		$smarty->setCaching(Smarty::CACHING_OFF);
-
 		// Load configurations
-		$smarty->configLoad("site.conf", 'helpdesk');
-		$smarty->configLoad("site.conf", 'services');  // Also load services section
-
 		$str_base_url = self::current_site_url();
 
-		// Basic assignments
-		$smarty->assign("str_base_url", $str_base_url);
-		$smarty->assign("action_url", $str_base_url, true);
-		$smarty->assign("saved", 0, true);
-		$smarty->assign("error", '', true);
-		$smarty->assign("subject", '', true);
-		$smarty->assign("message", '', true);
+		// Basic assignments as global variables
+		$twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('action_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('saved', 0);
+		$twig->getEnvironment()->addGlobal('error', []);
+		$twig->getEnvironment()->addGlobal('subject', '');
+		$twig->getEnvironment()->addGlobal('message', '');
 
-		$this->smarty = $smarty;
+		$this->twig = $twig;
 		$this->api = $api;
 	}
 
@@ -130,7 +122,10 @@ class HelpdeskController
 				'api_mode' => true
 			];
 
-			$cat_id = $this->smarty->getConfigVars('cat_id');
+			// Get category ID from config
+			$config = $this->twig->getEnvironment()->getGlobals()['config'];
+			$cat_id = $config['helpdesk']['cat_id'] ?? null;
+
 			$user_info = ApiClient::session_get('helpdesk', 'user_info');
 
 			// Build user info string
@@ -216,27 +211,29 @@ class HelpdeskController
 		$address = !empty($user_info['address']) ? $user_info['address'] : '';
 		$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
 
-		$this->smarty->assign("location_code", $location_code, true);
-		$this->smarty->assign("address", $address, true);
-		$this->smarty->assign("user_name", $user_name, true);
-		$this->smarty->assign("action_url", self::get_route_url('helpdesk', $get_data), true);
-		$this->smarty->assign("saved", $saved, true);
-		$this->smarty->assign("error", $error, true);
-		$this->smarty->assign("id", $id, true);
-
-		$enable_fileupload = $this->smarty->getConfigVars('enable_fileupload');
-		$this->smarty->assign("enable_fileupload", $enable_fileupload, true);
+		// Get config
+		$config = $this->twig->getEnvironment()->getGlobals()['config'];
+		$enable_fileupload = $config['helpdesk']['enable_fileupload'] ?? 0;
 
 		// Generate and set CSRF token
 		$rand = rand();
 		$_SESSION['rand'] = $rand;
-		$this->smarty->assign("rand", $rand, true);
 
 		try
 		{
-			$html = $this->smarty->fetch('helpdesk.tpl');
-			$response->getBody()->write($html);
-			return $response;
+			// Render template with Twig
+			return $this->twig->render($response, 'helpdesk.twig', [
+				'location_code' => $location_code,
+				'address' => $address,
+				'user_name' => $user_name,
+				'action_url' => self::get_route_url('helpdesk', $get_data),
+				'saved' => $saved,
+				'error' => $error,
+				'id' => $id,
+				'enable_fileupload' => $enable_fileupload,
+				'rand' => $rand,
+				'currentRoute' => 'helpdesk'
+			]);
 		}
 		catch (\Exception $e)
 		{

@@ -1,11 +1,10 @@
 <?php
-// src/Controller/NokkelbestillingController.php
+// filepath: /home/hc483/enkel_klient/src/Controller/NokkelbestillingController.php
 namespace App\Controller;
 
-use Smarty;
+use Slim\Views\Twig;
 use App\Service\ApiClient;
 use App\Service\Fiks;
-
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Traits\UtilityTrait;
@@ -13,25 +12,25 @@ use App\Service\Sanitizer;
 
 class NokkelbestillingController
 {
-	private $smarty;
+	private $twig;
 	private $api;
 
 	use UtilityTrait;
 
-	public function __construct(Smarty $smarty, ApiClient $api)
+	public function __construct(Twig $twig, ApiClient $api)
 	{
-		$smarty->configLoad("site.conf", 'nokkelbestilling');
-		$smarty->configLoad("site.conf", 'services');  // Also load services section
-
+		// Load configurations
 		$str_base_url = self::current_site_url();
 
-		$smarty->assign("str_base_url", $str_base_url, true);
-		$smarty->assign("action_url", $str_base_url, true);
-		$smarty->assign("saved", 0, true);
-		$smarty->assign("error", '', true);
-		$smarty->assign("subject", '', true);
-		$smarty->assign("message", '', true);
-		$this->smarty = $smarty;
+		// Basic assignments as globals
+		$twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('action_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('saved', 0);
+		$twig->getEnvironment()->addGlobal('error', []);
+		$twig->getEnvironment()->addGlobal('subject', '');
+		$twig->getEnvironment()->addGlobal('message', '');
+
+		$this->twig = $twig;
 		$this->api = $api;
 	}
 
@@ -44,23 +43,21 @@ class NokkelbestillingController
 
 		ApiClient::session_set('nokkelbestilling', 'ssn', $ssn);
 
-		$session_info	 = $this->api->get_session_info();
-		$url			 = $this->api->get_backend_url() . "/property/tenant/?";
+		$session_info = $this->api->get_session_info();
+		$url = $this->api->get_backend_url() . "/property/tenant/?";
 
-		$get_data = array(
-			'ssn'							 => $ssn,
-			$session_info['session_name']	 => $session_info['session_id'],
-			'domain'						 => $this->api->get_logindomain(),
-			'phpgw_return_as'				 => 'json',
-		);
-
-		$post_data = array();
+		$get_data = [
+			'ssn' => $ssn,
+			$session_info['session_name'] => $session_info['session_id'],
+			'domain' => $this->api->get_logindomain(),
+			'phpgw_return_as' => 'json',
+		];
 
 		$url .= http_build_query($get_data);
 
-		$empty = array('first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => '');
+		$empty = ['first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => ''];
+		$result = (array)json_decode($this->api->exchange_data($url, []), true);
 
-		$result = (array)json_decode($this->api->exchange_data($url, $post_data), true);
 		return array_merge($empty, $result);
 	}
 
@@ -70,25 +67,26 @@ class NokkelbestillingController
 		$saved = false;
 		$error = [];
 		$id = null;
+
 		if (!$saved)
 		{
 			$saved = ApiClient::session_get('nokkelbestilling', 'saved');
 			ApiClient::session_clear('nokkelbestilling', 'saved');
 		}
 
-		if (!$error)
+		if (empty($error))
 		{
 			$error = (array)ApiClient::session_get('nokkelbestilling', 'error');
 			ApiClient::session_clear('nokkelbestilling', 'error');
 		}
+
 		if (!$id)
 		{
 			$id = ApiClient::session_get('nokkelbestilling', 'id');
 			ApiClient::session_clear('nokkelbestilling', 'id');
 		}
 
-		$get_data = array(
-		);
+		$get_data = [];
 
 		$user_info = $this->get_logged_in();
 		$fiks = new Fiks();
@@ -102,33 +100,36 @@ class NokkelbestillingController
 		$location_code = !empty($user_info['location_code']) ? $user_info['location_code'] : '';
 		$address = !empty($user_info['address']) ? $user_info['address'] : '';
 		$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
-		$this->smarty->assign("location_code", $location_code, true);
-		$this->smarty->assign("address", $address, true);
-		$this->smarty->assign("user_name", $user_name, true);
-		$this->smarty->assign("action_url", self::get_route_url('nokkelbestilling', $get_data), true);
-		$this->smarty->assign("saved", $saved, true);
-		$this->smarty->assign("error", $error, true);
-		$this->smarty->assign("id", $id, true);
 
-		$enable_fileupload = $this->smarty->getConfigVars('enable_fileupload');
+		// Get config from Twig globals
+		$config = $this->twig->getEnvironment()->getGlobals()['config'];
+		$enable_fileupload = $config['nokkelbestilling']['enable_fileupload'] ?? 0;
 
-		$this->smarty->assign("enable_fileupload", $enable_fileupload, true);
-
-		$rand				 = rand();
-		$_SESSION['rand']	 = $rand;
-		$this->smarty->assign("rand", $rand, true);
+		// Generate and set CSRF token
+		$rand = rand();
+		$_SESSION['rand'] = $rand;
 
 		try
 		{
-			$html = $this->smarty->fetch('nokkelbestilling.tpl');
-			$response->getBody()->write($html);
-			return $response;
+			// Render template with Twig
+			return $this->twig->render($response, 'nokkelbestilling.twig', [
+				'location_code' => $location_code,
+				'address' => $address,
+				'user_name' => $user_name,
+				'action_url' => self::get_route_url('nokkelbestilling', $get_data),
+				'saved' => $saved,
+				'error' => $error,
+				'id' => $id,
+				'enable_fileupload' => $enable_fileupload,
+				'rand' => $rand,
+				'currentRoute' => 'nokkelbestilling'
+
+			]);
 		}
 		catch (\Exception $e)
 		{
-			echo "Smarty error: " . $e->getMessage();
 			// Fall back to rendering minimal content
-			$response->getBody()->write('<h1>Error loading template</h1>');
+			$response->getBody()->write('<h1>Error loading template: ' . $e->getMessage() . '</h1>');
 			return $response;
 		}
 	}
@@ -168,6 +169,13 @@ class NokkelbestillingController
 			$url = $this->api->get_backend_url() . "/?";
 			$post = $request->getParsedBody();
 
+			// Verify CSRF token
+			if (!isset($post['randcheck']) || $post['randcheck'] != $_SESSION['rand'])
+			{
+				$error[] = 'Invalid security token';
+				return $this->handleFormResponse($request, $response, false, $error, null);
+			}
+
 			// Sanitize input data
 			$sanitizedPost = [
 				'location_code' => Sanitizer::sanitizeString($post['location_code'] ?? ''),
@@ -190,7 +198,10 @@ class NokkelbestillingController
 				'api_mode' => true
 			];
 
-			$cat_id = $this->smarty->getConfigVars('cat_id');
+			// Get config
+			$config = $this->twig->getEnvironment()->getGlobals()['config'];
+			$cat_id = $config['nokkelbestilling']['cat_id'] ?? null;
+
 			$user_info = ApiClient::session_get('nokkelbestilling', 'user_info');
 
 			// Build user info string
@@ -307,12 +318,11 @@ class NokkelbestillingController
 
 	private function handleFormResponse(Request $request, Response $response, bool $saved, array $error, ?int $id): Response
 	{
+		ApiClient::session_set('nokkelbestilling', 'id', $id);
+		ApiClient::session_set('nokkelbestilling', 'error', $error);
+		ApiClient::session_set('nokkelbestilling', 'saved', $saved);
 
 		{
-			ApiClient::session_set('nokkelbestilling', 'id', $id);
-			ApiClient::session_set('nokkelbestilling', 'error', $error);
-			ApiClient::session_set('nokkelbestilling', 'saved', $saved);
-
 			$response = $response->withHeader('Content-Type', 'application/json');
 			$response->getBody()->write(json_encode([
 				'id' => $id,
@@ -322,6 +332,6 @@ class NokkelbestillingController
 			return $response;
 		}
 
-	//	return $this->displayForm($request, $response);
+		//		return $this->displayForm($request, $response);
 	}
 }

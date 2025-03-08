@@ -239,14 +239,14 @@
 			$('#location_name').on('change input', function() {
 				$('#title').val(summarytext + $(this).val());
 			});
-
-			// Listen for autoComplete.js selection event
-			document.querySelector("#location_name").addEventListener("selection", function(event) {
-				const selection = event.detail.selection.value;
-				$('#title').val(summarytext + selection.name);
-			});
-			//set focus on first input field
 			try {
+				// Listen for autoComplete.js selection event
+				document.querySelector("#location_name").addEventListener("selection", function(event) {
+					const selection = event.detail.selection.value;
+					$('#title').val(summarytext + selection.name);
+				});
+				//set focus on first input field
+
 				document.getElementById("paavegne_av").focus();
 			} catch (error) {}
 		{/if}
@@ -262,16 +262,18 @@
 	</script>
 	{literal}
 		<script>
-			document.getElementById('email').addEventListener('input', function(e) {
-				const email = e.target.value;
-				const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+			try {
+				document.getElementById('email').addEventListener('input', function(e) {
+					const email = e.target.value;
+					const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 
-				if (!emailRegex.test(email)) {
-					e.target.classList.add('is-invalid');
-				} else {
-					e.target.classList.remove('is-invalid');
-				}
-			});
+					if (!emailRegex.test(email)) {
+						e.target.classList.add('is-invalid');
+					} else {
+						e.target.classList.remove('is-invalid');
+					}
+				});
+			} catch (error) {}
 		</script>
 	{/literal}
 	{if $saved != 1 }

@@ -1,5 +1,5 @@
 	var pendingList = 0;
-	var redirect_action;
+	var redirect_action = `${strBaseURL}/nokkelbestilling`;
 	var file_count = 0;
 	var filesRequired = !$('#location_code').val();
 	$(document).ready(function() {
@@ -113,7 +113,7 @@
 					{
 						var id = data.id;
 
-	                    redirect_action = `${strBaseURL}/nokkelbestilling`;
+	                    
 						if (pendingList === 0)
 						{
 							window.location.href = redirect_action;

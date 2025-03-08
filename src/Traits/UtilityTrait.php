@@ -15,8 +15,8 @@ trait UtilityTrait
         $host = $_SERVER['HTTP_HOST'];
         $baseUrl = pathinfo($_SERVER['SCRIPT_NAME'], PATHINFO_DIRNAME);
         
-        // Ensure we have a trailing slash but no double slashes
-        return rtrim($protocol . $host . $baseUrl, '/') . '/';
+        // Ensure we have no trailing slash
+        return rtrim($protocol . $host . $baseUrl, '/');
     }
     
     /**

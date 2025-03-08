@@ -298,16 +298,16 @@ class NokkelbestillingController
 
 	private function processErrors(array $ret): array
 	{
-		if (!empty($ret['receipt']['error']))
+		if (!empty($ret['message']))
 		{
-			return array_map(fn($error) => $error['msg'], $ret['receipt']['error']);
+			return array_map(fn($error) => $error['msg'], $ret['message']);
 		}
 		return ['Noe gikk galt med innsendingen'];
 	}
 
 	private function handleFormResponse(Request $request, Response $response, bool $saved, array $error, ?int $id): Response
 	{
-		if ($request->getQueryParams()['phpgw_return_as'] ?? '' === 'json')
+
 		{
 			ApiClient::session_set('nokkelbestilling', 'id', $id);
 			ApiClient::session_set('nokkelbestilling', 'error', $error);
@@ -322,6 +322,6 @@ class NokkelbestillingController
 			return $response;
 		}
 
-		return $this->displayForm($request, $response);
+	//	return $this->displayForm($request, $response);
 	}
 }

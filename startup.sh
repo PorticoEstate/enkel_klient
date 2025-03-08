@@ -6,7 +6,5 @@ chown -R www-data:www-data /var/log/apache2
 
 /usr/local/bin/docker-php-entrypoint
 cd /var/www/html
-composer require firebase/php-jwt
-composer require vlucas/phpdotenv
-composer install
+composer update
 /usr/local/bin/apache2-foreground

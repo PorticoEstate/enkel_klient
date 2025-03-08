@@ -13,7 +13,7 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black">
 	<meta name="apple-mobile-web-app-title" content="BoligReg">
-	<link rel="apple-touch-icon" href="icon/icons8-city-buildings-96.png">
+	<link rel="apple-touch-icon" href="src/icon/icons8-city-buildings-96.png">
 	<link href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css?n={#cache_refresh_token#}" type="text/css"
 		rel="StyleSheet">
 	<link href="vendor/components/font-awesome/css/all.min.css?n={#cache_refresh_token#}" type="text/css" rel="StyleSheet">
@@ -25,5 +25,5 @@
 	<script src="src/js/base.js?n={#cache_refresh_token#}"></script>
 	<!--script src="vendor/components/jquery/jquery.min.js?n={#cache_refresh_token#}"></script-->
 	<script src="vendor/twbs/bootstrap/dist/js/bootstrap.min.js?n={#cache_refresh_token#}"></script>
-	<link rel="manifest" href="manifest.json">
+	<link rel="manifest" href="src/manifest.json">
 {/block}

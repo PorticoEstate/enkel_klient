@@ -215,6 +215,7 @@
 		<script src="src/js/file-upload/js/jquery.fileupload.js?n={#cache_refresh_token#}"></script>
 		<script src="src/js/file-upload/js/jquery.fileupload-process.js?n={#cache_refresh_token#}"></script>
 		<script src="src/js/file-upload/js/jquery.fileupload-validate.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-uploader.js?n={#cache_refresh_token#}"></script>
 		<script src="src/js/inspection_1.js?n={#cache_refresh_token#}"></script>
 		<script src="src/js/location.js?n={#cache_refresh_token#}"></script>
 	{/if}

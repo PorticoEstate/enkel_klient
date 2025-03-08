@@ -284,6 +284,7 @@
 		<script src="src/js/file-upload/js/jquery.fileupload-validate.js?n={#cache_refresh_token#}"></script>
 		<script src="src/js/autocomplete/autoComplete.js?n={#cache_refresh_token#}"></script>
 		<script src="src/js/location.js?n={#cache_refresh_token#}"></script>
+		<script src="src/js/file-uploader.js?n={#cache_refresh_token#}"></script>
 		<script src="src/js/nokkelbestilling.js?n={#cache_refresh_token#}"></script>
 	{/if}
 

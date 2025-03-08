@@ -120,12 +120,6 @@ $app->add(function (Request $request, $handler)
 		->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
-// Add legacy router middleware
-$legacyRouter = new \App\LegacyRouter($app);
-$app->add(function ($request, $handler) use ($legacyRouter)
-{
-	return $legacyRouter->route($request, $handler);
-});
 
 // Define debug route
 $app->get('/debug', function (Request $request, Response $response) use ($container)

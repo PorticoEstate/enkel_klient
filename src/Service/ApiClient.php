@@ -92,7 +92,7 @@ class ApiClient
 		];
 
 		$url .= http_build_query($get_data);
-		$response = $this->exchange_data($url, []);
+		$response = $this->exchange_data($url, [], null, null, true);
 
 		return $this->httpCode === 200;
 	}
@@ -231,12 +231,12 @@ class ApiClient
 	}
 
 
-	function exchange_data($url, $post_data = array(), $content_range = null, $content_disposition = null)
+	function exchange_data($url, $post_data = array(), $content_range = null, $content_disposition = null, $is_refresh = false)
 	{
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 
-		if (!empty($_FILES['files']['tmp_name'][0]))
+		if (!$is_refresh &&!empty($_FILES['files']['tmp_name'][0]))
 		{
 			// Don't set Content-Type header - let cURL set it with boundary
 			$http_header = array();

@@ -1,6 +1,6 @@
 = Frittstående klient
 
-Benytter smarty template og bootstrap 5x.
+Benytter smarty template, SLIM4 og bootstrap 5x.
 Forventer .env fil i katalogen src/configs, med variabler satt for pålogging til Portico/API.
 
 Rename env-eksempel til .env

@@ -1,310 +1,196 @@
-	var pendingList = 0;
-	var redirect_action = `${strBaseURL}/nokkelbestilling`;
-	var file_count = 0;
-	var filesRequired = !$('#location_code').val();
-	$(document).ready(function() {
-		// Add asterisk to all labels of required fields
-		$('form :required').each(function() {
-			var id = $(this).attr('id');
-			$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
-		});
-	});
-	$('#nokkelbestilling').on('submit', function (e) {
-		e.preventDefault();
+/**
+ * Nøkkelbestilling form handler
+ * 
+ * Handles form validation, submission and file uploads for key ordering
+ */
 
-		// Check form validity including file requirement
-		var form = this;
-		if (form.checkValidity() === false || (filesRequired && pendingList === 0)) {
-			// Find the first visible invalid field and focus it
-			var invalidFields = $(form).find(':invalid').filter(':visible');
-			
-			if (invalidFields.length > 0) {
-				// Focus on first visible invalid field
-				invalidFields[0].focus();
-				// Scroll element into view if needed
-				invalidFields[0].scrollIntoView({behavior: 'smooth', block: 'center'});
+// Global variables
+var redirect_action = `${strBaseURL}/nokkelbestilling`;
+var filesRequired = !$('#location_code').val();
+var fileUploader = null;
+
+$(document).ready(function() {
+	// Add asterisk to all required fields
+	markRequiredFields();
+	
+	// Initialize file uploader
+	initializeFileUploader();
+	
+	// Handle location code changes
+	$('#location_code').on('change', function() {
+		filesRequired = !$(this).val();
+		updateFileUploadRequirements();
+	});
+});
+
+function markRequiredFields() {
+	$('form :required').each(function() {
+		var id = $(this).attr('id');
+		$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
+	});
+}
+
+function initializeFileUploader() {
+	fileUploader = new FileUploader({
+		formId: 'nokkelbestilling',
+		uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
+		required: filesRequired,
+		onComplete: function(success) {
+			if (success) {
+				window.location.href = redirect_action;
 			} else {
-				// If no visible invalid fields, check if there are any hidden invalid fields
-				var hiddenInvalidFields = $(form).find(':invalid:not(:visible)');
-				if (hiddenInvalidFields.length > 0) {
-					// Try to find and show the container of the hidden field
-					var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
-					if (container.length > 0) {
-						container.show();
-						// After showing container, try to focus the field
-						setTimeout(function() {
-							hiddenInvalidFields[0].focus();
-						}, 100);
-					}
-				}
-			}
-			
-			if (filesRequired && pendingList === 0) {
-				alert('Du må laste opp fullmakt eller vergefullmakt');
-			}
-			return false;
-		}
-
-		confirm_session('save');
-	});
-
-
-	this.confirm_session = function (action)
-	{
-		if (action === 'cancel')
-		{
-	        window.location.href = `${strBaseURL}/nokkelbestilling`;
-			return;
-		}
-
-		/**
-		 * Block doubleclick
-		 */
-		$('#submit').prop('disabled', true);
-		$('#fileupload').prop('disabled', true);
-
-		var form = document.getElementById('nokkelbestilling');
-		$('<div id="spinner" class="d-flex align-items-center">')
-			.append($('<strong>').text('Lagrer...'))
-			.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>')).insertAfter(form);
-		window.scrollBy(0, 100); //
-
-		try
-		{
-			ajax_submit_form(action);
-		}
-		catch (e)
-		{
-			console.error('Error during AJAX submission:', e);
-			// Optionally alert the user or handle the error further
-		}
-
-	};
-
-	ajax_submit_form = function (action)
-	{
-		var thisForm = $('#nokkelbestilling');
-		var requestUrl = $(thisForm).attr("action");
-		var formdata = false;
-		if (window.FormData)
-		{
-			try
-			{
-				formdata = new FormData(thisForm[0]);
-			}
-			catch (e)
-			{
-	            console.error('FormData error:', e);
-			}
-		}
-
-		$.ajax({
-			cache: false,
-			contentType: false,
-			processData: false,
-			type: 'POST',
-	        url: `${requestUrl}`,
-			data: formdata ? formdata : thisForm.serialize(),
-			success: function (data, textStatus, jqXHR)
-			{
-				if (data)
-				{
-					if (data.status == "saved")
-					{
-						var id = data.id;
-
-	                    
-						if (pendingList === 0)
-						{
-							window.location.href = redirect_action;
-						}
-						else
-						{
-							sendAllFiles(id);
-						}
-					}
-					else
-					{
-						$('#submit').prop('disabled', false);
-						$('#fileupload').prop('disabled', false);
-
-						var element = document.getElementById('spinner');
-						if (element)
-						{
-							element.parentNode.removeChild(element);
-						}
-
-						var error_message = '';
-						$.each(data.message, function (index, error)
-						{
-							error_message += error + "\n";
-						});
-
-						alert(error_message);
-					}
-				}
-			},
-			error: function(jqXHR, textStatus, errorThrown) {
-				console.error('Ajax error:', textStatus, errorThrown);
-				$('#submit').prop('disabled', false);
-				$('#fileupload').prop('disabled', false);
-				alert('Det oppstod en feil ved sending av skjemaet');
-			}
-		});
-	};
-
-
-	$(document).ready(function ()
-	{
-		formatFileSize = function (bytes)
-		{
-			if (typeof bytes !== 'number')
-			{
-				return '';
-			}
-			if (bytes >= 1000000000)
-			{
-				return (bytes / 1000000000).toFixed(2) + ' GB';
-			}
-			if (bytes >= 1000000)
-			{
-				return (bytes / 1000000).toFixed(2) + ' MB';
-			}
-			return (bytes / 1000).toFixed(2) + ' KB';
-		};
-
-		sendAllFiles = function (id)
-		{
-			$('#fileupload').fileupload(
-				'option',
-				'url',
-				`${strBaseURL}/nokkelbestilling/upload?id=${id}`
-			);
-
-			$.each($('.start_file_upload'), function (index, file_start)
-			{
-				file_start.click();
-			});
-		};
-
-		$('#fileupload').fileupload(
-		{
-			dropZone: $('#drop-area'),
-			uploadTemplateId: null,
-			downloadTemplateId: null,
-			autoUpload: false,
-			add: function (e, data)
-			{
-				$.each(data.files, function (index, file)
-				{
-					var file_size = formatFileSize(file.size);
-
-					data.context = $('<p class="file">')
-						.append($('<span>').text(data.files[0].name + ' ' + file_size))
-						.appendTo($(".content_upload_download"))
-						.append($('<button type="button" class="start_file_upload" style="display:none">start</button>')
-							.click(function () {
-								data.submit();
-							}));
-
-					pendingList++;
-					$("#files-count").html(pendingList);
-
-					// Remove required validation when files are added
-					if (filesRequired && pendingList > 0) {
-						$('#fileupload').removeAttr('required');
-					}
-				});
-			},
-			progress: function (e, data)
-			{
-				var progress = parseInt((data.loaded / data.total) * 100, 10);
-				data.context.css("background-position-x", 100 - progress + "%");
-			},
-			done: function (e, data)
-			{
-				file_count++;
-
-				var result = data.result;
-				var error = false;
-				var error_message = '';
-
-				if (typeof (result.files) !== 'undefined')
-				{
-					error_message = result.files[0].error;
-				}
-				else
-				{
-					error_message = 'Noe gikk galt med filopplastingen';
-				}
-
-				if (error_message)
-				{
-					data.context
-						.removeClass("file")
-						.addClass("error")
-						.append($('<span>').text(' Error: ' + error_message));
-					error = true;
-					
-					// Re-add required validation if upload fails
-					pendingList--;
-					if (filesRequired && pendingList === 0)
-					{
-						$('#fileupload').attr('required', 'required');
-					}
-				}
-				else
-				{
-					data.context.addClass("done");
-				}
-
-				if (!error && file_count === pendingList) 
-				{
+				// Small delay to allow user to see error messages
+				window.setTimeout(function() {
 					window.location.href = redirect_action;
-				} 
-				else if (file_count === pendingList) 
-				{
-					window.setTimeout(function () {
-						window.location.href = redirect_action;
-					}, 1000);
-				}
-			},
-			fail: function (e, data)
-			{
-				pendingList--;
-				if (filesRequired && pendingList === 0) 
-				{
-					$('#fileupload').attr('required', 'required');
-				}
-			},
-			limitConcurrentUploads: 1,
-			maxChunkSize: 8388000
-		});
-
-		// Drag and drop handling
-		$(document).bind('dragover', function (e)
-		{
-			var dropZone = $('#drop-area'),
-				timeout = window.dropZoneTimeout;
-			if (timeout)
-			{
-				clearTimeout(timeout);
+				}, 1000);
 			}
-			else
-			{
-				dropZone.addClass('in');
-			}
-			var hoveredDropZone = $(e.target).closest(dropZone);
-			dropZone.toggleClass('hover', hoveredDropZone.length);
-			window.dropZoneTimeout = setTimeout(function ()
-			{
-				window.dropZoneTimeout = null;
-				dropZone.removeClass('in hover');
-			}, 100);
-		});
-
-		$(document).bind('drop dragover', function (e)
-		{
-			e.preventDefault();
-		});
+		}
 	});
+	
+	fileUploader.initialize();
+}
+
+function updateFileUploadRequirements() {
+	// Update the file uploader's required state based on location_code
+	if (filesRequired && fileUploader.getPendingCount() === 0) {
+		$('#fileupload').attr('required', 'required');
+	} else {
+		$('#fileupload').removeAttr('required');
+	}
+}
+
+$('#nokkelbestilling').on('submit', function(e) {
+	e.preventDefault();
+
+	// Check form validity including file requirement
+	var form = this;
+	if (form.checkValidity() === false || (filesRequired && fileUploader.getPendingCount() === 0)) {
+		// Find the first visible invalid field and focus it
+		var invalidFields = $(form).find(':invalid').filter(':visible');
+		
+		if (invalidFields.length > 0) {
+			// Focus on first visible invalid field
+			invalidFields[0].focus();
+			// Scroll element into view if needed
+			invalidFields[0].scrollIntoView({behavior: 'smooth', block: 'center'});
+		} else {
+			// If no visible invalid fields, check if there are any hidden invalid fields
+			var hiddenInvalidFields = $(form).find(':invalid:not(:visible)');
+			if (hiddenInvalidFields.length > 0) {
+				// Try to find and show the container of the hidden field
+				var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
+				if (container.length > 0) {
+					container.show();
+					// After showing container, try to focus the field
+					setTimeout(function() {
+						hiddenInvalidFields[0].focus();
+					}, 100);
+				}
+			}
+		}
+		
+		if (filesRequired && fileUploader.getPendingCount() === 0) {
+			alert('Du må laste opp fullmakt eller vergefullmakt');
+		}
+		return false;
+	}
+
+	confirm_session('save');
+});
+
+this.confirm_session = function(action) {
+	if (action === 'cancel') {
+		window.location.href = `${strBaseURL}/nokkelbestilling`;
+		return;
+	}
+
+	// Block doubleclick
+	$('#submit').prop('disabled', true);
+	$('#fileupload').prop('disabled', true);
+
+	// Show spinner
+	showSubmissionSpinner();
+
+	try {
+		ajax_submit_form(action);
+	} catch (e) {
+		console.error('Error during AJAX submission:', e);
+		removeSubmissionSpinner();
+		
+		$('#submit').prop('disabled', false);
+		$('#fileupload').prop('disabled', false);
+		
+		alert('Det oppstod en feil ved sending av skjemaet: ' + e.message);
+	}
+};
+
+function showSubmissionSpinner() {
+	var form = document.getElementById('nokkelbestilling');
+	$('<div id="spinner" class="d-flex align-items-center">')
+		.append($('<strong>').text('Lagrer...'))
+		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>'))
+		.insertAfter(form);
+	window.scrollBy(0, 100);
+}
+
+function removeSubmissionSpinner() {
+	var element = document.getElementById('spinner');
+	if (element) {
+		element.parentNode.removeChild(element);
+	}
+}
+
+ajax_submit_form = function(action) {
+	var thisForm = $('#nokkelbestilling');
+	var requestUrl = $(thisForm).attr("action");
+	var formdata = false;
+	
+	if (window.FormData) {
+		try {
+			formdata = new FormData(thisForm[0]);
+		} catch (e) {
+			console.error('FormData error:', e);
+		}
+	}
+
+	$.ajax({
+		cache: false,
+		contentType: false,
+		processData: false,
+		type: 'POST',
+		url: `${requestUrl}?phpgw_return_as=json`,
+		data: formdata ? formdata : thisForm.serialize(),
+		success: function(data, textStatus, jqXHR) {
+			if (data) {
+				if (data.status == "saved") {
+					var id = data.id;
+					
+					if (fileUploader.getPendingCount() === 0) {
+						window.location.href = redirect_action;
+					} else {
+						fileUploader.sendAllFiles(id);
+					}
+				} else {
+					$('#submit').prop('disabled', false);
+					$('#fileupload').prop('disabled', false);
+					removeSubmissionSpinner();
+
+					var error_message = '';
+					$.each(data.message, function(index, error) {
+						error_message += error + "\n";
+					});
+
+					alert(error_message);
+				}
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			console.error('Ajax error:', textStatus, errorThrown);
+			$('#submit').prop('disabled', false);
+			$('#fileupload').prop('disabled', false);
+			removeSubmissionSpinner();
+			
+			alert('Det oppstod en feil ved sending av skjemaet');
+		}
+	});
+};

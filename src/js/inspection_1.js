@@ -1,10 +1,15 @@
-function showDiv(divId, element)
-{
+/**
+ * Inspection form handler
+ * 
+ * Handles form validation, submission and file uploads for inspection form
+ */
+
+// Form-specific utility functions
+function showDiv(divId, element) {
 	document.getElementById(divId).style.display = element.checked == true ? 'block' : 'none';
 }
 
-function handleChangeTilgang(src)
-{
+function handleChangeTilgang(src) {
 	console.log(src.checked);
 	const type_br_slokking_1 = document.getElementById('type_br_slokking_1');
 	const type_br_slokking_2 = document.getElementById('type_br_slokking_2');
@@ -15,8 +20,7 @@ function handleChangeTilgang(src)
 	const rokvarsler_3 = document.getElementById('rokvarsler_3');
 	const rokvarsler_4 = document.getElementById('rokvarsler_4');
 
-	if (src.checked === true)
-	{
+	if (src.checked === true) {
 		type_br_slokking_1.removeAttribute('required');
 		type_br_slokking_2.removeAttribute('required');
 		type_br_slokking_3.removeAttribute('required');
@@ -26,9 +30,7 @@ function handleChangeTilgang(src)
 		rokvarsler_3.removeAttribute('required');
 		rokvarsler_4.removeAttribute('required');
 		document.getElementById('inner_details').style.display = 'none';
-	}
-	else
-	{
+	} else {
 		type_br_slokking_1.setAttribute('required', '');
 		type_br_slokking_2.setAttribute('required', '');
 		type_br_slokking_3.setAttribute('required', '');
@@ -41,26 +43,22 @@ function handleChangeTilgang(src)
 	}
 }
 
-function handleChangeSlukkeutstyr(src)
-{
+function handleChangeSlukkeutstyr(src) {
 	//datestamp
 	const input = document.getElementById('datestamp');
 
-	if (src.value == 2)
-	{
+	if (src.value == 2) {
 		input.removeAttribute('required');
 		document.getElementById('dateblock').style.display = 'none';
-	}
-	else
-	{
+	} else {
 		input.setAttribute('required', '');
 		document.getElementById('dateblock').style.display = 'block';
 	}
 }
 
-var pendingList = 0;
+// Global variables
 var redirect_action = `${strBaseURL}/inspection_1`;
-var file_count = 0;
+var fileUploader = null;
 
 $(document).ready(function() {
 	// Add asterisk to all labels of required fields
@@ -68,16 +66,37 @@ $(document).ready(function() {
 		var id = $(this).attr('id');
 		$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
 	});
+	
+	// Initialize FileUploader component
+	fileUploader = new FileUploader({
+		formId: 'inspection_1',
+		uploadUrl: `${strBaseURL}/inspection_1/upload`,
+		onComplete: function(success) {
+			if (success) {
+				console.log("All uploads completed successfully");
+				window.location.href = redirect_action;
+			} else {
+				console.error("There were errors during file upload");
+				
+				// Show an alert to the user
+				alert('Det oppstod en feil under filopplastingen. Vi omdirigerer deg til hovedsiden om 5 sekunder.');
+				
+				// Wait longer before redirecting to allow user to see errors
+				window.setTimeout(function() {
+					window.location.href = redirect_action;
+				}, 5000);
+			}
+		}
+	});
+	fileUploader.initialize();
 });
 
-$('#inspection_1').on('submit', function (e)
-{
+$('#inspection_1').on('submit', function(e) {
 	e.preventDefault();
 
 	// Check form validity
 	var form = this;
-	if (form.checkValidity() === false)
-	{
+	if (form.checkValidity() === false) {
 		// Find the first visible invalid field and focus it
 		var invalidFields = $(form).find(':invalid').filter(':visible');
 		
@@ -107,11 +126,9 @@ $('#inspection_1').on('submit', function (e)
 	confirm_session('save');
 });
 
-this.confirm_session = function (action)
-{
-	if (action === 'cancel')
-	{
-		window.location.href = `${strBaseURL}/inspection_1`;
+this.confirm_session = function(action) {
+	if (action === 'cancel') {
+		window.location.href = redirect_action;
 		return;
 	}
 
@@ -127,12 +144,9 @@ this.confirm_session = function (action)
 		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>')).insertAfter(form);
 	window.scrollBy(0, 100);
 
-	try
-	{
+	try {
 		ajax_submit_form(action);
-	}
-	catch (e)
-	{
+	} catch (e) {
 		console.error('Error during AJAX submission:', e);
 		$('#submit').prop('disabled', false);
 		$('#fileupload').prop('disabled', false);
@@ -146,19 +160,14 @@ this.confirm_session = function (action)
 	}
 };
 
-ajax_submit_form = function (action)
-{
+ajax_submit_form = function(action) {
 	var thisForm = $('#inspection_1');
 	var requestUrl = $(thisForm).attr("action");
 	var formdata = false;
-	if (window.FormData)
-	{
-		try
-		{
+	if (window.FormData) {
+		try {
 			formdata = new FormData(thisForm[0]);
-		}
-		catch (e)
-		{
+		} catch (e) {
 			console.error('FormData error:', e);
 		}
 	}
@@ -170,37 +179,27 @@ ajax_submit_form = function (action)
 		type: 'POST',
 		url: `${requestUrl}?phpgw_return_as=json`,
 		data: formdata ? formdata : thisForm.serialize(),
-		success: function (data, textStatus, jqXHR)
-		{
-			if (data)
-			{
-				if (data.status == "saved")
-				{
+		success: function(data, textStatus, jqXHR) {
+			if (data) {
+				if (data.status == "saved") {
 					var id = data.id;
 					
-					if (pendingList === 0)
-					{
+					if (fileUploader.getPendingCount() === 0) {
 						window.location.href = redirect_action;
+					} else {
+						fileUploader.sendAllFiles(id);
 					}
-					else
-					{
-						sendAllFiles(id);
-					}
-				}
-				else
-				{
+				} else {
 					$('#submit').prop('disabled', false);
 					$('#fileupload').prop('disabled', false);
 
 					var element = document.getElementById('spinner');
-					if (element)
-					{
+					if (element) {
 						element.parentNode.removeChild(element);
 					}
 
 					var error_message = '';
-					$.each(data.message, function (index, error)
-					{
+					$.each(data.message, function(index, error) {
 						error_message += error + "\n";
 					});
 
@@ -222,147 +221,3 @@ ajax_submit_form = function (action)
 		}
 	});
 };
-
-$(document).ready(function ()
-{
-	formatFileSize = function (bytes)
-	{
-		if (typeof bytes !== 'number')
-		{
-			return '';
-		}
-		if (bytes >= 1000000000)
-		{
-			return (bytes / 1000000000).toFixed(2) + ' GB';
-		}
-		if (bytes >= 1000000)
-		{
-			return (bytes / 1000000).toFixed(2) + ' MB';
-		}
-		return (bytes / 1000).toFixed(2) + ' KB';
-	};
-
-	sendAllFiles = function (id)
-	{
-		$('#fileupload').fileupload(
-			'option',
-			'url',
-			`${strBaseURL}/inspection_1/upload?id=${id}`
-		);
-
-		$.each($('.start_file_upload'), function (index, file_start)
-		{
-			file_start.click();
-		});
-	};
-
-	$('#fileupload').fileupload({
-		dropZone: $('#drop-area'),
-		uploadTemplateId: null,
-		downloadTemplateId: null,
-		autoUpload: false,
-		add: function (e, data)
-		{
-			$.each(data.files, function (index, file)
-			{
-				var file_size = formatFileSize(file.size);
-
-				data.context = $('<p class="file">')
-					.append($('<span>').text(data.files[0].name + ' ' + file_size))
-					.appendTo($(".content_upload_download"))
-					.append($('<button type="button" class="start_file_upload" style="display:none">start</button>')
-						.click(function ()
-						{
-							data.submit();
-						}));
-
-				pendingList++;
-				$("#files-count").html(pendingList);
-			});
-		},
-		progress: function (e, data)
-		{
-			var progress = parseInt((data.loaded / data.total) * 100, 10);
-			data.context.css("background-position-x", 100 - progress + "%");
-		},
-		done: function (e, data)
-		{
-			file_count++;
-
-			var result = data.result;
-			var error = false;
-			var error_message = '';
-
-			if (typeof (result.files) !== 'undefined')
-			{
-				error_message = result.files[0].error;
-			}
-			else
-			{
-				error_message = 'Noe gikk galt med filopplastingen';
-			}
-
-			if (error_message)
-			{
-				data.context
-					.removeClass("file")
-					.addClass("error")
-					.append($('<span>').text(' Error: ' + error_message));
-				error = true;
-			}
-			else
-			{
-				data.context.addClass("done");
-			}
-
-			if (!error && file_count === pendingList)
-			{
-				window.location.href = redirect_action;
-			}
-			else if (file_count === pendingList)
-			{
-				window.setTimeout(function ()
-				{
-					window.location.href = redirect_action;
-				}, 1000);
-			}
-		},
-		fail: function (e, data)
-		{
-			pendingList--;
-			data.context
-				.removeClass("file")
-				.addClass("error")
-				.append($('<span>').text(' Error: Failed to upload'));
-		},
-		limitConcurrentUploads: 1,
-		maxChunkSize: 8388000
-	});
-
-	// Drag and drop handling
-	$(document).bind('dragover', function (e)
-	{
-		var dropZone = $('#drop-area'),
-			timeout = window.dropZoneTimeout;
-		if (timeout)
-		{
-			clearTimeout(timeout);
-		}
-		else
-		{
-			dropZone.addClass('in');
-		}
-		var hoveredDropZone = $(e.target).closest(dropZone);
-		dropZone.toggleClass('hover', hoveredDropZone.length);
-		window.dropZoneTimeout = setTimeout(function ()
-		{
-			window.dropZoneTimeout = null;
-			dropZone.removeClass('in hover');
-		}, 100);
-	});
-
-	$(document).bind('drop dragover', function (e)
-	{
-		e.preventDefault();
-	});
-});

@@ -2,7 +2,6 @@
 
 use DI\ContainerBuilder;
 use Slim\Factory\AppFactory;
-use DI\Bridge\Slim\Bridge;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -83,7 +82,7 @@ $containerBuilder->addDefinitions([
 			$container->get(\App\Service\ApiClient::class)
 		);
 	},
-	
+
 	\App\Controller\HelpdeskController::class => function ($container)
 	{
 		return new \App\Controller\HelpdeskController(
@@ -104,8 +103,12 @@ $containerBuilder->addDefinitions([
 // Build PHP-DI Container instance
 $container = $containerBuilder->build();
 
-// Create App instance
-$app = Bridge::create($container);
+// Set container to create App from AppFactory instead of Bridge
+AppFactory::setContainer($container);
+$app = AppFactory::create();
+
+// Add routing middleware (needed for AppFactory)
+$app->addRoutingMiddleware();
 
 // Add error handling middleware
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
@@ -119,7 +122,6 @@ $app->add(function (Request $request, $handler)
 		->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
 		->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
-
 
 // Define debug route
 $app->get('/debug', function (Request $request, Response $response) use ($container)

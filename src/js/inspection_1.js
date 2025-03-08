@@ -3,7 +3,6 @@ function showDiv(divId, element)
 	document.getElementById(divId).style.display = element.checked == true ? 'block' : 'none';
 }
 
-
 function handleChangeTilgang(src)
 {
 	console.log(src.checked);
@@ -60,15 +59,48 @@ function handleChangeSlukkeutstyr(src)
 }
 
 var pendingList = 0;
-var redirect_action;
+var redirect_action = `${strBaseURL}/inspection_1`;
 var file_count = 0;
+
+$(document).ready(function() {
+	// Add asterisk to all labels of required fields
+	$('form :required').each(function() {
+		var id = $(this).attr('id');
+		$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
+	});
+});
 
 $('#inspection_1').on('submit', function (e)
 {
 	e.preventDefault();
 
-	if ($('#inspection_1').get(0).checkValidity() === false)
+	// Check form validity
+	var form = this;
+	if (form.checkValidity() === false)
 	{
+		// Find the first visible invalid field and focus it
+		var invalidFields = $(form).find(':invalid').filter(':visible');
+		
+		if (invalidFields.length > 0) {
+			// Focus on first visible invalid field
+			invalidFields[0].focus();
+			// Scroll element into view if needed
+			invalidFields[0].scrollIntoView({behavior: 'smooth', block: 'center'});
+		} else {
+			// If no visible invalid fields, check if there are any hidden invalid fields
+			var hiddenInvalidFields = $(form).find(':invalid:not(:visible)');
+			if (hiddenInvalidFields.length > 0) {
+				// Try to find and show the container of the hidden field
+				var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
+				if (container.length > 0) {
+					container.show();
+					// After showing container, try to focus the field
+					setTimeout(function() {
+						hiddenInvalidFields[0].focus();
+					}, 100);
+				}
+			}
+		}
 		return false;
 	}
 
@@ -79,7 +111,7 @@ this.confirm_session = function (action)
 {
 	if (action === 'cancel')
 	{
-		window.location.href = phpGWLink('index.php', {menuaction: 'enkel_klient.inspection_1.display_form'});
+		window.location.href = `${strBaseURL}/inspection_1`;
 		return;
 	}
 
@@ -93,19 +125,25 @@ this.confirm_session = function (action)
 	$('<div id="spinner" class="d-flex align-items-center">')
 		.append($('<strong>').text('Lagrer...'))
 		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>')).insertAfter(form);
-	window.scrollBy(0, 100); //
+	window.scrollBy(0, 100);
 
-//	document.getElementById(action).value = 1;
 	try
 	{
-		validate_submit();
+		ajax_submit_form(action);
 	}
 	catch (e)
 	{
-		ajax_submit_form(action);
-//						document.form.submit();
+		console.error('Error during AJAX submission:', e);
+		$('#submit').prop('disabled', false);
+		$('#fileupload').prop('disabled', false);
+		
+		var element = document.getElementById('spinner');
+		if (element) {
+			element.parentNode.removeChild(element);
+		}
+		
+		alert('Det oppstod en feil ved sending av skjemaet: ' + e.message);
 	}
-
 };
 
 ajax_submit_form = function (action)
@@ -121,7 +159,7 @@ ajax_submit_form = function (action)
 		}
 		catch (e)
 		{
-
+			console.error('FormData error:', e);
 		}
 	}
 
@@ -130,7 +168,7 @@ ajax_submit_form = function (action)
 		contentType: false,
 		processData: false,
 		type: 'POST',
-		url: requestUrl + '&phpgw_return_as=json',
+		url: `${requestUrl}?phpgw_return_as=json`,
 		data: formdata ? formdata : thisForm.serialize(),
 		success: function (data, textStatus, jqXHR)
 		{
@@ -139,8 +177,7 @@ ajax_submit_form = function (action)
 				if (data.status == "saved")
 				{
 					var id = data.id;
-
-					redirect_action = phpGWLink('index.php', {menuaction: 'enkel_klient.inspection_1.display_form'});
+					
 					if (pendingList === 0)
 					{
 						window.location.href = redirect_action;
@@ -170,15 +207,24 @@ ajax_submit_form = function (action)
 					alert(error_message);
 				}
 			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			console.error('Ajax error:', textStatus, errorThrown);
+			$('#submit').prop('disabled', false);
+			$('#fileupload').prop('disabled', false);
+			
+			var element = document.getElementById('spinner');
+			if (element) {
+				element.parentNode.removeChild(element);
+			}
+			
+			alert('Det oppstod en feil ved sending av skjemaet');
 		}
 	});
 };
 
-
-
 $(document).ready(function ()
 {
-
 	formatFileSize = function (bytes)
 	{
 		if (typeof bytes !== 'number')
@@ -196,15 +242,13 @@ $(document).ready(function ()
 		return (bytes / 1000).toFixed(2) + ' KB';
 	};
 
-
 	sendAllFiles = function (id)
 	{
-
 		$('#fileupload').fileupload(
 			'option',
 			'url',
-			phpGWLink('index.php', {menuaction: 'enkel_klient.inspection_1.handle_multi_upload_file', id: id})
-			);
+			`${strBaseURL}/inspection_1/upload?id=${id}`
+		);
 
 		$.each($('.start_file_upload'), function (index, file_start)
 		{
@@ -223,16 +267,6 @@ $(document).ready(function ()
 			{
 				var file_size = formatFileSize(file.size);
 
-//				if (file.size > 8388000)
-//				{
-//					alert("Filen \"" + data.files[0].name + "\" er for stor! Max 8 MB");
-//
-//					data.context = $('<p class="file error">')
-//						.append($('<span>').text(data.files[0].name + ' ' + file_size))
-//						.appendTo($(".content_upload_download"));
-//					return;
-//				}
-
 				data.context = $('<p class="file">')
 					.append($('<span>').text(data.files[0].name + ' ' + file_size))
 					.appendTo($(".content_upload_download"))
@@ -243,11 +277,8 @@ $(document).ready(function ()
 						}));
 
 				pendingList++;
-
 				$("#files-count").html(pendingList);
-
 			});
-
 		},
 		progress: function (e, data)
 		{
@@ -260,7 +291,6 @@ $(document).ready(function ()
 
 			var result = data.result;
 			var error = false;
-
 			var error_message = '';
 
 			if (typeof (result.files) !== 'undefined')
@@ -282,8 +312,7 @@ $(document).ready(function ()
 			}
 			else
 			{
-				data.context
-					.addClass("done");
+				data.context.addClass("done");
 			}
 
 			if (!error && file_count === pendingList)
@@ -297,12 +326,20 @@ $(document).ready(function ()
 					window.location.href = redirect_action;
 				}, 1000);
 			}
-
+		},
+		fail: function (e, data)
+		{
+			pendingList--;
+			data.context
+				.removeClass("file")
+				.addClass("error")
+				.append($('<span>').text(' Error: Failed to upload'));
 		},
 		limitConcurrentUploads: 1,
 		maxChunkSize: 8388000
 	});
 
+	// Drag and drop handling
 	$(document).bind('dragover', function (e)
 	{
 		var dropZone = $('#drop-area'),
@@ -328,5 +365,4 @@ $(document).ready(function ()
 	{
 		e.preventDefault();
 	});
-
 });

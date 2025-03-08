@@ -28,7 +28,7 @@ trait UtilityTrait
      */
     protected static function get_route_url(string $route, array $params = []): string
     {
-        $url = self::current_site_url() . $route;
+        $url = self::current_site_url() . '/' . ltrim($route, '/');
         
         if (!empty($params)) {
             $url .= '?' . http_build_query($params);

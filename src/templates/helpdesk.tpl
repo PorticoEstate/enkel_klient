@@ -85,7 +85,7 @@
 
 				</fieldset>
 
-				<div id="details" {if !$location_code}style="display: none;"{/if}>
+				<div id="details">
 					<fieldset>
 							<div class="form-group mt-2">
 								<label for="subject">Overskrift</label>
@@ -107,10 +107,7 @@
 	<script>
 		function refresh_form()
 		{
-			{literal}
-				var strURL = phpGWLink('index.php', {menuaction:'enkel_klient.helpdesk.display_form'});
-			{/literal}
-			window.location.replace(strURL);
+			window.location.replace(`{$str_base_url}/helpdesk`);
 		}
 		var schema = 'helpdesk';
 	</script>

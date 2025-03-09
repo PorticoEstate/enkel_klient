@@ -6,5 +6,4 @@ chown -R www-data:www-data /var/log/apache2
 
 /usr/local/bin/docker-php-entrypoint
 cd /var/www/html
-composer update
 /usr/local/bin/apache2-foreground

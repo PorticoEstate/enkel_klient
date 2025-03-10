@@ -1,0 +1,15 @@
+{
+  "brace_style": "allman",
+  "indent_with_tabs": true,
+  "indent_size": 4,
+  "jslint_happy": false,
+  "end_with_newline": true,
+  "preserve_newlines": true,
+  "keep_array_indentation": true,
+  "break_chained_methods": false,
+  "space_before_conditional": true,
+  "unescape_strings": false,
+  "e4x": false,
+  "wrap_line_length": 0,
+  "comma_first": false
+}

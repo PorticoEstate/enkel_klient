@@ -2,9 +2,12 @@
 const autoCompleteJS = new autoComplete({
 	selector: "#location_name",
 	data: {
-		src: async (query) => {
-			if (query.length > 3) {
-				try {
+		src: async (query) =>
+		{
+			if (query.length > 3)
+			{
+				try
+				{
 					// Loading placeholder text
 					document
 						.getElementById("location_name")
@@ -19,7 +22,8 @@ const autoCompleteJS = new autoComplete({
 						}
 					});
 
-					if (!response.ok) {
+					if (!response.ok)
+					{
 						throw new Error(`HTTP error! status: ${response.status}`);
 					}
 
@@ -31,7 +35,8 @@ const autoCompleteJS = new autoComplete({
 						.setAttribute("placeholder", autoCompleteJS.placeHolder);
 
 					return data;
-				} catch (error) {
+				} catch (error)
+				{
 					console.error('Error fetching locations:', error);
 					return [];
 				}
@@ -40,22 +45,27 @@ const autoCompleteJS = new autoComplete({
 		},
 		keys: ["name"],
 		cache: false,
-		filter: (list) => {
+		filter: (list) =>
+		{
 			// Filter duplicates
 			return Array.from(
 				new Set(list.map((value) => value.match))
-			).map((name) => {
+			).map((name) =>
+			{
 				return list.find((value) => value.match === name);
 			});
 		}
 	},
 	placeHolder: "Søk etter adresse, minst 4 tegn",
 	resultsList: {
-		element: (list, data) => {
+		element: (list, data) =>
+		{
 			const info = document.createElement("p");
-			if (data.results.length > 0) {
+			if (data.results.length > 0)
+			{
 				info.innerHTML = `Viser <strong>${data.results.length}</strong> av <strong>${data.matches.length}</strong> resultater`;
-			} else {
+			} else
+			{
 				info.innerHTML = `Fant <strong>${data.matches.length}</strong> resultater for <strong>"${data.query}"</strong>`;
 			}
 			list.prepend(info);
@@ -65,7 +75,8 @@ const autoCompleteJS = new autoComplete({
 		tabSelect: true
 	},
 	resultItem: {
-		element: (item, data) => {
+		element: (item, data) =>
+		{
 			item.style = "display: flex; justify-content: space-between;";
 			item.innerHTML = `
 				<span style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
@@ -79,14 +90,17 @@ const autoCompleteJS = new autoComplete({
 	},
 	events: {
 		input: {
-			selection: (event) => {
+			selection: (event) =>
+			{
 				const selection = event.detail.selection.value;
 				autoCompleteJS.input.value = selection.name;
 				document.getElementById("location_code").value = selection.id;
 				document.getElementById('details').style.display = 'block';
 			},
-			focus: () => {
-				if (autoCompleteJS.input.value.length) {
+			focus: () =>
+			{
+				if (autoCompleteJS.input.value.length)
+				{
 					autoCompleteJS.start();
 				}
 			}
@@ -95,22 +109,27 @@ const autoCompleteJS = new autoComplete({
 });
 
 // Blur/unBlur page elements
-const togglePageBlur = (action) => {
+const togglePageBlur = (action) =>
+{
 	const elements = {
 		title: document.querySelector("h1"),
 		selection: document.querySelector(".selection")
 	};
 
-	Object.values(elements).forEach(element => {
-		if (element) {
+	Object.values(elements).forEach(element =>
+	{
+		if (element)
+		{
 			element.style.opacity = action === "dim" ? 1 : 0.3;
 		}
 	});
 };
 
 // Add event listeners for focus/blur
-["focus", "blur"].forEach((eventType) => {
-	autoCompleteJS.input.addEventListener(eventType, () => {
+["focus", "blur"].forEach((eventType) =>
+{
+	autoCompleteJS.input.addEventListener(eventType, () =>
+	{
 		togglePageBlur(eventType === "blur" ? "dim" : "light");
 	});
 });

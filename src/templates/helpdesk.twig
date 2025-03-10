@@ -1,176 +1,174 @@
-{# filepath: /home/hc483/enkel_klient/src/templates/helpdesk.twig #}
 {% extends 'head.twig' %}
 
 {% block body %}
-    <script src="vendor/components/jquery/jquery.min.js?n={{ cache_refresh_token }}"></script>
-    <!-- Main Quill library -->
-    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-    <script src="src/js/quill-textarea.js"></script>
+	<script src="vendor/components/jquery/jquery.min.js?n={{ cache_refresh_token }}"></script>
+	<!-- Main Quill library -->
+	<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+	<script src="src/js/quill-textarea.js"></script>
 
-    <!-- Theme included stylesheets -->
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-    <link href="src/js/file-upload/css/jquery.fileupload.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
-    <link href="src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
-    <link href="src/js/file-upload/css/jquery.fileupload-custom.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+	<!-- Theme included stylesheets -->
+	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+	<link href="src/js/file-upload/css/jquery.fileupload-custom.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 
-    <style>
-        .ql-container {
-            height: 300px;
-        }
-        
-        .error {
-            background-color: #fcc;
-            border: 1px solid #f00;
-            color: #c10000;
-        }
-        
-        .file {
-            position: relative;
-            background: linear-gradient(to right, lightblue 50%, transparent 50%);
-            background-size: 200% 100%;
-            background-position: right bottom;
-            transition: all 1s ease;
-        }
-        
-        .file.done {
-            background: lightgreen;
-        }
-    </style>
+	<style>
+		.ql-container {
+			height: 300px;
+		}
 
-    <div class="container">
-        <h1>{{ config.helpdesk.form_header }}</h1>
+		.error {
+			background-color: #fcc;
+			border: 1px solid #f00;
+			color: #c10000;
+		}
 
-        {% if saved == 1 %}
-            <div class="alert alert-success">
-                <p>Saken er registrert og har fått referanse #{{ id }}</p>
-            </div>
-            <button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">Lag ny registrering</button>
-        {% else %}
-            {% if error|length > 0 %}
-                <div class="alert alert-danger alert-dismissible">
-                    {% for message in error %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>{{ config.helpdesk.form_info|raw }}</p>
-            {% endif %}
+		.file {
+			position: relative;
+			background: linear-gradient(to right, lightblue 50%, transparent 50%);
+			background-size: 200% 100%;
+			background-position: right bottom;
+			transition: all 1s ease;
+		}
 
-            <form method="post" action="{{ action_url }}" enctype="multipart/form-data">
-                <input type="hidden" value="{{ rand }}" name="randcheck" />
-                <fieldset>
-                    {% if user_name %}
-                        <p>Navn: {{ user_name }}</p>
-                    {% endif %}
+		.file.done {
+			background: lightgreen;
+		}
+	</style>
 
-                    {% if location_code %}
-                        <div class="form-group mt-2">
-                            <label for="location_name">
-                                Adresse
-                            </label>
-                            <span class="form-control">{{ address }}</span>
-                            <input type="hidden" id="location_code" name="location_code" value="{{ location_code }}">
-                            <input type="hidden" id="address" name="address" value="{{ address }}">
-                            <input type="hidden" id="user_name" name="user_name" value="{{ user_name }}">
-                        </div>
-                    {% else %}
-                        <div class="form-group mt-2">
-                            <label for="location_name">
-                                <i class="fas fa-search"></i>
-                                Adresse
-                            </label>
-                            <input type="text" id="location_name" name="location_name" tabindex="1" class="form-control"
-                                autocomplete="off" required="required" />
-                            <div class="selection"></div>
-                            <input type="hidden" id="location_code" name="location_code">
-                        </div>
-                    {% endif %}
+	<div class="container">
+		<h1>{{ config.helpdesk.form_header }}</h1>
 
-                    <div class="form-group mt-2">
-                        <label for="phone">Telefon/Mobil</label>
-                        <small id="contact_infoHelpPhone" class="form-text text-muted">Her legger du inn telefonnummeret til den EBF skal ta kontakt med.</small>
-                        <input type="text" id="phone" name="phone" tabindex="2" class="form-control"
-                            autocomplete="off" required="required" />
-                    </div>
-                    <!--email-->
-                    <div class="form-group mt-2">
-                        <label for="email">E-post</label>
-                        <small id="contact_infoHelpEmail" class="form-text text-muted">Her legger du inn E-post til den EBF skal ta kontakt med.</small>
-                        <input type="email" id="email" name="email" tabindex="3" class="form-control"
-                            autocomplete="off" required="required" />
-                    </div>
-                </fieldset>
+		{% if saved == 1 %}
+			<div class="alert alert-success">
+				<p>Saken er registrert og har fått referanse #{{ id }}</p>
+			</div>
+			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">Lag ny registrering</button>
+		{% else %}
+			{% if error|length > 0 %}
+				<div class="alert alert-danger alert-dismissible">
+					{% for message in error %}
+						<p>{{ message }}</p>
+					{% endfor %}
+				</div>
+			{% else %}
+				<p>{{ config.helpdesk.form_info|raw }}</p>
+			{% endif %}
 
-                <div id="details">
-                    <fieldset>
-                        <div class="form-group mt-2">
-                            <label for="subject">Overskrift</label>
-                            <small id="subjectHelp" class="form-text text-muted">Her legger du inn hva saken gjelder.</small>
-                            <input type="text" class="form-control" id="title" name="subject" value="{{ subject }}"
-                                aria-describedby="subjectHelp" required="required">
-                        </div>
-                        <div class="form-group mt-4">
-                            <label for="message">Melding</label>
-                            <textarea class="form-control" id="message" name="message" required="required">{{ message }}</textarea>
-                        </div>
-                        
-                        {% if enable_fileupload == 1 %}
-                            <div class="form-group mt-4">
-                                <label>Last opp fil</label>
-                                <div id="drop-area">
-                                    <div style="border: 2px dashed #ccc; padding: 20px;">
-                                        <p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene direkte.</p>
-                                        <div class="fileupload-buttonbar">
-                                            <div class="fileupload-buttons">
-                                                <span class="fileinput-button btn btn-success">
-                                                    <i class="fas fa-plus"></i>
-                                                    <span>Legg til filer...</span>
-                                                    <input id="fileupload" type="file" name="files[]" multiple="" data-url="">
-                                                </span>
-                                                <span class="fileupload-process"></span>
-                                            </div>
-                                            <div class="fileupload-count">
-                                                Antall filer: <span id="files-count">0</span>
-                                            </div>
-                                            <div class="fileupload-progress" style="display:none">
-                                                <div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-                                                <div class="progress-extended"></div>
-                                            </div>
-                                        </div>
-                                        <div class="content_upload_download">
-                                            <div class="presentation files" style="display: inline-table;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endif %}
-                        
-                        <button type="submit" class="btn btn-primary mt-4">Send</button>
-                    </fieldset>
-                </div>
-            </form>
-        {% endif %}
-    </div>
+			<form method="post" action="{{ action_url }}" enctype="multipart/form-data">
+				<input type="hidden" value="{{ rand }}" name="randcheck"/>
+				<fieldset>
+					{% if user_name %}
+						<p>Navn:
+							{{ user_name }}</p>
+					{% endif %}
 
-    <script>
-        function refresh_form() {
-            window.location.replace(`{{ str_base_url }}/helpdesk`);
-        }
-        var schema = 'helpdesk';
-    </script>
+					{% if location_code %}
+						<div class="form-group mt-2">
+							<label for="location_name">
+								Adresse
+							</label>
+							<span class="form-control">{{ address }}</span>
+							<input type="hidden" id="location_code" name="location_code" value="{{ location_code }}">
+							<input type="hidden" id="address" name="address" value="{{ address }}">
+							<input type="hidden" id="user_name" name="user_name" value="{{ user_name }}">
+						</div>
+					{% else %}
+						<div class="form-group mt-2">
+							<label for="location_name">
+								<i class="fas fa-search"></i>
+								Adresse
+							</label>
+							<input type="text" id="location_name" name="location_name" tabindex="1" class="form-control" autocomplete="off" required="required"/>
+							<div class="selection"></div>
+							<input type="hidden" id="location_code" name="location_code">
+						</div>
+					{% endif %}
 
-    {% if saved != 1 %}
-        <script src="src/js/autocomplete/autoComplete.js?n={{ cache_refresh_token }}"></script>
-        {% if not location_code %}
-            <script src="src/js/location.js?n={{ cache_refresh_token }}"></script>
-        {% endif %}
-        
-        {% if enable_fileupload == 1 %}
-            <script src="src/js/jquery-ui-1.13.1.min.js?n={{ cache_refresh_token }}"></script>
-            <script src="src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
-            <script src="src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
-            <script src="src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
-            <script src="src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
-        {% endif %}
-    {% endif %}
+					<div class="form-group mt-2">
+						<label for="phone">Telefon/Mobil</label>
+						<small id="contact_infoHelpPhone" class="form-text text-muted">Her legger du inn telefonnummeret til den EBF skal ta kontakt med.</small>
+						<input type="text" id="phone" name="phone" tabindex="2" class="form-control" autocomplete="off" required="required"/>
+					</div>
+					<!--email-->
+					<div class="form-group mt-2">
+						<label for="email">E-post</label>
+						<small id="contact_infoHelpEmail" class="form-text text-muted">Her legger du inn E-post til den EBF skal ta kontakt med.</small>
+						<input type="email" id="email" name="email" tabindex="3" class="form-control" autocomplete="off" required="required"/>
+					</div>
+				</fieldset>
+
+				<div id="details">
+					<fieldset>
+						<div class="form-group mt-2">
+							<label for="subject">Overskrift</label>
+							<small id="subjectHelp" class="form-text text-muted">Her legger du inn hva saken gjelder.</small>
+							<input type="text" class="form-control" id="title" name="subject" tabindex="5" value="{{ subject }}" aria-describedby="subjectHelp" required="required">
+						</div>
+						<div class="form-group mt-4">
+							<label for="message">Melding</label>
+							<textarea class="form-control" id="message" name="message" tabindex="6" required="required">{{ message }}</textarea>
+						</div>
+
+						{% if enable_fileupload == 1 %}
+							<div class="form-group mt-4">
+								<label>Last opp fil</label>
+								<div id="drop-area">
+									<div style="border: 2px dashed #ccc; padding: 20px;">
+										<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene direkte.</p>
+										<div class="fileupload-buttonbar">
+											<div class="fileupload-buttons">
+												<span class="fileinput-button btn btn-success">
+													<i class="fas fa-plus"></i>
+													<span>Legg til filer...</span>
+													<input id="fileupload" type="file" name="files[]" multiple="" data-url="">
+												</span>
+												<span class="fileupload-process"></span>
+											</div>
+											<div class="fileupload-count">
+												Antall filer:
+												<span id="files-count">0</span>
+											</div>
+											<div class="fileupload-progress" style="display:none">
+												<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+												<div class="progress-extended"></div>
+											</div>
+										</div>
+										<div class="content_upload_download">
+											<div class="presentation files" style="display: inline-table;"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+						{% endif %}
+
+						<button type="submit" class="btn btn-primary mt-4">Send</button>
+					</fieldset>
+				</div>
+			</form>
+		{% endif %}
+	</div>
+
+	<script>
+		function refresh_form() {
+window.location.replace(`{{ str_base_url }}/helpdesk`);
+}
+var schema = 'helpdesk';
+	</script>
+
+	{% if saved != 1 %}
+		<script src="src/js/autocomplete/autoComplete.js?n={{ cache_refresh_token }}"></script>
+		{% if not location_code %}
+			<script src="src/js/location.js?n={{ cache_refresh_token }}"></script>
+		{% endif %}
+
+		{% if enable_fileupload == 1 %}
+			<script src="src/js/jquery-ui-1.13.1.min.js?n={{ cache_refresh_token }}"></script>
+			<script src="src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
+			<script src="src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
+			<script src="src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
+			<script src="src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
+			<script src="src/js/helpdesk.js?n={{ cache_refresh_token }}"></script>
+		{% endif %}
+	{% endif %}
 {% endblock %}

@@ -17,9 +17,15 @@ function FileUploader(config) {
 
 	let pendingList = 0;
 	let file_count = 0;
+	let uploaded_count = 0; // Track actual upload completions
 	let initialized = false;
 	let currentUrl = settings.uploadUrl;
 	const $fileInput = $(`#${settings.fileInputId}`);
+	
+	// Track uploads for sequential processing
+	let isProcessingUploads = false;
+	let uploadQueue = [];
+	let hasUploadErrors = false;
 
 	// Private methods
 	const formatFileSize = function(bytes) {
@@ -39,6 +45,11 @@ function FileUploader(config) {
 		// Store the target URL
 		currentUrl = `${settings.uploadUrl}?id=${id}`;
 		console.log("Setting upload URL to:", currentUrl);
+		
+		// Reset tracking variables
+		file_count = 0;
+		uploaded_count = 0;
+		hasUploadErrors = false;
 		
 		// Make sure the plugin is initialized
 		if (!initialized || !$fileInput.data('blueimp-fileupload')) {
@@ -62,15 +73,66 @@ function FileUploader(config) {
 			console.error("Error setting fileupload URL:", e);
 		}
 		
-		// Trigger uploads
-		triggerUploads();
+		// Build the upload queue - important to capture all files
+		uploadQueue = [];
+		$('.start_file_upload').each(function() {
+			uploadQueue.push($(this));
+		});
+		
+		console.log(`Starting sequential upload of ${uploadQueue.length} files to ${currentUrl}`);
+		
+		if (uploadQueue.length === 0) {
+			// No files to upload
+			console.log("No files to upload");
+			if (typeof settings.onComplete === 'function') {
+				settings.onComplete(true);
+			}
+			return;
+		}
+		
+		// Start sequential processing
+		isProcessingUploads = true;
+		processNextUpload();
 	};
 	
-	const triggerUploads = function() {
-		console.log("Triggering file uploads to:", currentUrl);
-		$('.start_file_upload').each(function(index) {
-			$(this).click();
-		});
+	const processNextUpload = function() {
+		if (uploadQueue.length === 0) {
+			console.log(`All ${pendingList} files have been queued for upload.`);
+			return;
+		}
+		
+		// Get and remove the first button from the queue
+		const $button = uploadQueue.shift();
+		
+		// Start the upload by clicking the button
+		try {
+			console.log(`Starting upload ${file_count + 1} of ${pendingList}`);
+			$button.click();
+			file_count++;
+		} catch (e) {
+			console.error("Error starting upload:", e);
+			// Try next file
+			if (uploadQueue.length > 0) {
+				setTimeout(processNextUpload, 100);
+			} else {
+				checkAllUploadsComplete();
+			}
+		}
+	};
+	
+	const checkAllUploadsComplete = function() {
+		console.log(`Checking completion: uploaded ${uploaded_count}/${pendingList}, queued: ${file_count}`);
+		
+		// Only call onComplete when all files are truly done uploading
+		if (uploaded_count >= pendingList && typeof settings.onComplete === 'function') {
+			console.log(`All files processed: ${uploaded_count}/${pendingList}, success = ${!hasUploadErrors}`);
+			isProcessingUploads = false;
+			
+			// Use setTimeout to ensure this runs after all other pending operations
+			setTimeout(function() {
+				settings.onComplete(!hasUploadErrors);
+			}, 100);
+		}
 	};
 
 	const setupDragAndDrop = function() {
@@ -130,6 +192,7 @@ function FileUploader(config) {
 				uploadTemplateId: null,
 				downloadTemplateId: null,
 				autoUpload: false,
+				sequentialUploads: true, // Ensure sequential processing
 				add: function(e, data) {
 					console.log("File added, will upload to:", currentUrl || settings.uploadUrl);
 					// Override URL for each upload to ensure it's correct
@@ -169,8 +232,8 @@ function FileUploader(config) {
 					data.context.css("background-position-x", 100 - progress + "%");
 				},
 				done: function(e, data) {
-					file_count++;
-					console.log("Upload completed, response:", data.result);
+					uploaded_count++; // Track actual completed uploads
+					console.log(`Upload ${uploaded_count}/${pendingList} completed, response:`, data.result);
 
 					const result = data.result;
 					let error = false;
@@ -222,6 +285,9 @@ function FileUploader(config) {
 							.addClass("error")
 							.append($('<span>').text(' Error: ' + error_message));
 
+						// Track errors for final callback
+						hasUploadErrors = true;
+						
 						// Re-add required validation if upload fails
 						pendingList--;
 						if (settings.required && pendingList === 0) {
@@ -230,16 +296,22 @@ function FileUploader(config) {
 					} else {
 						data.context.addClass("done");
 					}
-
-					// Check if all files are processed and call completion callback
-					if (file_count >= pendingList && typeof settings.onComplete === 'function') {
-						console.log("All files processed, calling onComplete with success =", !error);
-						settings.onComplete(!error);
+					
+					// Process the next file in the queue if sequential uploads are in progress
+					if (isProcessingUploads && uploadQueue.length > 0) {
+						// Process next file with a small delay to prevent UI locking
+						setTimeout(processNextUpload, 100);
+					} else {
+						// Check if all uploads are done
+						checkAllUploadsComplete();
 					}
 				},
 				fail: function(e, data) {
 					console.error("Upload failed:", data.url, data.errorThrown);
+					uploaded_count++; // Count failed uploads in completion tracking
 					pendingList--;
+					hasUploadErrors = true;
+					
 					data.context
 						.removeClass("file")
 						.addClass("error")
@@ -247,6 +319,13 @@ function FileUploader(config) {
 					
 					if (settings.required && pendingList === 0) {
 						$fileInput.attr('required', 'required');
+					}
+					
+					// Continue with next file despite error
+					if (isProcessingUploads && uploadQueue.length > 0) {
+						setTimeout(processNextUpload, 100);
+					} else {
+						checkAllUploadsComplete();
 					}
 				},
 				limitConcurrentUploads: 1,
@@ -266,18 +345,23 @@ function FileUploader(config) {
 	return {
 		initialize: initialize,
 		sendAllFiles: sendAllFiles,
-		getPendingCount: function() {
+		getPendingCount: function ()
+		{
 			return pendingList;
 		},
-		getFileCount: function() {
+		getFileCount: function ()
+		{
 			return file_count;
 		},
-		resetCounts: function() {
+		resetCounts: function ()
+		{
 			pendingList = 0;
 			file_count = 0;
+			uploaded_count = 0;
 			$(`#${settings.counterId}`).html(pendingList);
 		},
-		isInitialized: function() {
+		isInitialized: function ()
+		{
 			return initialized;
 		}
 	};

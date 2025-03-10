@@ -33,6 +33,11 @@ RUN if [ "${INSTALL_XDEBUG}" = "true" ]; then \
     && echo 'xdebug.idekey=netbeans-xdebug' >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
    fi
 
+# Add to your Dockerfile
+RUN echo "upload_max_filesize = 20M" > /usr/local/etc/php/conf.d/uploads.ini && \
+    echo "post_max_size = 25M" >> /usr/local/etc/php/conf.d/uploads.ini && \
+    echo "memory_limit = 128M" >> /usr/local/etc/php/conf.d/uploads.ini
+    
 RUN apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

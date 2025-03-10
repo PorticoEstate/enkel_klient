@@ -1,40 +1,54 @@
-/**
- * Nøkkelbestilling form handler
- * 
- * Handles form validation, submission and file uploads for key ordering
- */
+	/**
+	 * Helpdesk form handler
+	 * 
+	 * Handles form validation, rich text editing, submission and file uploads for helpdesk tickets
+	 */
 
-// Global variables
-var redirect_action = `${strBaseURL}/nokkelbestilling`;
-var filesRequired = !$('#location_code').val();
-var fileUploader = null;
+	// Global variables
+	var redirect_action = `${strBaseURL}/helpdesk`;
+	var fileUploader = null;
+	var quill = null;
 
-$(document).ready(function() {
+	$(document).ready(function ()
+	{
+	// set focus on first input field
+	try
+	{
+	document.getElementById("location_name").focus();
+	}
+	catch (error)
+	{
+		try
+		{
+			document.getElementById("phone").focus();
+		}
+		catch (error)
+		{
+			
+		}
+		
+	}
 	// Add asterisk to all required fields
 	markRequiredFields();
-	
+
+
 	// Initialize file uploader
 	initializeFileUploader();
-	
-	// Handle location code changes
-	$('#location_code').on('change', function() {
-		filesRequired = !$(this).val();
-		updateFileUploadRequirements();
 	});
-});
 
-function markRequiredFields() {
+	function markRequiredFields() {
 	$('form :required').each(function() {
 		var id = $(this).attr('id');
 		$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
 	});
-}
+	}
 
-function initializeFileUploader() {
+
+	function initializeFileUploader() {
 	fileUploader = new FileUploader({
-		formId: 'nokkelbestilling',
-		uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
-		required: filesRequired,
+		formId: 'helpdesk',
+		uploadUrl: `${strBaseURL}/helpdesk/upload`,
+		required: false,
 		onComplete: function(success) {
 			if (success) {
 				window.location.href = redirect_action;
@@ -46,41 +60,20 @@ function initializeFileUploader() {
 			}
 		}
 	});
-	
+
 	fileUploader.initialize();
-}
-
-function updateFileUploadRequirements() {
-	// Update the file uploader's required state based on location_code
-	if (filesRequired && fileUploader.getPendingCount() === 0) {
-		$('#fileupload').attr('required', 'required');
-	} else {
-		$('#fileupload').removeAttr('required');
 	}
-}
 
-$('#nokkelbestilling').on('submit', function (e) {
+	$('form').on('submit', function (e) {
 	e.preventDefault();
 
-	// Check form validity excluding the file input
+	// Check form validity
 	var form = this;
-	var fileInputValid = !filesRequired || fileUploader.getPendingCount() > 0;
-	
-	// Temporarily remove required attribute for validation check
-	var fileInputRequired = $('#fileupload').attr('required');
-	$('#fileupload').removeAttr('required');
-	
-	// Now check validity of other fields
 	var formValid = form.checkValidity();
-	
-	// Restore required attribute if it was set
-	if (fileInputRequired) {
-		$('#fileupload').attr('required', 'required');
-	}
-	
-	if (!formValid || !fileInputValid) {
-		// Find invalid fields (excluding file input)
-		var invalidFields = $(form).find(':invalid').not('#fileupload').filter(':visible');
+
+	if (!formValid) {
+		// Find invalid fields
+		var invalidFields = $(form).find(':invalid').filter(':visible');
 		
 		if (invalidFields.length > 0) {
 			// Focus on first visible invalid field
@@ -88,7 +81,7 @@ $('#nokkelbestilling').on('submit', function (e) {
 			invalidFields[0].scrollIntoView({behavior: 'smooth', block: 'center'});
 		} else {
 			// Check for hidden invalid fields
-			var hiddenInvalidFields = $(form).find(':invalid').not('#fileupload').filter(':not(:visible)');
+			var hiddenInvalidFields = $(form).find(':invalid').filter(':not(:visible)');
 			if (hiddenInvalidFields.length > 0) {
 				// Handle hidden fields as before
 				var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
@@ -101,65 +94,55 @@ $('#nokkelbestilling').on('submit', function (e) {
 			}
 		}
 		
-		// Show file upload error separately
-		if (!fileInputValid) {
-			alert('Du må laste opp fullmakt eller vergefullmakt');
-		}
-		
 		return false;
 	}
 
-	confirm_session('save');
-});
+	// Form is valid, proceed with submission
+	submit_form();
+	});
 
-
-this.confirm_session = function(action) {
-	if (action === 'cancel') {
-		window.location.href = `${strBaseURL}/nokkelbestilling`;
-		return;
-	}
-
+	function submit_form() {
 	// Block doubleclick
-	$('#submit').prop('disabled', true);
+	$('button[type="submit"]').prop('disabled', true);
 	$('#fileupload').prop('disabled', true);
 
 	// Show spinner
 	showSubmissionSpinner();
 
 	try {
-		ajax_submit_form(action);
+		ajax_submit_form();
 	} catch (e) {
 		console.error('Error during AJAX submission:', e);
 		removeSubmissionSpinner();
 		
-		$('#submit').prop('disabled', false);
+		$('button[type="submit"]').prop('disabled', false);
 		$('#fileupload').prop('disabled', false);
 		
 		alert('Det oppstod en feil ved sending av skjemaet: ' + e.message);
 	}
-};
+	}
 
-function showSubmissionSpinner() {
-	var form = document.getElementById('nokkelbestilling');
+	function showSubmissionSpinner() {
+	var form = document.querySelector('form');
 	$('<div id="spinner" class="d-flex align-items-center">')
-		.append($('<strong>').text('Lagrer...'))
+		.append($('<strong>').text('Sender...'))
 		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>'))
 		.insertAfter(form);
 	window.scrollBy(0, 100);
-}
+	}
 
-function removeSubmissionSpinner() {
+	function removeSubmissionSpinner() {
 	var element = document.getElementById('spinner');
 	if (element) {
 		element.parentNode.removeChild(element);
 	}
-}
+	}
 
-ajax_submit_form = function(action) {
-	var thisForm = $('#nokkelbestilling');
+	function ajax_submit_form() {
+	var thisForm = $('form');
 	var requestUrl = $(thisForm).attr("action");
 	var formdata = false;
-	
+
 	if (window.FormData) {
 		try {
 			formdata = new FormData(thisForm[0]);
@@ -186,7 +169,7 @@ ajax_submit_form = function(action) {
 						fileUploader.sendAllFiles(id);
 					}
 				} else {
-					$('#submit').prop('disabled', false);
+					$('button[type="submit"]').prop('disabled', false);
 					$('#fileupload').prop('disabled', false);
 					removeSubmissionSpinner();
 
@@ -201,11 +184,11 @@ ajax_submit_form = function(action) {
 		},
 		error: function(jqXHR, textStatus, errorThrown) {
 			console.error('Ajax error:', textStatus, errorThrown);
-			$('#submit').prop('disabled', false);
+			$('button[type="submit"]').prop('disabled', false);
 			$('#fileupload').prop('disabled', false);
 			removeSubmissionSpinner();
 			
 			alert('Det oppstod en feil ved sending av skjemaet');
 		}
 	});
-};
+	}

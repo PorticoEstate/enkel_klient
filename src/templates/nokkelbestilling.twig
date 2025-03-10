@@ -239,7 +239,9 @@ $('#title').val(summarytext + selection.name);
 
 // set focus on first input field
 document.getElementById("paavegne_av").focus();
-} catch (error) {}{% endif %}{% if location_code %}$('#title').val(summarytext + $('#address').val());
+} catch (error) {}{% endif %}
+{% if location_code %}
+$('#title').val(summarytext + $('#address').val());
 
 // set focus on first input field
 try {
@@ -263,7 +265,6 @@ e.target.classList.remove('is-invalid');
 	</script>
 
 	{% if saved != 1 %}
-		<script src="vendor/components/jquery/jquery.min.js?n={{ cache_refresh_token }}"></script>
 		<script src="src/js/jquery-ui-1.13.1.min.js?n={{ cache_refresh_token }}"></script>
 		<script src="src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
 		<script src="src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
@@ -272,6 +273,5 @@ e.target.classList.remove('is-invalid');
 		<script src="src/js/location.js?n={{ cache_refresh_token }}"></script>
 		<script src="src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
 		<script src="src/js/nokkelbestilling.js?n={{ cache_refresh_token }}"></script>
-		<script src="src/js/nokkelbestilling-form.js?n={{ cache_refresh_token }}"></script>
 	{% endif %}
 {% endblock %}

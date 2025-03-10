@@ -10,4 +10,7 @@ fiks_webservicehost = "http(s)://"
 fiks_apikey  = "..."
 # Aktiver skjemaer
 activate_inspection_1 = 1
-activate_helpdesk = 0
+activate_helpdesk = 1
+activate_nokkelbestilling = 1
+
+#BASE_PATH = '/boligreg/'

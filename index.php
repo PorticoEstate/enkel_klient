@@ -160,22 +160,23 @@ $app->get('/debug', function (Request $request, Response $response) use ($contai
 // Define application routes
 $app->get('/', \App\Controller\LandingController::class . ':displayInfo');
 
-$app->get('/locations', \App\Controller\NokkelbestillingController::class . ':getLocations');
-
 // Nokkelbestilling routes
 $app->get('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':displayForm');
 $app->post('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':saveForm');
+$app->get('/nokkelbestilling/locations', \App\Controller\NokkelbestillingController::class . ':getLocations');
 $app->post('/nokkelbestilling/upload', \App\Controller\NokkelbestillingController::class . ':handleMultiUploadFile');
 
 // Helpdesk routes
 $app->get('/helpdesk', \App\Controller\HelpdeskController::class . ':displayForm');
 $app->post('/helpdesk', \App\Controller\HelpdeskController::class . ':saveForm');
+$app->get('/helpdesk/locations', \App\Controller\HelpdeskController::class . ':getLocations');
 $app->post('/helpdesk/upload', \App\Controller\HelpdeskController::class . ':handleMultiUploadFile');
 
 // Inspection1 routes
 $app->get('/inspection_1', \App\Controller\Inspection1Controller::class . ':displayForm');
 $app->post('/inspection_1', \App\Controller\Inspection1Controller::class . ':saveForm');
 $app->get('/inspection_1/attributes', \App\Controller\Inspection1Controller::class . ':getAttributes');
+$app->get('/inspection_1/locations', \App\Controller\Inspection1Controller::class . ':getLocations');
 $app->post('/inspection_1/upload', \App\Controller\Inspection1Controller::class . ':handleMultiUploadFile');
 
 // Run the application

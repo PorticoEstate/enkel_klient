@@ -12,9 +12,15 @@ const autoCompleteJS = new autoComplete({
 					document
 						.getElementById("location_name")
 						.setAttribute("placeholder", "Loading...");
+					console.log("Fetching locations");
+
+					// Use the schema variable to determine the right endpoint
+					// schema is defined in each template (nokkelbestilling, helpdesk, etc.)
+					const endpoint = schema ? `/${schema}/locations` : '/locations';
+					console.log(`${strBaseURL}${endpoint}?query=${encodeURIComponent(query)}`);
 
 					// Fetch External Data Source using new controller endpoint
-					const response = await fetch(`${strBaseURL}/locations?query=${encodeURIComponent(query)}`, {
+					const response = await fetch(`${strBaseURL}${endpoint}?query=${encodeURIComponent(query)}`, {
 						method: 'GET',
 						headers: {
 							'Content-Type': 'application/json',

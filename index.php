@@ -15,6 +15,11 @@ define('SRC_ROOT', APP_ROOT . '/src');
 // Include the Composer autoloader
 require APP_ROOT . '/vendor/autoload.php';
 
+$configs_dir = SRC_ROOT . '/configs';
+$dotenv = \Dotenv\Dotenv::createImmutable($configs_dir);
+$dotenv->load();
+
+
 // Create PHP-DI ContainerBuilder
 $containerBuilder = new ContainerBuilder();
 
@@ -44,6 +49,8 @@ $containerBuilder->addDefinitions([
 		// Add extensions if needed
 		$twig->addExtension(new \Twig\Extension\DebugExtension());
 
+		$twig->getEnvironment()->addGlobal('base_path', rtrim($_ENV['BASE_PATH'] ?? '', '/'));
+	
 		// Load configuration
 		$config = [];
 		if (file_exists(SRC_ROOT . '/configs/site.conf'))

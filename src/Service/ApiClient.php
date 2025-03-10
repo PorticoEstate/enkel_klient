@@ -30,10 +30,6 @@ class ApiClient
 
     private function initializeConfig()
     {
-        $configs_dir = SRC_ROOT . '/configs';
-        $dotenv = \Dotenv\Dotenv::createImmutable($configs_dir);
-        $dotenv->load();
-
         $this->login = $_ENV['login'] ?? '';
         $this->password = $_ENV['password'] ?? '';
         $this->backend_url = rtrim($_ENV['backend_url'] ?? '', '/');

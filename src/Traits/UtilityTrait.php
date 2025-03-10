@@ -15,15 +15,11 @@ trait UtilityTrait
         $host = $_SERVER['HTTP_HOST'];
         $baseUrl = pathinfo($_SERVER['SCRIPT_NAME'], PATHINFO_DIRNAME);
 
-        $ConfigURL = $_ENV['BASE_URL'] ?? '';
-        if (!empty($ConfigURL))
+        $basePath = $_SERVER['BASE_PATH'] ?? '';
+        if ($basePath)
         {
-            //remove the protocol if it is wrong - and insert the correct one
-            $ConfigURL = preg_replace('/^http(s)?:\/\//', '', $ConfigURL);
-            $ConfigURL = $protocol . $ConfigURL;
-            return rtrim($ConfigURL, '/');
-        }
-
+            $baseUrl = rtrim($baseUrl, '/') . '/' . ltrim($basePath, '/');
+        }        
         // Ensure we have no trailing slash
         return rtrim($protocol . $host . $baseUrl, '/');
     }

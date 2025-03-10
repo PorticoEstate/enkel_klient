@@ -46,18 +46,18 @@ RUN a2enmod proxy_http
 
 
 # Configure Apache to write logs to files instead of stdout/stderr
-RUN rm -f /var/log/apache2/access.log && \
-    rm -f /var/log/apache2/error.log && \
-    rm -f /var/log/apache2/other_vhosts_access.log && \
-    touch /var/log/apache2/access.log && \
-    touch /var/log/apache2/error.log && \
-    touch /var/log/apache2/other_vhosts_access.log && \
-    chown -R www-data:www-data /var/log/apache2
+# RUN rm -f /var/log/apache2/access.log && \
+#     rm -f /var/log/apache2/error.log && \
+#     rm -f /var/log/apache2/other_vhosts_access.log && \
+#     touch /var/log/apache2/access.log && \
+#     touch /var/log/apache2/error.log && \
+#     touch /var/log/apache2/other_vhosts_access.log && \
+#     chown -R www-data:www-data /var/log/apache2
 
-# Make sure apache can write to the log directory
-RUN mkdir -p /var/log/apache2 && \
-    chmod -R 755 /var/log/apache2 && \
-    chown -R www-data:www-data /var/log/apache2
+# # Make sure apache can write to the log directory
+# RUN mkdir -p /var/log/apache2 && \
+#     chmod -R 755 /var/log/apache2 && \
+#     chown -R www-data:www-data /var/log/apache2
 
 COPY startup.sh /usr/local/bin/
 RUN chmod +x  /usr/local/bin/startup.sh

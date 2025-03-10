@@ -10,8 +10,8 @@ services:
         dockerfile: Dockerfile
         args:
             INSTALL_XDEBUG: ${INSTALL_XDEBUG}
-    #        http_proxy: ${http_proxy:-false}
-    #        https_proxy: ${https_proxy:-false}
+            http_proxy: ${http_proxy:-}
+            https_proxy: ${https_proxy:-}
       container_name: enkel_klient_webserver
       volumes:
         - ./:/var/www/html/

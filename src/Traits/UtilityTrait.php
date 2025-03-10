@@ -14,7 +14,16 @@ trait UtilityTrait
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'];
         $baseUrl = pathinfo($_SERVER['SCRIPT_NAME'], PATHINFO_DIRNAME);
-        
+
+        $ConfigURL = $_ENV['BASE_URL'] ?? '';
+        if (!empty($ConfigURL))
+        {
+            //remove the protocol if it is wrong - and insert the correct one
+            $ConfigURL = preg_replace('/^http(s)?:\/\//', '', $ConfigURL);
+            $ConfigURL = $protocol . $ConfigURL;
+            return rtrim($ConfigURL, '/');
+        }
+
         // Ensure we have no trailing slash
         return rtrim($protocol . $host . $baseUrl, '/');
     }

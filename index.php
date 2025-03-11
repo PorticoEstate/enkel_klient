@@ -49,7 +49,8 @@ $containerBuilder->addDefinitions([
 		// Add extensions if needed
 		$twig->addExtension(new \Twig\Extension\DebugExtension());
 
-		$twig->getEnvironment()->addGlobal('base_path', rtrim($_ENV['BASE_PATH'] ?? '', '/'));
+		$base_path = rtrim($_ENV['BASE_PATH'] ?? '', '/');
+		$twig->getEnvironment()->addGlobal('base_path', $base_path);
 	
 		// Load configuration
 		$config = [];

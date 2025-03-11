@@ -51,9 +51,8 @@ RUN a2enmod proxy_http
 
 # write to the apache configuration file
 
-RUN echo "ProxyPass /boligreg http://127.0.0.1:8210" >> /etc/apache2/apache2.conf && \
-    echo "ProxyPassReverse /boligreg http://127.0.0.1:8210" >> /etc/apache2/apache2.conf
-
+RUN echo "ProxyPass /boligreg http://web" >> /etc/apache2/apache2.conf && \
+    echo "ProxyPassReverse /boligreg http://web" >> /etc/apache2/apache2.conf
 
 
 # Configure Apache to write logs to files instead of stdout/stderr

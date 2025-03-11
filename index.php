@@ -106,7 +106,15 @@ $containerBuilder->addDefinitions([
 			$container->get(Twig::class),
 			$container->get(\App\Service\ApiClient::class)
 		);
-	}
+	},
+	// My Cases controller
+	\App\Controller\MyCasesController::class => function ($container)
+	{
+		return new \App\Controller\MyCasesController(
+			$container->get(Twig::class),
+			$container->get(\App\Service\ApiClient::class)
+		);
+	},
 ]);
 
 // Build PHP-DI Container instance
@@ -134,6 +142,14 @@ $app->add(function (Request $request, $handler)
 		->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
 		->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
+
+
+$app->get('/my_cases', \App\Controller\MyCasesController::class . ':displayCases')
+	->setName('my_cases');
+
+// Add route for viewing individual case details
+$app->get('/view_case/{id}', \App\Controller\MyCasesController::class . ':viewCase')
+	->setName('view_case');
 
 // Define debug route
 $app->get('/debug', function (Request $request, Response $response) use ($container)

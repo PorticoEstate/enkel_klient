@@ -74,28 +74,27 @@ class MyCasesController
 		// Format user data for display
 		$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
 		$user_email = $user_info['email'] ?? '';
-		$ssn = ApiClient::session_get('my_cases', 'ssn');
-//		echo $ssn;
-//		die();
+		$ssn = 	ApiClient::session_get('my_cases', 'ssn');
 
 		// Fetch cases from API
 		$result = $this->fetchCasesFromApi($ssn);
-//		print_r($result);die();
+		// print_r($result);die();
 		// Format dates for display
 
 
-		if(!$result){
+		if (!$result || !empty($result['error']))
+		{
 			$result = ['results' => []];
 		}
 		foreach ($result['results'] as &$case)
 		{
 			if (!empty($case['entry_date']))
 			{
-				$case['registered_date'] = date('Y-m-d H:i:s', $case['entry_date']);
+				$case['registered_date'] = date('d.m.Y H:i', $case['entry_date']);
 			}
 			if (!empty($case['modified_date']))
 			{
-				$case['status_change_date'] = date('Y-m-d H:i:s', $case['modified_date']);
+				$case['status_change_date'] = date('d.m.Y H:i', $case['modified_date']);
 			}
 			else
 			{
@@ -134,12 +133,11 @@ class MyCasesController
 		}
 
 		// Get user information to verify ownership
-		$user_info = ApiClient::session_get('my_cases', 'user_info');
 		$ssn = ApiClient::session_get('my_cases', 'ssn');
 
 		// Fetch case details from API
 		$caseDetails = $this->fetchCaseDetails($caseId, $ssn);
-
+		// print_r($caseDetails);die();
 		// If no case found or user doesn't have access
 		if (empty($caseDetails))
 		{
@@ -148,28 +146,37 @@ class MyCasesController
 		}
 
 		// Format dates
-		if (!empty($caseDetails['registered_date']))
+		if (!empty($caseDetails['ticket']['entry_date']))
 		{
-			$caseDetails['registered_date'] = new \DateTime($caseDetails['registered_date']);
+			$caseDetails['ticket']['registered_date'] = date('d.m.Y H:i', $caseDetails['ticket']['entry_date']);
+		}
+		if (!empty($caseDetails['ticket']['modified_date']))
+		{
+			$caseDetails['ticket']['status_change_date'] = date('d.m.Y H:i', $caseDetails['ticket']['modified_date']);
+		}
+		else
+		{
+			$caseDetails['ticket']['status_change_date'] = $caseDetails['ticket']['registered_date'];
 		}
 
 		// Fetch case files/attachments
-		$attachments = $this->fetchCaseAttachments($caseId);
-
-		// Get case history/comments
-		$history = $this->fetchCaseHistory($caseId);
+		//$attachments = $this->fetchCaseAttachments($caseId);
+		$attachments = [];
 
 		// Get config from Twig globals
 		$config = $this->twig->getEnvironment()->getGlobals()['config'];
-
+		// echo "<pre>";
+		// print_r($caseDetails);
+		// echo "</pre>";
+		// die();
 		try
 		{
 			// Render template with Twig
 			return $this->twig->render($response, 'view_case.twig', [
 				'currentRoute' => 'my_cases',
-				'case' => $caseDetails,
+				'case' => $caseDetails['ticket'],
 				'attachments' => $attachments,
-				'history' => $history,
+				'history' => $caseDetails['history'] ?? [],
 				'config' => $config
 			]);
 		}
@@ -184,9 +191,9 @@ class MyCasesController
 	/**
 	 * Fetch user's cases from API
 	 */
-	private function fetchCasesFromApi( ?string $ssn): array
+	private function fetchCasesFromApi(?string $ssn): array
 	{
-		if ( !$ssn)
+		if (!$ssn)
 		{
 			return [];
 		}
@@ -229,6 +236,10 @@ class MyCasesController
 
 		$url .= http_build_query($get_data);
 		$result = json_decode($this->api->exchange_data($url, []), true);
+		if ($this->api->get_http_status() !== 200)
+		{
+			return [];
+		}
 
 		return $result ?? [];
 	}

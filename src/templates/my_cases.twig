@@ -4,13 +4,15 @@
 {% block body %}
 	<div class="container mt-4">
 		<h1 class="mb-4">Mine saker</h1>
-		
+
 		<div class="card mb-4">
 			<div class="card-body">
 				<h5 class="card-title">Brukerinformasjon</h5>
-				<p class="card-text">Navn: {{ user_name }}</p>
+				<p class="card-text">Navn:
+					{{ user_name }}</p>
 				{% if user_email %}
-					<p class="card-text">E-post: {{ user_email }}</p>
+					<p class="card-text">E-post:
+						{{ user_email }}</p>
 				{% endif %}
 			</div>
 		</div>
@@ -43,10 +45,10 @@
 									{% endif %}
 								</a>
 							</th>
-						
+
 							{# Non-sortable Subject column #}
 							<th scope="col">Emne</th>
-							
+
 							{# Sortable Last Updated column #}
 							<th scope="col">
 								<a href="{{ base_path }}/my_cases?sort=modified_date&sort=modified_date&dir={{ result.sort == 'modified_date' and result.dir == 'asc' ? 'desc' : 'asc' }}&start={{ result.start }}" class="text-decoration-none text-dark">
@@ -58,7 +60,7 @@
 									{% endif %}
 								</a>
 							</th>
-							
+
 							{# Non-sortable columns #}
 							<th scope="col">Status</th>
 							<th scope="col">Handling</th>
@@ -89,20 +91,25 @@
 								</td>
 								<td>
 									{% if case.status == 'O' %}
-										<span class="badge bg-success">Åpen</span>
-									{% elseif case.status == 'B' %}
-										<span class="badge bg-warning text-dark">Under behandling</span>
+										<span class="badge bg-success">{{case.status_text}}</span>
+									{% elseif case.status == 'C1' %}
+										<span class="badge bg-warning text-dark">{{case.status_text}}</span>
+
 									{% elseif case.status == 'X' %}
-										<span class="badge bg-secondary">Avsluttet</span>
+										<span class="badge bg-secondary">{{case.status_text}}</span>
+
 									{% elseif case.status == 'C' %}
-										<span class="badge bg-secondary">Lukket</span>
+										<span class="badge bg-secondary">{{case.status_text}}</span>
+
 									{% else %}
-										<span class="badge bg-info">{{ case.status }}</span>
+										<span class="badge bg-info">{{ case.status_text }}</span>
+
 									{% endif %}
 								</td>
 								<td>
 									<a href="{{ base_path }}/view_case/{{ case.id }}" class="btn btn-sm btn-outline-primary">
-										<i class="fas fa-eye"></i> Se detaljer
+										<i class="fas fa-eye"></i>
+										Se detaljer
 									</a>
 								</td>
 							</tr>
@@ -110,10 +117,18 @@
 					</tbody>
 				</table>
 			</div>
-			
+
 			<div class="mt-3 d-flex justify-content-between">
-				<p class="text-muted"><small>Viser {{ result.start + 1 }} - {{ result.start + result.results|length }} av totalt {{ result.total_records }} saker</small></p>
-				
+				<p class="text-muted">
+					<small>Viser
+						{{ result.start + 1 }}
+						-
+						{{ result.start + result.results|length }}
+						av totalt
+						{{ result.total_records }}
+						saker</small>
+				</p>
+
 				{% if result.total_records > result.results|length %}
 					<nav aria-label="Page navigation">
 						<ul class="pagination pagination-sm">
@@ -129,7 +144,7 @@
 									</a>
 								</li>
 							{% endif %}
-							
+
 							{% if result.start + result.results|length < result.total_records %}
 								<li class="page-item">
 									<a class="page-link" href="{{ base_path }}/my_cases?start={{ result.start + result.perPage }}&sort={{ result.sort }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="Next">
@@ -151,25 +166,27 @@
 				<p>Du har ingen registrerte saker ennå.</p>
 			</div>
 		{% endif %}
-		
+
 		<div class="mt-4">
 			<h2 class="h4 mb-3">Opprett ny sak</h2>
 			<div class="row">
 				{% if config.services.helpdesk %}
-					<div class="col-md-4 mb-3">
+					<div class="col-md-6 mb-3">
 						<div class="d-grid">
 							<a href="{{ base_path }}/helpdesk" class="btn btn-outline-primary">
-								<i class="fas fa-ticket-alt me-2"></i> {{ config.helpdesk.form_header }}
+								<i class="fas fa-ticket-alt me-2"></i>
+								{{ config.helpdesk.form_header }}
 							</a>
 						</div>
 					</div>
 				{% endif %}
-				
+
 				{% if config.services.nokkelbestilling %}
-					<div class="col-md-4 mb-3">
+					<div class="col-md-6 mb-3">
 						<div class="d-grid">
 							<a href="{{ base_path }}/nokkelbestilling" class="btn btn-outline-primary">
-								<i class="fas fa-key me-2"></i> {{ config.nokkelbestilling.form_header }}
+								<i class="fas fa-key me-2"></i>
+								{{ config.nokkelbestilling.form_header }}
 							</a>
 						</div>
 					</div>
@@ -180,20 +197,19 @@
 	</div>
 
 	<script>
-		document.addEventListener('DOMContentLoaded', function() {
-			// Make table rows clickable but exclude header row and clicks on buttons/links
-			const rows = document.querySelectorAll('tbody tr');
-			rows.forEach(row => {
-				row.addEventListener('click', function(e) {
-					if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && !e.target.closest('a') && !e.target.closest('button')) {
-						const link = this.querySelector('a.btn-outline-primary');
-						if (link) {
-							link.click();
-						}
-					}
-				});
-				row.style.cursor = 'pointer';
-			});
-		});
+		document.addEventListener('DOMContentLoaded', function () { // Make table rows clickable but exclude header row and clicks on buttons/links
+const rows = document.querySelectorAll('tbody tr');
+rows.forEach(row => {
+row.addEventListener('click', function (e) {
+if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && ! e.target.closest('a') && ! e.target.closest('button')) {
+const link = this.querySelector('a.btn-outline-primary');
+if (link) {
+link.click();
+}
+}
+});
+row.style.cursor = 'pointer';
+});
+});
 	</script>
 {% endblock %}

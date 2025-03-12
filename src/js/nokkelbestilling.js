@@ -6,7 +6,7 @@
 
 // Global variables
 var redirect_action = `${strBaseURL}/nokkelbestilling`;
-var filesRequired = !$('#location_code').val();
+var filesRequired = false; //!$('#location_code').val();
 var fileUploader = null;
 
 $(document).ready(function ()

@@ -63,7 +63,7 @@
 				<div class="mt-4">
 					<h6 class="mb-3">Beskrivelse</h6>
 					<div class="p-3 bg-light rounded">
-						{{ case.message|raw }}
+						{{ case.details|raw }}
 					</div>
 				</div>
 			</div>
@@ -129,22 +129,31 @@
 									</div>
 									<div class="timeline-content">
 										<div class="d-flex justify-content-between">
-											<h6 class="mb-1">{{ item.user_name|default('System') }}</h6>
+											<h6 class="mb-1">{{ item.value_user|default('System') }}</h6>
+
 											<small class="text-muted">
-												{% if item.created_on is defined %}
-													{{ item.created_on|date('d.m.Y H:i') }}
+												{% if item.value_date is defined %}
+
+													{{ item.value_date }}
+
 												{% endif %}
 											</small>
 										</div>
-										<div class="mb-2">
-											{% if item.status_text is defined %}
-												<span class="badge bg-info me-2">Status endret til:
-													{{ item.status_text }}</span>
-											{% endif %}
-										</div>
-										<div class="p-3 bg-light rounded">
-											{{ item.comment|raw|default('') }}
-										</div>
+										{% if item.value_new_value is defined %}
+
+											<div class="p-3 bg-light rounded">
+												{{ item.value_action }}:&nbsp;
+												{{ item.value_new_value }}
+
+											</div>
+
+										{% else %}
+
+											<div class="p-3 bg-light rounded">
+												{{ item.value_note|raw|default('') }}
+
+											</div>
+										{% endif %}
 									</div>
 								</div>
 							</div>

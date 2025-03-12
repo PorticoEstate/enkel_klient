@@ -144,6 +144,11 @@ class ApiClient
 	{
 		return $this->logindomain;
 	}
+
+	function get_http_status()
+	{
+		return $this->httpCode;
+	}
 	/**
 	 * Clear a value from the session cache
 	 *

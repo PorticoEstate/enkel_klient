@@ -175,7 +175,7 @@ class nokkelbestilling
 					'subject'	 => sanitizer::get_var('subject', 'string'),
 					'details'	 => $details,
 					'extra'		=> array(
-						'tenant_id' => $user_info['id'],
+						'tenant_id' => $user_info['id'] ?? null,
 						'external_owner_ssn' => $ssn,
 					)
 				)

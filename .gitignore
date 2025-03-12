@@ -3,6 +3,7 @@
 launch.json
 /src/templates_c/*
 /src/composer.lock
+/src/cache/*
 /nbproject
 composer.lock
 logs/*

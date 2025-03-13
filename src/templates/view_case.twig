@@ -9,6 +9,39 @@
 				<i class="fas fa-arrow-left me-2"></i>Tilbake til saksoversikt
 			</a>
 		</div>
+		{# Add this alert section for success/error messages #}
+		{% set success = app.request.query.get('success') %}
+		{% set error = app.request.query.get('error') %}
+
+		{% if success is not empty %}
+			<div class="alert alert-success alert-dismissible fade show" role="alert">
+				{% if success == 'response_added' %}
+					<i class="fas fa-check-circle me-2"></i>Kommentaren din ble lagt til.
+				{% else %}
+					<i class="fas fa-check-circle me-2"></i>Handlingen ble fullført.
+				{% endif %}
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Lukk"></button>
+			</div>
+		{% endif %}
+
+		{% if error is not empty %}
+			<div class="alert alert-danger alert-dismissible fade show" role="alert">
+				{% if error == 'empty_content' %}
+					<i class="fas fa-exclamation-circle me-2"></i>Kommentarfeltet kan ikke være tomt.
+				{% elseif error == 'file_too_large' %}
+					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor. Maksimal størrelse er 10MB.
+				{% elseif error == 'invalid_file_type' %}
+					<i class="fas fa-exclamation-circle me-2"></i>Filtypen er ikke støttet. Vennligst bruk PDF, DOC, DOCX, XLS, XLSX, JPG eller PNG.
+				{% elseif error == 'api_error' %}
+					<i class="fas fa-exclamation-circle me-2"></i>Det oppstod en feil ved behandling av forespørselen din. Vennligst prøv igjen senere.
+				{% else %}
+					<i class="fas fa-exclamation-circle me-2"></i>Det oppstod en feil:
+					{{ error }}
+				{% endif %}
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Lukk"></button>
+			</div>
+		{% endif %}
+
 
 		<div class="card mb-4">
 			<div class="card-header d-flex justify-content-between align-items-center">

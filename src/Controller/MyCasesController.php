@@ -289,4 +289,120 @@ class MyCasesController
 
 		return !empty($result['ResultSet']['Result']) ? $result['ResultSet']['Result'] : [];
 	}
+
+	/**
+	 * Handle case response submission
+	 */
+	public function respondToCase(Request $request, Response $response, array $args): Response
+	{
+		$caseId = (int)$args['id'];
+
+		// Get user information
+		$user_info = ApiClient::session_get('my_cases', 'user_info');
+		$ssn = ApiClient::session_get('my_cases', 'ssn');
+
+		// Get form data
+		$post = $request->getParsedBody();
+		$content = !empty($post['content']) ? trim($post['content']) : '';
+
+		// Validate input
+		if (empty($content))
+		{
+			// Flash message for empty content
+			// Redirect back to case view
+			return $response->withHeader('Location', self::get_route_url("view_case/{$caseId}") . "?error=empty_content");
+		}
+
+		// Handle file upload if present
+		$uploadedFiles = $request->getUploadedFiles();
+		$attachment = !empty($uploadedFiles['attachment']) ? $uploadedFiles['attachment'] : null;
+		$attachmentData = null;
+
+		// Process file attachment if present
+		if ($attachment && $attachment->getError() === UPLOAD_ERR_OK)
+		{
+			$filename = $attachment->getClientFilename();
+			$filesize = $attachment->getSize();
+			$filetype = $attachment->getClientMediaType();
+
+			// Size limit check (10MB)
+			if ($filesize > 10 * 1024 * 1024)
+			{
+				return $response->withHeader('Location', self::get_route_url("view_case/{$caseId}") . "?error=file_too_large");
+			}
+
+			// File type validation
+			$allowedTypes = [
+				'application/pdf',
+				'application/msword',
+				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+				'application/vnd.ms-excel',
+				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+				'image/jpeg',
+				'image/png'
+			];
+			if (!in_array($filetype, $allowedTypes))
+			{
+				return $response->withHeader('Location', self::get_route_url("view_case/{$caseId}") . "?error=invalid_file_type");
+			}
+
+			// Get file content as base64
+			$tmpFile = $attachment->getStream()->getMetadata('uri');
+			$fileContent = base64_encode(file_get_contents($tmpFile));
+
+			$attachmentData = [
+				'name' => $filename,
+				'type' => $filetype,
+				'size' => $filesize,
+				'content' => $fileContent
+			];
+		}
+
+		// Send response to API
+		$result = $this->submitCaseResponse($caseId, $content, $attachmentData, $user_info, $ssn);
+
+		if (!$result || isset($result['error']))
+		{
+			$error = isset($result['error']) ? $result['error'] : 'api_error';
+			return $response->withHeader('Location', self::get_route_url("view_case/{$caseId}") . "?error={$error}");
+		}
+
+		// Success - redirect back to case view with success message
+		return $response->withHeader('Location', self::get_route_url("view_case/{$caseId}") . "?success=response_added");
+	}
+
+	/**
+	 * Submit case response to API
+	 */
+	private function submitCaseResponse(int $caseId, string $content, ?array $attachment, array $user_info, string $ssn): array
+	{
+		$session_info = $this->api->get_session_info();
+		$url = $this->api->get_backend_url() . "/property/usercase/{$caseId}/response/?";
+
+		$post_data = [
+			$session_info['session_name'] => $session_info['session_id'],
+			'domain' => $this->api->get_logindomain(),
+			'phpgw_return_as' => 'json',
+			'api_mode' => true,
+			'ssn' => $ssn,
+			'content' => $content,
+			'user_name' => !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : 'Bruker'
+		];
+
+		// Add attachment data if present
+		if ($attachment)
+		{
+			$post_data['attachment'] = json_encode($attachment);
+		}
+
+		// POST the response to the API
+		$result = json_decode($this->api->exchange_data($url, $post_data ), true);
+
+		if ($this->api->get_http_status() !== 200)
+		{
+			return ['error' => 'api_error'];
+		}
+
+		return $result ?? [];
+	}
 }

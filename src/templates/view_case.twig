@@ -5,7 +5,7 @@
 	<div class="container mt-4">
 		<div class="d-flex justify-content-between align-items-center mb-4">
 			<h1>Sak #{{ case.id }}</h1>
-			<a href="{{ str_base_url }}/my_cases" class="btn btn-outline-secondary">
+			<a href="{{ base_path }}/my_cases" class="btn btn-outline-secondary">
 				<i class="fas fa-arrow-left me-2"></i>Tilbake til saksoversikt
 			</a>
 		</div>
@@ -101,7 +101,7 @@
 											{% endif %}
 										</td>
 										<td>
-											<a href="{{ str_base_url }}/my_cases/download/{{ case.id }}/{{ attachment.id }}" class="btn btn-sm btn-outline-primary">
+											<a href="{{ base_path }}/my_cases/download/{{ case.id }}/{{ attachment.id }}" class="btn btn-sm btn-outline-primary">
 												<i class="fas fa-download me-1"></i>Last ned
 											</a>
 										</td>
@@ -162,9 +162,39 @@
 				</div>
 			</div>
 		{% endif %}
+		<div class="card mb-4">
+			<div class="card-header">
+				<h5 class="mb-0">Legg til kommentar</h5>
+			</div>
+			<div class="card-body">
+				<form method="post" action="{{ base_path }}/my_cases/respond/{{ case.id }}" enctype="multipart/form-data">
+					<div class="mb-3">
+						<label for="responseContent" class="form-label">Din kommentar</label>
+						<textarea class="form-control" id="responseContent" name="content" rows="4" required></textarea>
+						<div class="form-text">Din kommentar vil bli synlig for alle som har tilgang til denne saken.</div>
+					</div>
+
+					<div class="mb-3">
+						<label for="responseAttachment" class="form-label">Legg ved fil (valgfritt)</label>
+						<input class="form-control" type="file" id="responseAttachment" name="attachment">
+						<div class="form-text">Støttede filtyper: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (maks 10MB)</div>
+					</div>
+
+					{% if csrf_token is defined %}
+						<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+					{% endif %}
+
+					<div class="d-flex justify-content-end">
+						<button type="submit" class="btn btn-primary">
+							<i class="fas fa-paper-plane me-2"></i>Send kommentar
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
 
 		<div class="text-center mt-4 mb-5">
-			<a href="{{ str_base_url }}/my_cases" class="btn btn-primary">
+			<a href="{{ base_path }}/my_cases" class="btn btn-primary">
 				<i class="fas fa-arrow-left me-2"></i>Tilbake til saksoversikt
 			</a>
 		</div>

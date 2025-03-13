@@ -19,7 +19,6 @@ $configs_dir = SRC_ROOT . '/configs';
 $dotenv = \Dotenv\Dotenv::createImmutable($configs_dir);
 $dotenv->load();
 
-
 // Create PHP-DI ContainerBuilder
 $containerBuilder = new ContainerBuilder();
 
@@ -144,12 +143,6 @@ $app->add(function (Request $request, $handler)
 });
 
 
-$app->get('/my_cases', \App\Controller\MyCasesController::class . ':displayCases')
-	->setName('my_cases');
-
-// Add route for viewing individual case details
-$app->get('/view_case/{id}', \App\Controller\MyCasesController::class . ':viewCase')
-	->setName('view_case');
 
 // Define debug route
 $app->get('/debug', function (Request $request, Response $response) use ($container)
@@ -196,5 +189,13 @@ $app->get('/inspection_1/attributes', \App\Controller\Inspection1Controller::cla
 $app->get('/inspection_1/locations', \App\Controller\Inspection1Controller::class . ':getLocations');
 $app->post('/inspection_1/upload', \App\Controller\Inspection1Controller::class . ':handleMultiUploadFile');
 
+$app->get('/my_cases', \App\Controller\MyCasesController::class . ':displayCases')
+	->setName('my_cases');
+
+// Add route for viewing individual case details
+$app->get('/view_case/{id}', \App\Controller\MyCasesController::class . ':viewCase')
+	->setName('view_case');
+
+$app->post('/my_cases/respond/{id}', \App\Controller\MyCasesController::class . ':respondToCase');
 // Run the application
 $app->run();

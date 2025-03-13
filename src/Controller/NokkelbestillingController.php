@@ -212,6 +212,8 @@ class NokkelbestillingController
 				$details = $userinfo . $details;
 			}
 
+			$tenant_data = $this->api->get_tenant($post['location_code']);
+
 			$post_data = [
 				'values' => [
 					'cat_id' => $cat_id,
@@ -222,7 +224,7 @@ class NokkelbestillingController
 					'subject' => Sanitizer::sanitizeString($post['subject'] ?? ''),
 					'details' => $details,
 					'extra' => [
-						'tenant_id' => $user_info['id'] ?? null,
+						'tenant_id' => $tenant_data['id'] ?? null,
 						'external_owner_ssn' => ApiClient::session_get('nokkelbestilling', 'ssn')
 					]
 				]

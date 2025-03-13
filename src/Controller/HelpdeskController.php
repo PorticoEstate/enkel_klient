@@ -136,6 +136,8 @@ class HelpdeskController
 				$details = $userinfo . $details;
 			}
 
+			$tenant_data = $this->api->get_tenant($post['location_code']);
+
 			$post_data = [
 				'values' => [
 					'cat_id' => $cat_id,
@@ -144,7 +146,11 @@ class HelpdeskController
 					'location_code' => $sanitizedPost['location_code'],
 					'address' => !empty($sanitizedPost['address']) ? $sanitizedPost['address'] : $sanitizedPost['location_name'],
 					'subject' => $sanitizedPost['subject'],
-					'details' => $details
+					'details' => $details,
+					'extra' => [
+						'tenant_id' => $tenant_data['id'] ?? null,
+						'external_owner_ssn' => ApiClient::session_get('helpdesk', 'ssn')
+					]
 				]
 			];
 

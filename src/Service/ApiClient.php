@@ -130,22 +130,44 @@ class ApiClient
 		return $session_info;
 	}
 
-	function get_session_info()
+	public function get_tenant($location_code): ?array
+	{
+		$session_info = $this->get_session_info();
+		$url = $this->get_backend_url() . "/property/tenantbylocation/{$location_code}/?";
+
+		$get_data = [
+			$session_info['session_name'] => $session_info['session_id'],
+			'domain' => $this->get_logindomain(),
+			'phpgw_return_as' => 'json',
+			'api_mode' => true
+		];
+
+		$url .= http_build_query($get_data);
+		$result = json_decode($this->exchange_data($url, []), true);
+		if ($this->get_http_status() !== 200)
+		{
+			return [];
+		}
+
+		return $result ?? [];
+	}
+
+	public function get_session_info()
 	{
 		return $this->session_info ?? null;
 	}
 
-	function get_backend_url()
+	public function get_backend_url()
 	{
 		return $this->backend_url;
 	}
 
-	function get_logindomain()
+	public function get_logindomain()
 	{
 		return $this->logindomain;
 	}
 
-	function get_http_status()
+	public function get_http_status()
 	{
 		return $this->httpCode;
 	}

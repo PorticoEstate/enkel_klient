@@ -21,6 +21,6 @@
     "short_name": "BoligReg",
     "start_url": "index.php",
     "orientation": "any",
-    "scope": "/",
+    "scope": "/boligreg/",
     "prefer_related_applications": false
 }

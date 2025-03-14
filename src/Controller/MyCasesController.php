@@ -292,6 +292,22 @@ class MyCasesController
 		$post = $request->getParsedBody();
 		$content = !empty($post['content']) ? trim($post['content']) : '';
 
+		$contentLength = $_SERVER['CONTENT_LENGTH'] ?? 0;
+		$postMaxSize = $this->returnBytes(ini_get('post_max_size'));
+
+		if ($contentLength > $postMaxSize)
+		{
+			// Too large file, handle gracefully
+			return $response->withStatus(302)->withHeader(
+				'Location',
+				self::get_route_url("view_case/{$caseId}", [
+					'error' => 'file_too_large_server',
+					'preserved_content' => urlencode($content)
+				])
+			);
+		}
+
+
 		// Validate input
 		if (empty($content))
 		{
@@ -411,5 +427,24 @@ class MyCasesController
 		}
 
 		return $result ?? [];
+	}
+
+
+	// Helper method to add to your class
+	private function returnBytes($val)
+	{
+		$val = trim($val);
+		$last = strtolower($val[strlen($val) - 1]);
+		$val = (int)$val;
+		switch ($last)
+		{
+			case 'g':
+				$val *= 1024;
+			case 'm':
+				$val *= 1024;
+			case 'k':
+				$val *= 1024;
+		}
+		return $val;
 	}
 }

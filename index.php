@@ -130,8 +130,32 @@ $app->add(TwigMiddleware::createFromContainer($app, Twig::class));
 $app->addRoutingMiddleware();
 
 // Add error handling middleware
-$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$displayErrorDetails = $_ENV['APP_ENV'] ?? 'production';
+$displayErrorDetails = ($displayErrorDetails === 'development');
 
+// Create error handling middleware with proper settings
+$errorMiddleware = $app->addErrorMiddleware(
+	$displayErrorDetails,  // display error details (only in development)
+	true,                  // log errors
+	true                   // log error details
+);
+
+// Set up custom error handler for production environment
+$errorHandler = $errorMiddleware->getDefaultErrorHandler();
+$errorHandler->forceContentType('text/html');
+$errorHandler->setDefaultErrorRenderer('text/html', function ($exception, $request) use ($container)
+{
+	// Log the actual error for administrators
+	error_log($exception->getMessage() . "\n" . $exception->getTraceAsString());
+
+	// For users, display a friendly error page
+	$twig = $container->get(Twig::class);
+	$response = new \Slim\Psr7\Response();
+	return $twig->render($response, 'error.twig', [
+		'error_message' => 'Det oppstod en feil på serveren. Vennligst prøv igjen senere.',
+		'error_code' => 500
+	]);
+});
 // Add CORS middleware
 $app->add(function (Request $request, $handler)
 {

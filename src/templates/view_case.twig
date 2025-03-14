@@ -23,7 +23,13 @@
 
 		{% if error is not empty %}
 			<div class="alert alert-danger alert-dismissible fade show" role="alert">
-				{% if 'empty_content' in error %}
+				{% if 'file_too_large_server' in error %}
+					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor for serveren. 
+																						            Maksimal filstørrelse er
+					{{ php_upload_max_filesize|default('25') }}
+					MB. 
+																		            Vennligst komprimer filen eller del den opp i mindre filer.
+				{% elseif 'empty_content' in error %}
 					<i class="fas fa-exclamation-circle me-2"></i>Kommentarfeltet kan ikke være tomt.
 				{% elseif 'file_too_large' in error and 'invalid_file_type' in error %}
 					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor (maks 10MB) og har et ugyldig format. Støttede formater: PDF, Word, Excel, JPG og PNG.
@@ -222,6 +228,85 @@
 							<i class="fas fa-paper-plane me-2"></i>Send kommentar
 						</button>
 					</div>
+					{# Add this to view_case.twig just before the closing </form> tag #}
+
+					<script>
+						document.addEventListener('DOMContentLoaded', function () {
+const fileInput = document.getElementById('responseAttachment');
+const submitButton = document.querySelector('button[type="submit"]');
+const maxFileSizeBytes = 10 * 1024 * 1024;
+// 10MB in bytes
+
+// Create feedback element
+const feedbackDiv = document.createElement('div');
+feedbackDiv.className = 'invalid-feedback d-none';
+fileInput.parentNode.appendChild(feedbackDiv);
+
+fileInput.addEventListener('change', function () { // Reset state
+fileInput.classList.remove('is-invalid');
+feedbackDiv.classList.add('d-none');
+submitButton.disabled = false;
+
+if (this.files && this.files[0]) {
+const fileSize = this.files[0].size;
+
+// Check file size against our 10MB limit
+if (fileSize > maxFileSizeBytes) {
+fileInput.classList.add('is-invalid');
+feedbackDiv.textContent = `Filen er for stor. Maksimal filstørrelse er ${
+formatFileSize(maxFileSizeBytes)
+}. Din fil er ${
+formatFileSize(fileSize)
+}.`;
+feedbackDiv.classList.remove('d-none');
+submitButton.disabled = true;
+
+// Reset file input to clear selection
+this.value = '';
+return;
+}
+
+// Show file size information
+feedbackDiv.textContent = `Valgt fil: ${
+this.files[0].name
+} (${
+formatFileSize(fileSize)
+})`;
+feedbackDiv.classList.remove('d-none');
+feedbackDiv.classList.remove('invalid-feedback');
+feedbackDiv.classList.add('text-muted', 'small');
+}
+});
+
+// Format file size in KB, MB
+function formatFileSize(bytes) {
+if (bytes < 1024) {
+return bytes + ' bytes';
+}
+else if (bytes < 1024 * 1024) {
+return(bytes / 1024).toFixed(1) + ' KB';
+}
+else {
+return(bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+}
+
+// Add form submission validation
+const form = fileInput.closest('form');
+form.addEventListener('submit', function (event) {
+if (fileInput.files && fileInput.files[0]) {
+const fileSize = fileInput.files[0].size;
+
+if (fileSize > maxFileSizeBytes) {
+event.preventDefault();
+alert('Filen er for stor. Maksimal filstørrelse er 10MB.');
+return false;
+}
+}
+});
+});
+					</script>
+
 				</form>
 			</div>
 		</div>

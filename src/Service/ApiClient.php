@@ -282,7 +282,7 @@ class ApiClient
 		else if ($post_data)
 		{
 			curl_setopt($ch, CURLOPT_POST, true);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
 		}
 
 		// Debug headers

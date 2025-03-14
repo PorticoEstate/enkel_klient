@@ -9,9 +9,6 @@
 				<i class="fas fa-arrow-left me-2"></i>Tilbake til saksoversikt
 			</a>
 		</div>
-		{# Add this alert section for success/error messages #}
-		{% set success = app.request.query.get('success') %}
-		{% set error = app.request.query.get('error') %}
 
 		{% if success is not empty %}
 			<div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -26,16 +23,18 @@
 
 		{% if error is not empty %}
 			<div class="alert alert-danger alert-dismissible fade show" role="alert">
-				{% if error == 'empty_content' %}
+				{% if 'empty_content' in error %}
 					<i class="fas fa-exclamation-circle me-2"></i>Kommentarfeltet kan ikke være tomt.
-				{% elseif error == 'file_too_large' %}
-					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor. Maksimal størrelse er 10MB.
-				{% elseif error == 'invalid_file_type' %}
-					<i class="fas fa-exclamation-circle me-2"></i>Filtypen er ikke støttet. Vennligst bruk PDF, DOC, DOCX, XLS, XLSX, JPG eller PNG.
-				{% elseif error == 'api_error' %}
-					<i class="fas fa-exclamation-circle me-2"></i>Det oppstod en feil ved behandling av forespørselen din. Vennligst prøv igjen senere.
+				{% elseif 'file_too_large' in error and 'invalid_file_type' in error %}
+					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor (maks 10MB) og har et ugyldig format. Støttede formater: PDF, Word, Excel, JPG og PNG.
+				{% elseif 'file_too_large' in error %}
+					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor. Maksimal filstørrelse er 10MB.
+				{% elseif 'invalid_file_type' in error %}
+					<i class="fas fa-exclamation-circle me-2"></i>Ugyldig filformat. Støttede formater: PDF, Word, Excel, JPG og PNG.
+				{% elseif 'api_error' in error %}
+					<i class="fas fa-exclamation-circle me-2"></i>Det oppstod en feil ved sending av kommentar. Vennligst prøv igjen senere.
 				{% else %}
-					<i class="fas fa-exclamation-circle me-2"></i>Det oppstod en feil:
+					<i class="fas fa-exclamation-circle me-2"></i>
 					{{ error }}
 				{% endif %}
 				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Lukk"></button>
@@ -203,7 +202,8 @@
 				<form method="post" action="{{ base_path }}/my_cases/respond/{{ case.id }}" enctype="multipart/form-data">
 					<div class="mb-3">
 						<label for="responseContent" class="form-label">Din kommentar</label>
-						<textarea class="form-control" id="responseContent" name="content" rows="4" required></textarea>
+						<textarea class="form-control" id="responseContent" name="content" rows="4" required>{{ preserved_content }}</textarea>
+
 						<div class="form-text">Din kommentar vil bli synlig for alle som har tilgang til denne saken.</div>
 					</div>
 

@@ -7,7 +7,6 @@
 // Global variables
 var redirect_action = `${strBaseURL}/helpdesk`;
 var fileUploader = null;
-var quill = null;
 
 $(document).ready(function ()
 {
@@ -30,7 +29,6 @@ $(document).ready(function ()
 	}
 	// Add asterisk to all required fields
 	markRequiredFields();
-
 
 	// Initialize file uploader
 	initializeFileUploader();

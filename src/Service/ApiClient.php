@@ -9,33 +9,33 @@ use App\Traits\UtilityTrait;
 
 class ApiClient
 {
-    private $backend_url;
-    private $login;
-    private $password;
-    private $logindomain;
-    private $session_info = [];
-    private $httpCode;
-    private $debug;
+	private $backend_url;
+	private $login;
+	private $password;
+	private $logindomain;
+	private $session_info = [];
+	private $httpCode;
+	private $debug;
 
 	use UtilityTrait;
-    
+
 	public function __construct()
-    {
-        ini_set('session.cookie_samesite', 'Lax');
-        session_start();
+	{
+		ini_set('session.cookie_samesite', 'Lax');
+		session_start();
 
-        $this->initializeConfig();
-        $this->validateAndRefreshSession();
-    }
+		$this->initializeConfig();
+		$this->validateAndRefreshSession();
+	}
 
-    private function initializeConfig()
-    {
-        $this->login = $_ENV['login'] ?? '';
-        $this->password = $_ENV['password'] ?? '';
-        $this->backend_url = rtrim($_ENV['backend_url'] ?? '', '/');
-        $this->logindomain = $_ENV['backend_domain'] ?? '';
-        $this->debug = $_ENV['debug'] ?? false;
-    }
+	private function initializeConfig()
+	{
+		$this->login = $_ENV['login'] ?? '';
+		$this->password = $_ENV['password'] ?? '';
+		$this->backend_url = rtrim($_ENV['backend_url'] ?? '', '/');
+		$this->logindomain = $_ENV['backend_domain'] ?? '';
+		$this->debug = $_ENV['debug'] ?? false;
+	}
 
 	private function validateAndRefreshSession()
 	{
@@ -259,7 +259,20 @@ class ApiClient
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 
-		if (!$is_refresh &&!empty($_FILES['files']['tmp_name'][0]))
+		$has_file = false;
+		if (is_array($post_data))
+		{
+			foreach ($post_data as $value)
+			{
+				if ($value instanceof \CURLFile)
+				{
+					$has_file = true;
+					break;
+				}
+			}
+		}
+
+		if (!$is_refresh && !empty($_FILES['files']['tmp_name'][0]))
 		{
 			// Don't set Content-Type header - let cURL set it with boundary
 			$http_header = array();
@@ -282,7 +295,14 @@ class ApiClient
 		else if ($post_data)
 		{
 			curl_setopt($ch, CURLOPT_POST, true);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+			if ($has_file)
+			{
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+			}
+			else
+			{
+				curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+			}
 		}
 
 		// Debug headers

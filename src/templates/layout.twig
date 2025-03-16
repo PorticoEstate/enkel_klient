@@ -5,6 +5,28 @@
 		{% block title %}{% endblock %}
 		{% block head %}{% endblock %}
 		<style>
+
+			html,
+			body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			.content {
+				flex: 1;
+				margin-left: 250px;
+				padding: 20px;
+				transition: 0.3s;
+			}
+
+
 			/* Sidebar styles */
 			.sidebar {
 				height: 100vh;
@@ -65,6 +87,12 @@
 				padding: 0.5rem;
 				border-radius: 0.25rem;
 				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+				display: block;
+				position: fixed;
+				left: 10px;
+				top: 10px;
+				z-index: 1000;
+				width: 40px;
 			}
 
 			.navbar-toggler-icon {
@@ -107,9 +135,121 @@
 					width: 40px;
 				}
 			}
+
+
+			/* Cookie Consent Styles - Fixed z-index to be higher */
+			.cookie-consent {
+				position: fixed;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				background-color: rgba(0, 0, 0, 0.9);
+				color: #fff;
+				padding: 15px;
+				text-align: center;
+				z-index: 1050; /* Increased z-index */
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				flex-wrap: wrap;
+				gap: 10px;
+				box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+				transform: translateY(100%);
+				transition: transform 0.3s ease-in-out;
+			}
+
+
+			.cookie-consent.active {
+				transform: translateY(0);
+			}
+
+			.cookie-text {
+				flex: 1;
+				min-width: 200px;
+				margin-right: 10px;
+			}
+
+			.cookie-buttons {
+				display: flex;
+				gap: 10px;
+			}
+
+			.cookie-btn {
+				padding: 8px 16px;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-weight: bold;
+				transition: background-color 0.2s;
+			}
+
+			.accept-btn {
+				background-color: #0d6efd;
+				color: white;
+			}
+
+			.accept-btn:hover {
+				background-color: #0b5ed7;
+			}
+
+			.decline-btn {
+				background-color: #6c757d;
+				color: white;
+			}
+
+			.decline-btn:hover {
+				background-color: #5c636a;
+			}
+
+			@media(max-width: 768px) {
+				.cookie-consent {
+					flex-direction: column;
+				}
+			}
+			/* Footer Styles */
+			footer {
+				margin-left: 250px;
+				padding: 12px 20px;
+				background-color: #f8f9fa;
+				border-top: 1px solid #dee2e6;
+				font-size: 0.75rem;
+				color: #6c757d;
+				transition: margin-left 0.3s ease;
+			}
+
+			.footer-content {
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+
+			footer p {
+				margin-bottom: 0.5rem;
+			}
+
+			/* Update the mobile styles for footer */
+			@media(max-width: 768px) {
+				.content {
+					margin-left: 0;
+					padding-left: 20px;
+					width: 100%;
+				}
+
+				.content.active {
+					margin-left: 250px;
+				}
+
+				footer {
+					margin-left: 0;
+					text-align: center;
+				}
+
+				footer.active {
+					margin-left: 250px;
+				}
+			}
+			</head> </html> </head> </html> </head> </html> </head> </html> </head> </html>
 		</style>
 	</head>
-
 	<body>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
@@ -159,13 +299,106 @@
 		<div class="content"> {% block body %}{% endblock %}
 			</div>
 
+
+			<footer>
+				<div class="footer-content">
+					<b>{{ config.footer.contact_info_name }}</b>
+
+					<p>Adresse:
+						{{ config.footer.contact_info_visiting_address }}</p>
+					<p>Åpningstider:
+						{{ config.footer.contact_info_opening_hours }}</p>
+					<p>Organisasjonsnummer:
+						{{ config.footer.contact_info_org_nr }}</p>
+				</div>
+			</footer>
+			<!-- Cookie Consent Banner -->
+			<div class="cookie-consent" id="cookieConsent">
+				<div class="cookie-text">
+					<p>Vi bruker kun cookies som er nødvendig for innlogging på siden. Ved å fortsette å bruke denne nettsiden samtykker du til vår bruk av cookies.</p>
+				</div>
+				<div class="cookie-buttons">
+					<button class="cookie-btn accept-btn" id="acceptCookies">Aksepter</button>
+					<button class="cookie-btn decline-btn" id="declineCookies">Avslå</button>
+				</div>
+			</div>
+
 			<script>
 				document.querySelector('.navbar-toggler').addEventListener('click', function () {
-document.querySelector('.sidebar').classList.toggle('active');
-document.querySelector('.content').classList.toggle('active');
+const sidebar = document.querySelector('.sidebar');
+const content = document.querySelector('.content');
+const footer = document.querySelector('footer');
+
+sidebar.classList.toggle('active');
+content.classList.toggle('active');
+
+// Toggle footer active class instead of directly setting style
+if (window.innerWidth<= 768) {
+            footer.classList.toggle('active');
+        }
+    });
+
+    // Window resize handler to properly adjust footer on window resize
+    window.addEventListener('resize', function() {
+        const sidebar = document.querySelector('.sidebar');
+        const footer = document.querySelector('footer');
+        
+        if (window.innerWidth <= 768) {
+            // If sidebar is active in mobile view, apply active class to footer
+            if (sidebar.classList.contains('active')) {
+                footer.classList.add('active');
+            } else {
+                footer.classList.remove('active');
+            }
+        } else {
+            // In desktop view, remove active class (footer uses default margin)
+            footer.classList.remove('active');
+        }
+    });
+
+
+// Cookie consent functionality
+document.addEventListener('DOMContentLoaded', function () {
+const cookieConsent = document.getElementById('cookieConsent');
+const acceptBtn = document.getElementById('acceptCookies');
+const declineBtn = document.getElementById('declineCookies');
+
+// Check if user has already made a choice
+const cookieChoice = localStorage.getItem('cookieConsent');
+
+if (! cookieChoice) { // Show the banner after a short delay
+setTimeout(() => {
+cookieConsent.classList.add('active');
+}, 500);
+}
+
+// Handle accept button click
+acceptBtn.addEventListener('click', () => {
+localStorage.setItem('cookieConsent', 'accepted');
+cookieConsent.classList.remove('active');
+
+// Here you could initialize your analytics or tracking scripts
+console.log('Cookies accepted');
+}) 
+
+
+// Handle decline button click
+declineBtn.addEventListener('click', () => { // Remove the cookieConsent item instead of setting it to 'declined'
+localStorage.removeItem('cookieConsent');
+cookieConsent.classList.remove('active');
+// Here you could disable any non-essential cookies
+
+// Redirect to Bergen Kommune website
+window.location.href = 'https://www.bergen.kommune.no/innbyggerhjelpen/bolig-og-sosiale-tjenester/botilbud/kommunal-bolig/apningstider-og-telefonnumre-til-etat-for-boligforvaltning/';
+
+console.log('Cookies declined, redirecting...');
+});
+
+
+
 });
 			</script>
 
-		</body>
 
+		</body>
 	</html>

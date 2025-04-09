@@ -25,10 +25,10 @@
 			<div class="alert alert-danger alert-dismissible fade show" role="alert">
 				{% if 'file_too_large_server' in error %}
 					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor for serveren. 
-																						            Maksimal filstørrelse er
+																												            Maksimal filstørrelse er
 					{{ php_upload_max_filesize|default('25') }}
 					MB. 
-																		            Vennligst komprimer filen eller del den opp i mindre filer.
+																							            Vennligst komprimer filen eller del den opp i mindre filer.
 				{% elseif 'empty_content' in error %}
 					<i class="fas fa-exclamation-circle me-2"></i>Kommentarfeltet kan ikke være tomt.
 				{% elseif 'file_too_large' in error and 'invalid_file_type' in error %}
@@ -167,7 +167,7 @@
 									</div>
 									<div class="timeline-content">
 										<div class="d-flex justify-content-between">
-											<h6 class="mb-1">Saksbehandler</h6>
+											<h6 class="mb-1">Endring</h6>
 
 											<small class="text-muted">
 												{% if item.value_date is defined %}

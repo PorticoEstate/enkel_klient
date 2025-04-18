@@ -19,6 +19,21 @@ $configs_dir = SRC_ROOT . '/configs';
 $dotenv = \Dotenv\Dotenv::createImmutable($configs_dir);
 $dotenv->load();
 
+// Detect language from query parameter or session
+ini_set('session.cookie_samesite', 'Lax');
+
+session_start();
+$lang = 'en';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'no']))
+{
+	$lang = $_GET['lang'];
+	$_SESSION['lang'] = $lang;
+}
+elseif (isset($_SESSION['lang']))
+{
+	$lang = $_SESSION['lang'];
+}
+
 // Create PHP-DI ContainerBuilder
 $containerBuilder = new ContainerBuilder();
 
@@ -50,7 +65,7 @@ $containerBuilder->addDefinitions([
 
 		$base_path = rtrim($_ENV['BASE_PATH'] ?? '', '/');
 		$twig->getEnvironment()->addGlobal('base_path', $base_path);
-	
+
 		// Load configuration
 		$config = [];
 		if (file_exists(SRC_ROOT . '/configs/site.conf'))
@@ -72,6 +87,12 @@ $containerBuilder->addDefinitions([
 	\App\Service\ApiClient::class => function ()
 	{
 		return new \App\Service\ApiClient();
+	},
+
+	// Register Translator in container
+	\App\Service\Translator::class => function () use ($lang)
+	{
+		return new \App\Service\Translator($lang);
 	},
 
 	// Controller definitions
@@ -166,7 +187,13 @@ $app->add(function (Request $request, $handler)
 		->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
-
+// After Twig is created, add translation function to Twig
+$twig = $container->get(Twig::class);
+$translator = $container->get(\App\Service\Translator::class);
+$twig->getEnvironment()->addFunction(new \Twig\TwigFunction('__', function ($key) use ($translator)
+{
+	return $translator->translate($key);
+}));
 
 // Define debug route
 $app->get('/debug', function (Request $request, Response $response) use ($container)

@@ -37,6 +37,7 @@ class LandingController
 		$rand = rand();
 		$_SESSION['rand'] = $rand;
 		$this->twig->getEnvironment()->addGlobal('rand', $rand);
+		$this->twig->getEnvironment()->addGlobal('current_section', 'home');
 
 		try
 		{

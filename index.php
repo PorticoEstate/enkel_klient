@@ -190,9 +190,14 @@ $app->add(function (Request $request, $handler)
 // After Twig is created, add translation function to Twig
 $twig = $container->get(Twig::class);
 $translator = $container->get(\App\Service\Translator::class);
-$twig->getEnvironment()->addFunction(new \Twig\TwigFunction('__', function ($key) use ($translator)
+$twig->getEnvironment()->addGlobal('current_section', null);
+$twig->getEnvironment()->addFunction(new \Twig\TwigFunction('__', function ($key, $section = null) use ($translator, $twig)
 {
-	return $translator->translate($key);
+	if ($section === null)
+	{
+		$section = $twig->getEnvironment()->getGlobals()['current_section'] ?? null;
+	}
+	return $translator->translate($key, $section);
 }));
 
 // Define debug route

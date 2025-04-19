@@ -272,7 +272,7 @@
 					<li class="nav-item">
 						<a class="nav-link {{ currentRoute == 'helpdesk' ? 'active' }}" href="{{ base_path }}/helpdesk">
 							<i class="fas fa-ticket-alt me-2"></i>
-							{{ __('helpdesk_title') }}
+							{{ __('title','helpdesk') }}
 						</a>
 					</li>
 				{% endif %}
@@ -280,7 +280,7 @@
 					<li class="nav-item">
 						<a class="nav-link {{ currentRoute == 'nokkelbestilling' ? 'active' }}" href="{{ base_path }}/nokkelbestilling">
 							<i class="fas fa-key me-2"></i>
-							{{ __('nokkelbestilling_title') }}
+							{{ __('title', 'nokkelbestilling') }}
 						</a>
 					</li>
 				{% endif %}
@@ -288,7 +288,7 @@
 					<li class="nav-item">
 						<a class="nav-link {{ currentRoute == 'inspection_1' ? 'active' }}" href="{{ base_path }}/inspection_1">
 							<i class="fas fa-clipboard-check me-2"></i>
-							{{ __('inspection_1_title') }}
+							{{ __('title', 'inspection_1') }}
 						</a>
 					</li>
 				{% endif %}

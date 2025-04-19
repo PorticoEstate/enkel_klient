@@ -60,7 +60,7 @@
 		}
 	</style>
 	<div class="container">
-		<h1>{{ __('nokkelbestilling_form_header') }}</h1>
+		<h1>{{ __('form_header') }}</h1>
 
 		{% if saved == 1 %}
 			<div class="alert alert-success">
@@ -76,7 +76,7 @@
 					{% endfor %}
 				</div>
 			{% else %}
-				<p>{{ __('nokkelbestilling_form_info')|raw }}</p>
+				<p>{{ __('form_info')|raw }}</p>
 			{% endif %}
 			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate>
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>

@@ -25,6 +25,7 @@ class MyCasesController
 		// Basic assignments as globals
 		$twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
 		$twig->getEnvironment()->addGlobal('action_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('current_section', 'my_cases');
 
 		$this->twig = $twig;
 		$this->api = $api;

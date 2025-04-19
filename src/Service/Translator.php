@@ -20,8 +20,26 @@ class Translator
         }
     }
 
-    public function translate($key)
+    /**
+     * Translate a key, searching in the given section first, then 'common'.
+     * @param string $key
+     * @param string|null $section
+     * @return string
+     */
+    public function translate($key, $section = null)
     {
-        return $this->translations[$key] ?? $key;
+        if ($section && isset($this->translations[$section][$key])) {
+            return $this->translations[$section][$key];
+        }
+        if (isset($this->translations['common'][$key])) {
+            return $this->translations['common'][$key];
+        }
+        // Optionally search all sections if not found (fallback)
+        foreach ($this->translations as $sect => $arr) {
+            if ($sect !== 'common' && isset($arr[$key])) {
+                return $arr[$key];
+            }
+        }
+        return $key;
     }
 }

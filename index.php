@@ -23,7 +23,7 @@ $dotenv->load();
 ini_set('session.cookie_samesite', 'Lax');
 
 session_start();
-$lang = 'en';
+$lang = 'no'; // Default language
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'no']))
 {
 	$lang = $_GET['lang'];

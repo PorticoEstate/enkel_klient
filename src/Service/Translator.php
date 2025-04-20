@@ -4,7 +4,7 @@ namespace App\Service;
 class Translator
 {
     private $translations = [];
-    private $lang = 'en';
+    private $lang = 'no';
 
     public function __construct($lang = 'en')
     {
@@ -14,7 +14,7 @@ class Translator
 
     private function loadTranslations()
     {
-        $file = __DIR__ . '/../translations/' . $this->lang . '.php';
+        $file = SRC_ROOT . '/translations/' . $this->lang . '.php';
         if (file_exists($file)) {
             $this->translations = include $file;
         }

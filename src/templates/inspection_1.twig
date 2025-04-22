@@ -29,13 +29,14 @@
 	</style>
 
 	<div class="container">
-		<h1>{{ config.inspection_1.form_header }}</h1>
+		<h1>{{ __('form_header') }}</h1>
 
 		{% if saved == 1 %}
 			<div class="alert alert-success">
-				<p>Saken er registrert og har fått referanse #{{ id }}</p>
+				<p>{{ __('case_registered') }}
+					#{{ id }}</p>
 			</div>
-			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">Lag ny registrering</button>
+			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">{{ __('new_registration') }}</button>
 		{% else %}
 			{% if error|length > 0 %}
 				<div class="alert alert-danger alert-dismissible">
@@ -51,7 +52,7 @@
 					<div class="form-group mt-2">
 						<label for="location_name">
 							<i class="fas fa-search"></i>
-							Adresse
+							{{ __('address') }}
 						</label>
 						<input type="text" id="location_name" name="values[location_name]" tabindex="1" class="form-control" autocomplete="off" required="required"/>
 						<div class="selection"></div>
@@ -61,68 +62,68 @@
 						<div class="form-check">
 							<input class="form-check-input" type="checkbox" name="values_attribute[7][value]" id="tilgang" value="1" onchange="handleChangeTilgang(this);"/>
 							<label class="form-check-label" for="tilgang">
-								Manglende tilgang
+								{{ __('missing_access') }}
 							</label>
 						</div>
 						<div id="inner_details">
 							<div id="slukkeutstyr" class="form-group mt-2">
-								<label for="location_name">Slukkeutstyr</label>
+								<label for="location_name">{{ __('fire_equipment') }}</label>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_2" value="2" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
 									<label class="form-check-label" for="type_br_slokking_2">
-										Husbrannslange
+										{{ __('fire_hose') }}
 									</label>
 								</div>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_3" value="3" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
 									<label class="form-check-label" for="type_br_slokking_3">
-										Pulver
+										{{ __('powder') }}
 									</label>
 								</div>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_4" value="4" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
 									<label class="form-check-label" for="type_br_slokking_4">
-										Skum
+										{{ __('foam') }}
 									</label>
 								</div>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_1" value="1" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
 									<label class="form-check-label" for="type_br_slokking_1">
-										Skiftet brannslokkingsapparat
+										{{ __('changed_extinguisher') }}
 									</label>
 								</div>
 							</div>
 
 							<div id="dateblock" class="form-group mt-2" style="display: none;">
-								<label for="subject">Datostempel for Brannslokkingsapparatet</label>
+								<label for="subject">{{ __('date_stamp_extinguisher') }}</label>
 								<!--the parsed value is always formatted yyyy-mm-dd.-->
 								<input id="datestamp" type="date" class="form-control" id="title" name="values_attribute[1][value]"/>
 							</div>
 
 							<div class="form-group mt-2">
-								<label>Røykvarsler</label>
+								<label>{{ __('smoke_detector') }}</label>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_1" value="1" required="required"/>
 									<label class="form-check-label" for="rokvarsler_1">
-										Kontrollert - OK
+										{{ __('checked_ok') }}
 									</label>
 								</div>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_2" value="2" required="required"/>
 									<label class="form-check-label" for="rokvarsler_2">
-										Skiftet batteri
+										{{ __('changed_battery') }}
 									</label>
 								</div>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_3" value="3" required="required"/>
 									<label class="form-check-label" for="rokvarsler_3">
-										Skiftet røykvarsler
+										{{ __('changed_detector') }}
 									</label>
 								</div>
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_4" value="1" required="required"/>
 									<label class="form-check-label" for="rokvarsler_4">
-										Inngår i brannvarslingsanlegg
+										{{ __('part_of_alarm_system') }}
 									</label>
 								</div>
 							</div>
@@ -133,33 +134,32 @@
 							<div class="form-check">
 								<input class="form-check-input" type="checkbox" name="values_attribute[4][value]" id="id_behov_tilsyn" value="1"/>
 								<label class="form-check-label" for="id_behov_tilsyn">
-									Behov for utvidet tilsyn
+									{{ __('need_extended_inspection') }}
 								</label>
 							</div>
 						</div>
 
 						<div id="hidden_div" class="form-group mt-2">
-							<label for="merknad">Merknad</label>
-							<small id="merknadHelp" class="form-text text-muted">Her legger du inn merknader dersom det er behov
-																                                for utvidet tilsyn, eller andre kommentarer.</small>
+							<label for="merknad">{{ __('remark') }}</label>
+							<small id="merknadHelp" class="form-text text-muted">{{ __('remark_help') }}</small>
 							<textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp" name="values_attribute[5][value]"></textarea>
 						</div>
 						{% if enable_fileupload == 1 %}
 							<div class="form-group mt-2">
-								<label>Last opp fil</label>
+								<label>{{ __('upload_file') }}</label>
 								<div id="drop-area" class="">
 									<div style="border: 2px dashed #ccc; padding: 20px;">
-										<p>Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene direkte.</p>
+										<p>{{ __('upload_instructions') }}</p>
 										<div class="fileupload-buttonbar">
 											<div class="fileupload-buttons">
 												<span class="fileinput-button btn btn-success">
 													<i class="fas fa-plus"></i>
-													<span>Legg til filer...</span>
+													<span>{{ __('add_files') }}</span>
 													<input id="fileupload" type="file" name="files[]" multiple="" data-url=""></span>
 												<span class="fileupload-process"></span>
 											</div>
 											<div class="fileupload-count">
-												Antall filer:
+												{{ __('number_of_files') }}:
 												<span id="files-count"></span>
 											</div>
 											<div class="fileupload-progress" style="display:none">
@@ -176,7 +176,7 @@
 						{% endif %}
 						<button id="submit" type="submit" class="btn btn-primary mt-2">
 							<i class="far fa-paper-plane"></i>
-							Send
+							{{ __('send') }}
 						</button>
 					</div>
 				</fieldset>

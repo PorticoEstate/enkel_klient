@@ -29,6 +29,7 @@ class HelpdeskController
 		$twig->getEnvironment()->addGlobal('error', []);
 		$twig->getEnvironment()->addGlobal('subject', '');
 		$twig->getEnvironment()->addGlobal('message', '');
+		$twig->getEnvironment()->addGlobal('current_section', 'helpdesk');
 
 		$this->twig = $twig;
 		$this->api = $api;

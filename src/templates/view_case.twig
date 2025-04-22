@@ -4,18 +4,22 @@
 {% block body %}
 	<div class="container mt-4">
 		<div class="d-flex justify-content-between align-items-center mb-4">
-			<h1>Sak #{{ case.id }}</h1>
+			<h1>{{ __('case') }}
+				#{{ case.id }}</h1>
 			<a href="{{ base_path }}/my_cases" class="btn btn-outline-secondary">
-				<i class="fas fa-arrow-left me-2"></i>Tilbake til saksoversikt
+				<i class="fas fa-arrow-left me-2"></i>
+				{{ __('back_to_cases') }}
 			</a>
 		</div>
 
 		{% if success is not empty %}
 			<div class="alert alert-success alert-dismissible fade show" role="alert">
 				{% if success == 'response_added' %}
-					<i class="fas fa-check-circle me-2"></i>Kommentaren din ble lagt til.
+					<i class="fas fa-check-circle me-2"></i>
+					{{ __('comment_added') }}
 				{% else %}
-					<i class="fas fa-check-circle me-2"></i>Handlingen ble fullført.
+					<i class="fas fa-check-circle me-2"></i>
+					{{ __('action_completed') }}
 				{% endif %}
 				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Lukk"></button>
 			</div>
@@ -24,21 +28,25 @@
 		{% if error is not empty %}
 			<div class="alert alert-danger alert-dismissible fade show" role="alert">
 				{% if 'file_too_large_server' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor for serveren. 
-																												            Maksimal filstørrelse er
-					{{ php_upload_max_filesize|default('25') }}
-					MB. 
-																							            Vennligst komprimer filen eller del den opp i mindre filer.
+					<i class="fas fa-exclamation-circle me-2"></i>
+					{{ __('file_too_large_server') }}
+					{{ php_upload_max_filesize|default('25') }}MB.
+					{{ __('compress_or_split_file') }}
 				{% elseif 'empty_content' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>Kommentarfeltet kan ikke være tomt.
+					<i class="fas fa-exclamation-circle me-2"></i>
+					{{ __('empty_comment') }}
 				{% elseif 'file_too_large' in error and 'invalid_file_type' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor (maks 10MB) og har et ugyldig format. Støttede formater: PDF, Word, Excel, JPG og PNG.
+					<i class="fas fa-exclamation-circle me-2"></i>
+					{{ __('file_too_large_invalid_type') }}
 				{% elseif 'file_too_large' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>Filen er for stor. Maksimal filstørrelse er 10MB.
+					<i class="fas fa-exclamation-circle me-2"></i>
+					{{ __('file_too_large') }}
 				{% elseif 'invalid_file_type' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>Ugyldig filformat. Støttede formater: PDF, Word, Excel, JPG og PNG.
+					<i class="fas fa-exclamation-circle me-2"></i>
+					{{ __('invalid_file_type') }}
 				{% elseif 'api_error' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>Det oppstod en feil ved sending av kommentar. Vennligst prøv igjen senere.
+					<i class="fas fa-exclamation-circle me-2"></i>
+					{{ __('api_error') }}
 				{% else %}
 					<i class="fas fa-exclamation-circle me-2"></i>
 					{{ error }}
@@ -51,13 +59,13 @@
 		<div class="card mb-4">
 			<div class="card-header d-flex justify-content-between align-items-center">
 				<h5 class="mb-0">{{ case.subject }}</h5>
-				<span class="badge {{ case.status_class|default('bg-secondary') }}">{{ case.status_text|default('Ukjent status') }}</span>
+				<span class="badge {{ case.status_class|default('bg-secondary') }}">{{ case.status_text|default(__('unknown_status')) }}</span>
 			</div>
 			<div class="card-body">
 				<div class="row mb-3">
 					<div class="col-md-6">
 						<p class="mb-1">
-							<strong>Registrert dato:</strong>
+							<strong>{{ __('registered_date') }}:</strong>
 							{% if case.registered_date is defined and case.registered_date %}
 								{{ case.registered_date|date('d.m.Y H:i') }}
 							{% else %}
@@ -65,17 +73,17 @@
 							{% endif %}
 						</p>
 						<p class="mb-1">
-							<strong>Saksnummer:</strong>
+							<strong>{{ __('case_number') }}:</strong>
 							#{{ case.id }}</p>
 						{% if case.location_code is defined and case.location_code %}
 							<p class="mb-1">
-								<strong>Adresse:</strong>
+								<strong>{{ __('address') }}:</strong>
 								{{ case.address|default('-') }}</p>
 						{% endif %}
 					</div>
 					<div class="col-md-6">
 						<p class="mb-1">
-							<strong>Sist oppdatert:</strong>
+							<strong>{{ __('last_updated') }}:</strong>
 							{% if case.status_change_date is defined and case.status_change_date %}
 								{{ case.status_change_date|date('d.m.Y H:i') }}
 							{% else %}
@@ -83,23 +91,23 @@
 							{% endif %}
 						</p>
 						<p class="mb-1">
-							<strong>Kategori:</strong>
+							<strong>{{ __('category') }}:</strong>
 							{{ case.category|default('-') }}</p>
 						{% if case.phone is defined and case.phone %}
 							<p class="mb-1">
-								<strong>Telefon:</strong>
+								<strong>{{ __('phone') }}:</strong>
 								{{ case.phone }}</p>
 						{% endif %}
 						{% if case.email is defined and case.email %}
 							<p class="mb-1">
-								<strong>E-post:</strong>
+								<strong>{{ __('email') }}:</strong>
 								{{ case.email }}</p>
 						{% endif %}
 					</div>
 				</div>
 
 				<div class="mt-4">
-					<h6 class="mb-3">Beskrivelse</h6>
+					<h6 class="mb-3">{{ __('description') }}</h6>
 					<div class="p-3 bg-light rounded">
 						{{ case.details|raw }}
 					</div>
@@ -110,18 +118,18 @@
 		{% if attachments|length > 0 %}
 			<div class="card mb-4">
 				<div class="card-header">
-					<h5 class="mb-0">Vedlegg</h5>
+					<h5 class="mb-0">{{ __('attachments') }}</h5>
 				</div>
 				<div class="card-body">
 					<div class="table-responsive">
 						<table class="table table-hover">
 							<thead>
 								<tr>
-									<th>Filnavn</th>
-									<th>Type</th>
-									<th>Størrelse</th>
-									<th>Dato</th>
-									<th>Handling</th>
+									<th>{{ __('filename') }}</th>
+									<th>{{ __('type') }}</th>
+									<th>{{ __('size') }}</th>
+									<th>{{ __('date') }}</th>
+									<th>{{ __('action') }}</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -140,7 +148,8 @@
 										</td>
 										<td>
 											<a href="{{ base_path }}/my_cases/download/{{ case.id }}/{{ attachment.id }}" class="btn btn-sm btn-outline-primary">
-												<i class="fas fa-download me-1"></i>Last ned
+												<i class="fas fa-download me-1"></i>
+												{{ __('download') }}
 											</a>
 										</td>
 									</tr>
@@ -155,7 +164,7 @@
 		{% if history|length > 0 %}
 			<div class="card mb-4">
 				<div class="card-header">
-					<h5 class="mb-0">Sakshistorikk</h5>
+					<h5 class="mb-0">{{ __('case_history') }}</h5>
 				</div>
 				<div class="card-body">
 					<div class="timeline">
@@ -167,7 +176,7 @@
 									</div>
 									<div class="timeline-content">
 										<div class="d-flex justify-content-between">
-											<h6 class="mb-1">Endring</h6>
+											<h6 class="mb-1">{{ __('change') }}</h6>
 
 											<small class="text-muted">
 												{% if item.value_date is defined %}
@@ -202,21 +211,21 @@
 		{% endif %}
 		<div class="card mb-4">
 			<div class="card-header">
-				<h5 class="mb-0">Legg til kommentar</h5>
+				<h5 class="mb-0">{{ __('add_comment') }}</h5>
 			</div>
 			<div class="card-body">
 				<form method="post" action="{{ base_path }}/my_cases/respond/{{ case.id }}" enctype="multipart/form-data">
 					<div class="mb-3">
-						<label for="responseContent" class="form-label">Din kommentar</label>
+						<label for="responseContent" class="form-label">{{ __('your_comment') }}</label>
 						<textarea class="form-control" id="responseContent" name="content" rows="4" required>{{ preserved_content }}</textarea>
 
-						<div class="form-text">Din kommentar vil bli synlig for alle som har tilgang til denne saken.</div>
+						<div class="form-text">{{ __('comment_visible_info') }}</div>
 					</div>
 
 					<div class="mb-3">
-						<label for="responseAttachment" class="form-label">Legg ved fil (valgfritt)</label>
+						<label for="responseAttachment" class="form-label">{{ __('attach_file_optional') }}</label>
 						<input class="form-control" type="file" id="responseAttachment" name="attachment">
-						<div class="form-text">Støttede filtyper: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (maks 10MB)</div>
+						<div class="form-text">{{ __('supported_file_types') }}</div>
 					</div>
 
 					{% if csrf_token is defined %}
@@ -225,7 +234,8 @@
 
 					<div class="d-flex justify-content-end">
 						<button type="submit" class="btn btn-primary">
-							<i class="fas fa-paper-plane me-2"></i>Send kommentar
+							<i class="fas fa-paper-plane me-2"></i>
+							{{ __('send_comment') }}
 						</button>
 					</div>
 					{# Add this to view_case.twig just before the closing </form> tag #}
@@ -313,7 +323,8 @@ return false;
 
 		<div class="text-center mt-4 mb-5">
 			<a href="{{ base_path }}/my_cases" class="btn btn-primary">
-				<i class="fas fa-arrow-left me-2"></i>Tilbake til saksoversikt
+				<i class="fas fa-arrow-left me-2"></i>
+				{{ __('back_to_cases') }}
 			</a>
 		</div>
 	</div>

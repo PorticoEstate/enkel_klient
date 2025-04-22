@@ -27,6 +27,7 @@ class Inspection1Controller
         $twig->getEnvironment()->addGlobal('error', []);
         $twig->getEnvironment()->addGlobal('subject', '');
         $twig->getEnvironment()->addGlobal('message', '');
+        $twig->getEnvironment()->addGlobal('current_section', 'inspection_1');
 
         $this->twig = $twig;
         $this->api = $api;

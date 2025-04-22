@@ -60,13 +60,14 @@
 		}
 	</style>
 	<div class="container">
-		<h1>{{ config.nokkelbestilling.form_header }}</h1>
+		<h1>{{ __('form_header') }}</h1>
 
 		{% if saved == 1 %}
 			<div class="alert alert-success">
-				<p>Saken er registrert og har fått referanse #{{ id }}</p>
+				<p>{{ __('case_registered') }}
+					#{{ id }}</p>
 			</div>
-			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">Lag ny registrering</button>
+			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">{{ __('new_registration') }}</button>
 		{% else %}
 			{% if error|length > 0 %}
 				<div class="alert alert-danger alert-dismissible">
@@ -75,24 +76,20 @@
 					{% endfor %}
 				</div>
 			{% else %}
-				<p>{{ config.nokkelbestilling.form_info|raw }}</p>
+				<p>{{ __('form_info')|raw }}</p>
 			{% endif %}
 			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate>
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				{% if user_name %}
-					<p>Navn:
+					<p>{{ __('name') }}:
 						{{ user_name }}</p>
 				{% endif %}
-				<p class="text-muted small mb-3">Felt markert med
-					<span class="text-danger">*</span>
-					er obligatoriske</p>
+				<p class="text-muted small mb-3">{{ __('required_fields') }}</p>
 				{% if location_code %}
 					<div class="form-group mt-2">
-						<label for="location_name">
-							Adresse
-						</label>
+						<label for="location_name">{{ __('address') }}</label>
 						<small id="contact_infoHelpLocation" class="form-text text-muted d-block mb-2">
-							Adresse til boligen du trenger nøkkel til
+							{{ __('address_help') }}
 						</small>
 						<span class="form-control">{{ address }}</span>
 						<input type="hidden" id="location_code" name="location_code" value="{{ location_code }}">
@@ -102,18 +99,16 @@
 				{% else %}
 					<!--paavegne av-->
 					<div class="form-group mt-2">
-						<label for="paavegne_av">
-							Jeg bestiller på vegne av leietaker
-						</label>
+						<label for="paavegne_av">{{ __('order_on_behalf') }}</label>
 						<small id="contact_paavegne_av" class="form-text text-muted d-block mb-2">
-							Vi fant ikke husleiekontrakten din. Vi trenger derfor navn på leietaker du bestiller på vegne av. Husk at du også må laste opp fullmakt fra leietaker eller en vergefullmakt.
+							{{ __('order_on_behalf_help') }}
 						</small>
 						<input type="text" id="paavegne_av" name="paavegne_av" tabindex="1" class="form-control" autocomplete="off" required="required"/>
 					</div>
 					<div class="form-group mt-2">
 						<label for="location_name">
 							<i class="fas fa-search"></i>
-							Adresse
+							{{ __('address') }}
 						</label>
 						<input type="text" id="location_name" name="location_name" tabindex="2" class="form-control" autocomplete="off" required="required"/>
 						<div class="selection"></div>
@@ -122,54 +117,54 @@
 				{% endif %}
 
 				<div class="form-group mt-2">
-					<label for="phone">Telefon/Mobil</label>
+					<label for="phone">{{ __('phone') }}</label>
 					<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">
-						Her legger du inn telefonnummeret til den EBF skal ta kontakt med.
+						{{ __('phone_help') }}
 					</small>
 					<input type="text" id="phone" name="phone" tabindex="3" class="form-control" autocomplete="off" required="required"/>
 				</div>
 				<!--email-->
 				<div class="form-group mt-2">
-					<label for="email">E-post</label>
+					<label for="email">{{ __('email') }}</label>
 					<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">
-						Her legger du inn E-post til den EBF skal ta kontakt med.
+						{{ __('email_help') }}
 					</small>
-					<input type="email" id="email" name="email" tabindex="4" class="form-control" autocomplete="off" required="required" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" oninvalid="this.setCustomValidity('Vennligst skriv inn en gyldig e-postadresse')" oninput="this.setCustomValidity('')"/>
+					<input type="email" id="email" name="email" tabindex="4" class="form-control" autocomplete="off" required="required" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" oninvalid="this.setCustomValidity('{{ __('invalid_email') }}')" oninput="this.setCustomValidity('')"/>
 				</div>
 				<!--Nøkkelnummer-->
 				<div class="form-group mt-2">
-					<label for="key_number">Nøkkelnummer</label>
+					<label for="key_number">{{ __('key_number') }}</label>
 					<small id="contact_Nøkkelnummer" class="form-text text-muted d-block mb-2">
-						Nummeret står på nøkkel og For at EBF skal kunne bestille nøkkel trenger vi at du oppgir nummeret som står på nøkkel (inneholder bokstaver og tall).
+						{{ __('key_number_help') }}
 					</small>
 					<input type="text" id="key_number" name="key_number" tabindex="5" class="form-control" autocomplete="off" required="required"/>
 				</div>
 				<!--Antall nøkler-->
 				<div class="form-group mt-2">
-					<label for="number_of_keys">Antall nøkler</label>
+					<label for="number_of_keys">{{ __('number_of_keys') }}</label>
 					<small id="contact_infoHelpNumberOfKeys" class="form-text text-muted d-block mb-2">
-						Her legger du inn antall nøkler som skal bestilles. Kr 800,- for første nøkkel, deretter kr 500,- pr stk. utover dette
+						{{ __('number_of_keys_help') }}
 					</small>
 					<input type="number" id="number_of_keys" name="number_of_keys" tabindex="6" class="form-control" autocomplete="off" required="required" min="1"/>
 				</div>
 
 				<div id="details">
 					<div class="form-group mt-2">
-						<label for="subject">Overskrift</label>
-						<small id="subjectHelp" class="form-text text-muted d-block mb-2">Sammendrag</small>
+						<label for="subject">{{ __('subject') }}</label>
+						<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('summary') }}</small>
 						<input type="text" class="form-control" id="title" name="subject" readonly value="{{ subject }}" style="background-color: #e9ecef; cursor: not-allowed;" aria-describedby="subjectHelp" required="required"/>
 					</div>
 
 					<div class="form-group mt-4">
-						<label for="message">Tillegssopplysninger</label>
+						<label for="message">{{ __('additional_info') }}</label>
 						<small id="messageHelp" class="form-text text-muted d-block mb-2">
-							Skal nøkkel sendes annen adresse enn boligadresse eller eventuelt andre nyttige opplysninger du vil formidle til EBF?
+							{{ __('additional_info_help') }}
 						</small>
 						<textarea class="form-control" id="message" name="message" tabindex="7">{{ message }}</textarea>
 					</div>
 					{% if enable_fileupload == 1 %}
 						<div class="form-group mt-2">
-							<label>Last opp fil
+							<label>{{ __('upload_file') }}
 								{% if not location_code %}
 									<span class="text-danger">*</span>
 								{% endif %}
@@ -177,22 +172,22 @@
 							<div id="drop-area" class="">
 								<div style="border: 2px dashed #ccc; padding: 20px;">
 									<p>
-										Last opp flere filer ved enten å dra-og-slipp i markert område, eller ved å velge filene direkte.
+										{{ __('upload_instructions') }}
 										{% if not location_code %}
-											<br><small class="text-danger">Last opp fullmakt eller vergefullmakt</small>
+											<br><small class="text-danger">{{ __('upload_authorization') }}</small>
 										{% endif %}
 									</p>
 									<div class="fileupload-buttonbar">
 										<div class="fileupload-buttons">
 											<span class="fileinput-button btn btn-success">
 												<i class="fas fa-plus"></i>
-												<span>Legg til filer...</span>
+												<span>{{ __('add_files') }}</span>
 												<input id="fileupload" type="file" name="files[]" multiple="" data-url="">
 											</span>
 											<span class="fileupload-process"></span>
 										</div>
 										<div class="fileupload-count">
-											Antall filer:
+											{{ __('number_of_files') }}:
 											<span id="files-count"></span>
 										</div>
 										<div class="fileupload-progress" style="display:none">
@@ -209,7 +204,7 @@
 					{% endif %}
 					<button id="submit" type="submit" class="btn btn-primary mt-4">
 						<i class="far fa-paper-plane"></i>
-						Send
+						{{ __('send') }}
 					</button>
 				</div>
 			</form>
@@ -225,7 +220,7 @@ window.location.replace(`{{ base_path }}/nokkelbestilling`);
 var schema = 'nokkelbestilling';
 
 // set field id="title" to text id="location_name" when location_code is set by autocomplete
-var summarytext = 'Nøkkelbestilling for ';
+var summarytext = '{{ __('key_order_summary') }}';
 $('#title').val(summarytext);{% if not location_code %}
 // Listen for both change and input events
 $('#location_name').on('change input', function () {

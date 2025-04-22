@@ -21,9 +21,6 @@ class ApiClient
 
 	public function __construct()
 	{
-		ini_set('session.cookie_samesite', 'Lax');
-		session_start();
-
 		$this->initializeConfig();
 		$this->validateAndRefreshSession();
 	}

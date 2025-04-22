@@ -251,6 +251,11 @@
 		</style>
 	</head>
 	<body>
+		<!-- Language Switcher -->
+		<div style="position:fixed;top:10px;right:20px;z-index:2000;">
+			<a href="?lang=no" style="margin-right:8px;">Norsk</a>|
+			<a href="?lang=en" style="margin-left:8px;">English</a>
+		</div>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
 		</button>
@@ -259,14 +264,15 @@
 			<ul class="navbar-nav">
 				<li class="nav-item">
 					<a class="nav-link {{ currentRoute == 'home' ? 'active' }}" href="{{ base_path }}/">
-						<i class="fas fa-home me-2"></i>Hjem
+						<i class="fas fa-home me-2"></i>
+						{{ __('home') }}
 					</a>
 				</li>
 				{% if config.services.helpdesk %}
 					<li class="nav-item">
 						<a class="nav-link {{ currentRoute == 'helpdesk' ? 'active' }}" href="{{ base_path }}/helpdesk">
 							<i class="fas fa-ticket-alt me-2"></i>
-							{{ config.helpdesk.form_header }}
+							{{ __('title','helpdesk') }}
 						</a>
 					</li>
 				{% endif %}
@@ -274,7 +280,7 @@
 					<li class="nav-item">
 						<a class="nav-link {{ currentRoute == 'nokkelbestilling' ? 'active' }}" href="{{ base_path }}/nokkelbestilling">
 							<i class="fas fa-key me-2"></i>
-							{{ config.nokkelbestilling.form_header }}
+							{{ __('title', 'nokkelbestilling') }}
 						</a>
 					</li>
 				{% endif %}
@@ -282,7 +288,7 @@
 					<li class="nav-item">
 						<a class="nav-link {{ currentRoute == 'inspection_1' ? 'active' }}" href="{{ base_path }}/inspection_1">
 							<i class="fas fa-clipboard-check me-2"></i>
-							{{ config.inspection_1.form_header }}
+							{{ __('title', 'inspection_1') }}
 						</a>
 					</li>
 				{% endif %}
@@ -290,7 +296,7 @@
 				<li class="nav-item">
 					<a class="nav-link {{ currentRoute == 'my_cases' ? 'active' }}" href="{{ base_path }}/my_cases">
 						<i class="fas fa-folder-open me-2"></i>
-						Mine saker
+						{{ __('my_cases') }}
 					</a>
 				</li>
 				<!-- End of My Cases Section -->
@@ -304,22 +310,22 @@
 				<div class="footer-content">
 					<b>{{ config.footer.contact_info_name }}</b>
 
-					<p>Adresse:
+					<p>{{ __('address') }}:
 						{{ config.footer.contact_info_visiting_address }}</p>
-					<p>Åpningstider:
+					<p>{{ __('opening_hours') }}:
 						{{ config.footer.contact_info_opening_hours }}</p>
-					<p>Organisasjonsnummer:
+					<p>{{ __('org_number') }}:
 						{{ config.footer.contact_info_org_nr }}</p>
 				</div>
 			</footer>
 			<!-- Cookie Consent Banner -->
 			<div class="cookie-consent" id="cookieConsent">
 				<div class="cookie-text">
-					<p>Vi bruker kun cookies som er nødvendig for innlogging på siden. Ved å fortsette å bruke denne nettsiden samtykker du til vår bruk av cookies.</p>
+					<p>{{ __('cookie_text') }}</p>
 				</div>
 				<div class="cookie-buttons">
-					<button class="cookie-btn accept-btn" id="acceptCookies">Aksepter</button>
-					<button class="cookie-btn decline-btn" id="declineCookies">Avslå</button>
+					<button class="cookie-btn accept-btn" id="acceptCookies">{{ __('accept') }}</button>
+					<button class="cookie-btn decline-btn" id="declineCookies">{{ __('decline') }}</button>
 				</div>
 			</div>
 

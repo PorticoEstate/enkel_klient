@@ -172,5 +172,6 @@ return [
         'subject_help' => 'Briefly describe what the invoice request concerns',
         'phone_help' => 'Phone number where you can be reached',
         'email_help' => 'Email address where you can be reached',
+        'message_help' => 'Do not enter sensitive information here.',
     ],
 ];

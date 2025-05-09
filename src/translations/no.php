@@ -153,6 +153,7 @@ return [
         'subject_help' => 'Beskriv kort hva fakturaforespørselen gjelder',
         'phone_help' => 'Telefonnummer du kan kontaktes på',
         'email_help' => 'E-post du kan kontaktes på',
+        'message_help' => 'Ikke skriv inn sensitiv informasjon her.',
     ],
     'inspection_1' => [
         'form_header' => 'Skjema for brannforebyggende tilsyn på kommunal eiendom',

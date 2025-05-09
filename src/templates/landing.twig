@@ -34,6 +34,19 @@
 							</a>
 						</div>
 					{% endif %}
+					{% if config.services.invoicerequest %}
+						<div class="col-md-4 mb-4">
+							<a href="{{ str_base_url }}/invoicerequest" class="text-decoration-none">
+								<div class="card h-100 hover-shadow">
+									<div class="card-body">
+										<i class="fas fa-file-invoice fa-2x mb-3 text-primary"></i>
+										<h3 class="h5 card-title text-nowrap">{{ __('title', 'invoicerequest') }}</h3>
+										<p class="card-text text-dark">{{ __('description', 'invoicerequest') }}</p>
+									</div>
+								</div>
+							</a>
+						</div>
+					{% endif %}
 					{% if config.services.inspection_1 %}
 						<div class="col-md-4 mb-4">
 							<a href="{{ str_base_url }}/inspection_1" class="text-decoration-none">

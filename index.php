@@ -127,6 +127,15 @@ $containerBuilder->addDefinitions([
 			$container->get(\App\Service\ApiClient::class)
 		);
 	},
+	
+	\App\Controller\InvoicerequestController::class => function ($container)
+	{
+		return new \App\Controller\InvoicerequestController(
+			$container->get(Twig::class),
+			$container->get(\App\Service\ApiClient::class)
+		);
+	},
+	
 	// My Cases controller
 	\App\Controller\MyCasesController::class => function ($container)
 	{
@@ -237,6 +246,12 @@ $app->get('/helpdesk', \App\Controller\HelpdeskController::class . ':displayForm
 $app->post('/helpdesk', \App\Controller\HelpdeskController::class . ':saveForm');
 $app->get('/helpdesk/locations', \App\Controller\HelpdeskController::class . ':getLocations');
 $app->post('/helpdesk/upload', \App\Controller\HelpdeskController::class . ':handleMultiUploadFile');
+
+// Invoice Request routes
+$app->get('/invoicerequest', \App\Controller\InvoicerequestController::class . ':displayForm');
+$app->post('/invoicerequest', \App\Controller\InvoicerequestController::class . ':saveForm');
+$app->get('/invoicerequest/locations', \App\Controller\InvoicerequestController::class . ':getLocations');
+$app->post('/invoicerequest/upload', \App\Controller\InvoicerequestController::class . ':handleMultiUploadFile');
 
 // Inspection1 routes
 $app->get('/inspection_1', \App\Controller\Inspection1Controller::class . ':displayForm');

@@ -223,7 +223,7 @@
 			}
 
 			footer p {
-				margin-bottom: 0.5rem;
+				margin-bottom: 0.1rem;
 			}
 
 			/* Update the mobile styles for footer */
@@ -281,6 +281,14 @@
 						<a class="nav-link {{ currentRoute == 'nokkelbestilling' ? 'active' }}" href="{{ base_path }}/nokkelbestilling">
 							<i class="fas fa-key me-2"></i>
 							{{ __('title', 'nokkelbestilling') }}
+						</a>
+					</li>
+				{% endif %}
+				{% if config.services.invoicerequest %}
+					<li class="nav-item">
+						<a class="nav-link {{ currentRoute == 'invoicerequest' ? 'active' }}" href="{{ base_path }}/invoicerequest">
+							<i class="fas fa-money-bill me-2"></i>
+							{{ __('title', 'invoicerequest') }}
 						</a>
 					</li>
 				{% endif %}

@@ -135,6 +135,25 @@ return [
         'number_of_keys_help' => 'Hvor mange nøkler trenger du?',
         'key_order_summary' => 'Nøkkelbestilling for: ',
     ],
+    'invoicerequest' => [
+        'form_header' => 'Skjema for registrering av fakturaforespørsel',
+        'form_info' => '<h2>Fakturaforespørsel</h2>
+        <p>Bruk dette skjemaet for å be om fakturakopi fra etat for boligforvaltning.</p>
+        <p><b>Hvem kan be om fakturakopi?</b></p>
+        <ul><li>Du kan be om fakturakopi selv eller på vegne av andre. Forespørsel på vegne av andre krever en fullmakt eller vergefullmakt som du laster opp i forespørselsskjema.</li>
+        </ul><p><b>Hva koster det?</b></p>
+        <ul><li>Ingen kostnad for forespørsel om fakturakopi.</li></ul><p><b>Levering av fakturakopi</b></p>
+        <ul><li>Fakturakopien vil bli sendt til den folkeregistrerte adressen.</li></ul>',
+        'title' => 'Fakturaforespørsel',
+        'description' => 'Be om informasjon vedrørende faktura for husleie.',
+        'invoice_number' => 'Fakturanummer',
+        'invoice_number_help' => 'Nummeret på fakturaen du ønsker å be om',
+        'invoice_date' => 'Faktura for periode',
+        'invoice_date_help' => 'Velg måned og år for perioden fakturaen gjelder',
+        'subject_help' => 'Beskriv kort hva fakturaforespørselen gjelder',
+        'phone_help' => 'Telefonnummer du kan kontaktes på',
+        'email_help' => 'E-post du kan kontaktes på',
+    ],
     'inspection_1' => [
         'form_header' => 'Skjema for brannforebyggende tilsyn på kommunal eiendom',
         'title' => 'Brannforebyggende tilsyn',

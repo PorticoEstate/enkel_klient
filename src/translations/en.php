@@ -154,4 +154,23 @@ return [
         'part_of_alarm_system' => 'Part of alarm system',
         'need_extended_inspection' => 'Need extended inspection',
     ],
+    'invoicerequest' => [
+        'form_header' => 'Form for invoice request registration',
+        'form_info' => '<h2>Invoice Request</h2>
+        <p>Use this form to request an invoice copy from the housing management department.</p>
+        <p><b>Who can request an invoice copy?</b></p>
+        <ul><li>You can request an invoice copy yourself or on behalf of someone else. Requests on behalf of others require a power of attorney or guardianship documentation, which you upload in the request form.</li>
+        </ul><p><b>What does it cost?</b></p>
+        <ul><li>There is no cost for requesting an invoice copy.</li></ul><p><b>Delivery of invoice copy</b></p>
+        <ul><li>The invoice copy will be sent to the registered address.</li></ul>',
+        'title' => 'Invoice Request',
+        'description' => 'Request information regarding rent invoices.',
+        'invoice_number' => 'Invoice number',
+        'invoice_number_help' => 'The number of the invoice you wish to request',
+        'invoice_date' => 'Invoice period',
+        'invoice_date_help' => 'Select month and year for the invoice period',
+        'subject_help' => 'Briefly describe what the invoice request concerns',
+        'phone_help' => 'Phone number where you can be reached',
+        'email_help' => 'Email address where you can be reached',
+    ],
 ];

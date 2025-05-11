@@ -171,7 +171,7 @@
 			<h2 class="h4 mb-3">{{ __('create_new_case') }}</h2>
 			<div class="row">
 				{% if config.services.helpdesk %}
-					<div class="col-md-6 mb-3">
+					<div class="col-md-4 mb-3">
 						<div class="d-grid">
 							<a href="{{ base_path }}/helpdesk" class="btn btn-outline-primary">
 								<i class="fas fa-ticket-alt me-2"></i>
@@ -182,7 +182,7 @@
 				{% endif %}
 
 				{% if config.services.nokkelbestilling %}
-					<div class="col-md-6 mb-3">
+					<div class="col-md-4 mb-3">
 						<div class="d-grid">
 							<a href="{{ base_path }}/nokkelbestilling" class="btn btn-outline-primary">
 								<i class="fas fa-key me-2"></i>
@@ -191,25 +191,36 @@
 						</div>
 					</div>
 				{% endif %}
-
+				
+				{% if config.services.invoicerequest %}
+					<div class="col-md-4 mb-3">
+						<div class="d-grid">
+							<a href="{{ base_path }}/invoicerequest" class="btn btn-outline-primary">
+								<i class="fas fa-file-invoice-dollar me-2"></i>
+								{{ __('form_header', 'invoicerequest') }}
+							</a>
+						</div>
+					</div>
+				{% endif %}
 			</div>
 		</div>
 	</div>
 
 	<script>
-		document.addEventListener('DOMContentLoaded', function () { // Make table rows clickable but exclude header row and clicks on buttons/links
-const rows = document.querySelectorAll('tbody tr');
-rows.forEach(row => {
-row.addEventListener('click', function (e) {
-if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && ! e.target.closest('a') && ! e.target.closest('button')) {
-const link = this.querySelector('a.btn-outline-primary');
-if (link) {
-link.click();
-}
-}
-});
-row.style.cursor = 'pointer';
-});
-});
+		document.addEventListener('DOMContentLoaded', function() {
+			// Make table rows clickable but exclude header row and clicks on buttons/links
+			const rows = document.querySelectorAll('tbody tr');
+			rows.forEach(row => {
+				row.addEventListener('click', function(e) {
+					if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && !e.target.closest('a') && !e.target.closest('button')) {
+						const link = this.querySelector('a.btn-outline-primary');
+						if (link) {
+							link.click();
+						}
+					}
+				});
+				row.style.cursor = 'pointer';
+			});
+		});
 	</script>
 {% endblock %}

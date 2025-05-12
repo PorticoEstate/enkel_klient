@@ -39,7 +39,6 @@ $containerBuilder = new ContainerBuilder();
 
 // Add container definitions
 $containerBuilder->addDefinitions([
-	// Twig template engine (replacing Smarty)
 	Twig::class => function ()
 	{
 		// Create directory if it doesn't exist
@@ -73,7 +72,6 @@ $containerBuilder->addDefinitions([
 			$config = parse_ini_file(SRC_ROOT . '/configs/site.conf', true);
 		}
 
-		// Add global variables equivalent to Smarty config
 		$twig->getEnvironment()->addGlobal('config', $config);
 		$twig->getEnvironment()->addGlobal('cache_refresh_token', time());
 
@@ -209,64 +207,10 @@ $twig->getEnvironment()->addFunction(new \Twig\TwigFunction('__', function ($key
 	return $translator->translate($key, $section);
 }));
 
-// Define debug route
-$app->get('/debug', function (Request $request, Response $response) use ($container)
-{
-	$response->getBody()->write('<h1>Debug Information</h1>');
-	$response->getBody()->write('<pre>');
+// Automatically load all route files from src/routes
+foreach (glob(SRC_ROOT . '/routes/*.php') as $routeFile) {
+    require $routeFile;
+}
 
-	// Show template directories
-	$smarty = $container->get('smarty');
-	$response->getBody()->write("Template directories:\n");
-	$response->getBody()->write(print_r($smarty->getTemplateDir(), true));
-
-	// Show important paths and system information
-	$response->getBody()->write("\nSystem Information:\n");
-	$response->getBody()->write("PHP Version: " . PHP_VERSION . "\n");
-	$response->getBody()->write("APP_ROOT: " . APP_ROOT . "\n");
-	$response->getBody()->write("SRC_ROOT: " . SRC_ROOT . "\n");
-	$response->getBody()->write("templates_c writable: " . (is_writable(SRC_ROOT . '/templates_c') ? 'Yes' : 'No') . "\n");
-	$response->getBody()->write("cache writable: " . (is_writable(SRC_ROOT . '/cache') ? 'Yes' : 'No') . "\n");
-
-	$response->getBody()->write('</pre>');
-	return $response;
-});
-
-// Define application routes
-$app->get('/', \App\Controller\LandingController::class . ':displayInfo');
-
-// Nokkelbestilling routes
-$app->get('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':displayForm');
-$app->post('/nokkelbestilling', \App\Controller\NokkelbestillingController::class . ':saveForm');
-$app->get('/nokkelbestilling/locations', \App\Controller\NokkelbestillingController::class . ':getLocations');
-$app->post('/nokkelbestilling/upload', \App\Controller\NokkelbestillingController::class . ':handleMultiUploadFile');
-
-// Helpdesk routes
-$app->get('/helpdesk', \App\Controller\HelpdeskController::class . ':displayForm');
-$app->post('/helpdesk', \App\Controller\HelpdeskController::class . ':saveForm');
-$app->get('/helpdesk/locations', \App\Controller\HelpdeskController::class . ':getLocations');
-$app->post('/helpdesk/upload', \App\Controller\HelpdeskController::class . ':handleMultiUploadFile');
-
-// Invoice Request routes
-$app->get('/invoicerequest', \App\Controller\InvoicerequestController::class . ':displayForm');
-$app->post('/invoicerequest', \App\Controller\InvoicerequestController::class . ':saveForm');
-$app->get('/invoicerequest/locations', \App\Controller\InvoicerequestController::class . ':getLocations');
-$app->post('/invoicerequest/upload', \App\Controller\InvoicerequestController::class . ':handleMultiUploadFile');
-
-// Inspection1 routes
-$app->get('/inspection_1', \App\Controller\Inspection1Controller::class . ':displayForm');
-$app->post('/inspection_1', \App\Controller\Inspection1Controller::class . ':saveForm');
-$app->get('/inspection_1/attributes', \App\Controller\Inspection1Controller::class . ':getAttributes');
-$app->get('/inspection_1/locations', \App\Controller\Inspection1Controller::class . ':getLocations');
-$app->post('/inspection_1/upload', \App\Controller\Inspection1Controller::class . ':handleMultiUploadFile');
-
-$app->get('/my_cases', \App\Controller\MyCasesController::class . ':displayCases')
-	->setName('my_cases');
-
-// Add route for viewing individual case details
-$app->get('/view_case/{id}', \App\Controller\MyCasesController::class . ':viewCase')
-	->setName('view_case');
-
-$app->post('/my_cases/respond/{id}', \App\Controller\MyCasesController::class . ':respondToCase');
 // Run the application
 $app->run();

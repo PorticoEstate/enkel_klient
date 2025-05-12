@@ -80,6 +80,8 @@ return [
         'send_comment' => 'Send comment',
         'access_denied' => 'You do not have access to this area.',
         'error' => 'Error',
+        'go_to_homepage' => 'Go to homepage',
+        'go_back' => 'Go back',
     ],
     'landing' => [
         'title' => 'Welcome to Bergen Municipality, Housing Management Department',

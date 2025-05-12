@@ -79,7 +79,9 @@ return [
         'supported_file_types' => 'Støttede filtyper: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (maks 10MB)',
         'send_comment' => 'Send kommentar',
         'access_denied' => 'Beklager, du har ikke tilgang til dette området.',
-        'error' => 'Feil'
+        'error' => 'Feil',
+        'go_to_homepage' => 'Gå til forsiden',
+        'go_back' => 'Gå tilbake',
     ],
     'landing' => [
         'title' => 'Velkommen til Bergen kommune, etat for boligforvaltning',

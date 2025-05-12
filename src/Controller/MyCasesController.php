@@ -23,37 +23,17 @@ class MyCasesController extends BaseFormController
         $twig->getEnvironment()->addGlobal('current_section', 'my_cases');
     }
 
-	public function get_logged_in()
+
+	function getLoggedIn(): array
 	{
-		$headers = getallheaders();
-		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
-		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
-		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
-
-		ApiClient::session_set('my_cases', 'ssn', $ssn);
-
-		$session_info = $this->apiClient->get_session_info();
-		$url = $this->apiClient->get_backend_url() . "/property/tenant/?";
-
-		$get_data = [
-			'ssn' => $ssn,
-			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->apiClient->get_logindomain(),
-			'phpgw_return_as' => 'json',
-		];
-
-		$url .= http_build_query($get_data);
-
-		$empty = ['first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => '', 'email' => ''];
-		$result = (array)json_decode($this->apiClient->exchange_data($url, []), true);
-
-		return array_merge($empty, $result);
+		return parent::getLoggedIn();
 	}
+
 
 	public function displayCases(Request $request, Response $response): Response
 	{
 		// Get user information
-		$user_info = $this->get_logged_in();
+		$user_info = $this->getLoggedIn();
 
 		// Use Fiks service to enhance user data
 		$fiks = new Fiks();

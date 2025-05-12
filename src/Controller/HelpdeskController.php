@@ -12,308 +12,286 @@ use App\Service\Sanitizer;
 
 class HelpdeskController extends BaseFormController
 {
-    use UtilityTrait;
+	use UtilityTrait;
 
-    public function __construct(Twig $twig, ApiClient $apiClient)
-    {
-        parent::__construct($twig, $apiClient);
-        $str_base_url = self::current_site_url();
-        $twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
-        $twig->getEnvironment()->addGlobal('action_url', $str_base_url);
-        $twig->getEnvironment()->addGlobal('saved', 0);
-        $twig->getEnvironment()->addGlobal('error', []);
-        $twig->getEnvironment()->addGlobal('subject', '');
-        $twig->getEnvironment()->addGlobal('message', '');
-        $twig->getEnvironment()->addGlobal('current_section', 'helpdesk');
-    }
+	public function __construct(Twig $twig, ApiClient $apiClient)
+	{
+		parent::__construct($twig, $apiClient);
+		$str_base_url = self::current_site_url();
+		$twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('action_url', $str_base_url);
+		$twig->getEnvironment()->addGlobal('saved', 0);
+		$twig->getEnvironment()->addGlobal('error', []);
+		$twig->getEnvironment()->addGlobal('subject', '');
+		$twig->getEnvironment()->addGlobal('message', '');
+		$twig->getEnvironment()->addGlobal('current_section', 'helpdesk');
+	}
 
-    private function getLoggedIn(): array
-    {
-        $headers = getallheaders();
-        $ssn = !empty($headers['uid']) ? $headers['uid'] : '';
-        $ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
-        $ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
+	function getLoggedIn(): array
+	{
+		return parent::getLoggedIn();
+	}
 
-        ApiClient::session_set('helpdesk', 'ssn', $ssn);
+	public function getLocations(Request $request, Response $response): Response
+	{
+		$session_info = $this->apiClient->get_session_info();
+		$url = $this->apiClient->get_backend_url() . "/?";
 
-        $session_info = $this->apiClient->get_session_info();
-        $url = $this->apiClient->get_backend_url() . "/property/tenant/?";
+		$get_data = [
+			'menuaction' => 'property.bolocation.get_locations',
+			$session_info['session_name'] => $session_info['session_id'],
+			'domain' => $this->apiClient->get_logindomain(),
+			'phpgw_return_as' => 'json',
+			'api_mode' => true,
+			'query' => $request->getQueryParams()['query'] ?? ''
+		];
 
-        $get_data = [
-            'ssn' => $ssn,
-            $session_info['session_name'] => $session_info['session_id'],
-            'domain' => $this->apiClient->get_logindomain(),
-            'phpgw_return_as' => 'json',
-        ];
+		$url .= http_build_query($get_data);
+		$result = json_decode($this->apiClient->exchange_data($url, []), true);
+		$locations = empty($result['ResultSet']['Result']) ? [] : $result['ResultSet']['Result'];
 
-        $url .= http_build_query($get_data);
+		$response = $response->withHeader('Content-Type', 'application/json');
+		$response->getBody()->write(json_encode($locations));
+		return $response;
+	}
 
-        $empty = ['first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => ''];
-        $result = (array)json_decode($this->apiClient->exchange_data($url, []), true);
+	public function saveForm(Request $request, Response $response): Response
+	{
+		$saved = false;
+		$error = [];
 
-        return array_merge($empty, $result);
-    }
+		if ($request->getMethod() === 'POST')
+		{
+			$post = $request->getParsedBody();
 
-    public function getLocations(Request $request, Response $response): Response
-    {
-        $session_info = $this->apiClient->get_session_info();
-        $url = $this->apiClient->get_backend_url() . "/?";
+			// Verify CSRF token
+			if (!isset($post['randcheck']) || $post['randcheck'] != $_SESSION['rand'])
+			{
+				$error[] = 'Invalid security token';
+				return $this->handleFormResponse($request, $response, false, $error, null);
+			}
 
-        $get_data = [
-            'menuaction' => 'property.bolocation.get_locations',
-            $session_info['session_name'] => $session_info['session_id'],
-            'domain' => $this->apiClient->get_logindomain(),
-            'phpgw_return_as' => 'json',
-            'api_mode' => true,
-            'query' => $request->getQueryParams()['query'] ?? ''
-        ];
+			$session_info = $this->apiClient->get_session_info();
+			$url = $this->apiClient->get_backend_url() . "/?";
 
-        $url .= http_build_query($get_data);
-        $result = json_decode($this->apiClient->exchange_data($url, []), true);
-        $locations = empty($result['ResultSet']['Result']) ? [] : $result['ResultSet']['Result'];
+			// Sanitize input data
+			$sanitizedPost = [
+				'location_code' => Sanitizer::sanitizeString($post['location_code'] ?? ''),
+				'address' => Sanitizer::sanitizeString($post['address'] ?? ''),
+				'location_name' => Sanitizer::sanitizeString($post['location_name'] ?? ''),
+				'subject' => Sanitizer::sanitizeString($post['subject'] ?? ''),
+				'message' => Sanitizer::sanitizeHTML($post['message'] ?? ''),
+				'phone' => Sanitizer::sanitizePhone($post['phone'] ?? ''),
+				'email' => Sanitizer::sanitizeEmail($post['email'] ?? '')
+			];
 
-        $response = $response->withHeader('Content-Type', 'application/json');
-        $response->getBody()->write(json_encode($locations));
-        return $response;
-    }
+			$get_data = [
+				'menuaction' => 'property.uitts.add',
+				$session_info['session_name'] => $session_info['session_id'],
+				'domain' => $this->apiClient->get_logindomain(),
+				'phpgw_return_as' => 'json',
+				'api_mode' => true
+			];
 
-    public function saveForm(Request $request, Response $response): Response
-    {
-        $saved = false;
-        $error = [];
+			// Get category ID from config
+			$config = $this->twig->getEnvironment()->getGlobals()['config'];
+			$cat_id = $config['helpdesk']['cat_id'] ?? null;
 
-        if ($request->getMethod() === 'POST')
-        {
-            $post = $request->getParsedBody();
+			$user_info = ApiClient::session_get('helpdesk', 'user_info');
 
-            // Verify CSRF token
-            if (!isset($post['randcheck']) || $post['randcheck'] != $_SESSION['rand'])
-            {
-                $error[] = 'Invalid security token';
-                return $this->handleFormResponse($request, $response, false, $error, null);
-            }
+			// Build user info string
+			$userinfo = $this->buildUserInfo($user_info, $sanitizedPost);
+			$details = $sanitizedPost['message'];
+			if ($userinfo)
+			{
+				$details = $userinfo . $details;
+			}
 
-            $session_info = $this->apiClient->get_session_info();
-            $url = $this->apiClient->get_backend_url() . "/?";
+			$tenant_data = $this->apiClient->get_tenant($post['location_code']);
 
-            // Sanitize input data
-            $sanitizedPost = [
-                'location_code' => Sanitizer::sanitizeString($post['location_code'] ?? ''),
-                'address' => Sanitizer::sanitizeString($post['address'] ?? ''),
-                'location_name' => Sanitizer::sanitizeString($post['location_name'] ?? ''),
-                'subject' => Sanitizer::sanitizeString($post['subject'] ?? ''),
-                'message' => Sanitizer::sanitizeHTML($post['message'] ?? ''),
-                'phone' => Sanitizer::sanitizePhone($post['phone'] ?? ''),
-                'email' => Sanitizer::sanitizeEmail($post['email'] ?? '')
-            ];
+			$post_data = [
+				'values' => [
+					'cat_id' => $cat_id,
+					'priority' => 3,
+					'apply' => true,
+					'location_code' => $sanitizedPost['location_code'],
+					'address' => !empty($sanitizedPost['address']) ? $sanitizedPost['address'] : $sanitizedPost['location_name'],
+					'subject' => $sanitizedPost['subject'],
+					'details' => $details,
+					'extra' => [
+						'tenant_id' => $tenant_data['id'] ?? null,
+						'external_owner_ssn' => ApiClient::session_get('helpdesk', 'ssn')
+					]
+				]
+			];
 
-            $get_data = [
-                'menuaction' => 'property.uitts.add',
-                $session_info['session_name'] => $session_info['session_id'],
-                'domain' => $this->apiClient->get_logindomain(),
-                'phpgw_return_as' => 'json',
-                'api_mode' => true
-            ];
+			$url .= http_build_query($get_data);
+			$ret = json_decode($this->apiClient->exchange_data($url, $post_data), true);
 
-            // Get category ID from config
-            $config = $this->twig->getEnvironment()->getGlobals()['config'];
-            $cat_id = $config['helpdesk']['cat_id'] ?? null;
+			if (isset($ret['status']) && $ret['status'] === 'saved')
+			{
+				$saved = true;
+			}
+			else
+			{
+				$error = $this->processErrors($ret);
+			}
+		}
 
-            $user_info = ApiClient::session_get('helpdesk', 'user_info');
+		if (
+			isset($request->getQueryParams()['phpgw_return_as']) &&
+			$request->getQueryParams()['phpgw_return_as'] === 'json'
+		)
+		{
+			return $this->handleFormResponse($request, $response, $saved, $error, $ret['id'] ?? null);
+		}
 
-            // Build user info string
-            $userinfo = $this->buildUserInfo($user_info, $sanitizedPost);
-            $details = $sanitizedPost['message'];
-            if ($userinfo)
-            {
-                $details = $userinfo . $details;
-            }
+		return $this->displayForm($request, $response);
+	}
 
-            $tenant_data = $this->apiClient->get_tenant($post['location_code']);
+	public function displayForm(Request $request, Response $response): Response
+	{
+		$saved = false;
+		$error = [];
+		$id = null;
 
-            $post_data = [
-                'values' => [
-                    'cat_id' => $cat_id,
-                    'priority' => 3,
-                    'apply' => true,
-                    'location_code' => $sanitizedPost['location_code'],
-                    'address' => !empty($sanitizedPost['address']) ? $sanitizedPost['address'] : $sanitizedPost['location_name'],
-                    'subject' => $sanitizedPost['subject'],
-                    'details' => $details,
-                    'extra' => [
-                        'tenant_id' => $tenant_data['id'] ?? null,
-                        'external_owner_ssn' => ApiClient::session_get('helpdesk', 'ssn')
-                    ]
-                ]
-            ];
+		// Check for session data
+		if (!$saved)
+		{
+			$saved = ApiClient::session_get('helpdesk', 'saved');
+			ApiClient::session_clear('helpdesk', 'saved');
+		}
 
-            $url .= http_build_query($get_data);
-            $ret = json_decode($this->apiClient->exchange_data($url, $post_data), true);
+		if (empty($error))
+		{
+			$error = (array)ApiClient::session_get('helpdesk', 'error');
+			ApiClient::session_clear('helpdesk', 'error');
+		}
 
-            if (isset($ret['status']) && $ret['status'] === 'saved')
-            {
-                $saved = true;
-            }
-            else
-            {
-                $error = $this->processErrors($ret);
-            }
-        }
+		if (!$id)
+		{
+			$id = ApiClient::session_get('helpdesk', 'id');
+			ApiClient::session_clear('helpdesk', 'id');
+		}
 
-        if (
-            isset($request->getQueryParams()['phpgw_return_as']) &&
-            $request->getQueryParams()['phpgw_return_as'] === 'json'
-        )
-        {
-            return $this->handleFormResponse($request, $response, $saved, $error, $ret['id'] ?? null);
-        }
+		$get_data = [];
+		$user_info = $this->getLoggedIn();
+		$fiks = new Fiks();
+		$fiks_data = $fiks->get_name_from_external_service();
 
-        return $this->displayForm($request, $response);
-    }
+		$user_info['first_name'] = !empty($fiks_data['first_name']) ? $fiks_data['first_name'] : $user_info['first_name'];
+		$user_info['last_name'] = !empty($fiks_data['last_name']) ? $fiks_data['last_name'] : $user_info['last_name'];
 
-    public function displayForm(Request $request, Response $response): Response
-    {
-        $saved = false;
-        $error = [];
-        $id = null;
+		ApiClient::session_set('helpdesk', 'user_info', $user_info);
 
-        // Check for session data
-        if (!$saved)
-        {
-            $saved = ApiClient::session_get('helpdesk', 'saved');
-            ApiClient::session_clear('helpdesk', 'saved');
-        }
+		$location_code = !empty($user_info['location_code']) ? $user_info['location_code'] : '';
+		$address = !empty($user_info['address']) ? $user_info['address'] : '';
+		$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
 
-        if (empty($error))
-        {
-            $error = (array)ApiClient::session_get('helpdesk', 'error');
-            ApiClient::session_clear('helpdesk', 'error');
-        }
+		// Get config
+		$config = $this->twig->getEnvironment()->getGlobals()['config'];
+		$enable_fileupload = $config['helpdesk']['enable_fileupload'] ?? 0;
 
-        if (!$id)
-        {
-            $id = ApiClient::session_get('helpdesk', 'id');
-            ApiClient::session_clear('helpdesk', 'id');
-        }
+		// Generate and set CSRF token
+		$rand = rand();
+		$_SESSION['rand'] = $rand;
 
-        $get_data = [];
-        $user_info = $this->getLoggedIn();
-        $fiks = new Fiks();
-        $fiks_data = $fiks->get_name_from_external_service();
+		try
+		{
+			// Render template with Twig
+			return $this->twig->render($response, 'helpdesk.twig', [
+				'location_code' => $location_code,
+				'address' => $address,
+				'user_name' => $user_name,
+				'action_url' => self::get_route_url('helpdesk', $get_data),
+				'saved' => $saved,
+				'error' => $error,
+				'id' => $id,
+				'enable_fileupload' => $enable_fileupload,
+				'rand' => $rand,
+				'currentRoute' => 'helpdesk'
+			]);
+		}
+		catch (\Exception $e)
+		{
+			// Fall back to rendering minimal content
+			$response->getBody()->write('<h1>Error loading template: ' . $e->getMessage() . '</h1>');
+			return $response;
+		}
+	}
 
-        $user_info['first_name'] = !empty($fiks_data['first_name']) ? $fiks_data['first_name'] : $user_info['first_name'];
-        $user_info['last_name'] = !empty($fiks_data['last_name']) ? $fiks_data['last_name'] : $user_info['last_name'];
+	public function handleMultiUploadFile(Request $request, Response $response): Response
+	{
+		$id = (int)($request->getQueryParams()['id'] ?? 0);
+		$session_info = $this->apiClient->get_session_info();
 
-        ApiClient::session_set('helpdesk', 'user_info', $user_info);
+		$url = $this->apiClient->get_backend_url() . "/?" . http_build_query([
+			'menuaction' => 'property.uitts.handle_multi_upload_file',
+			$session_info['session_name'] => $session_info['session_id'],
+			'domain' => $this->apiClient->get_logindomain(),
+			'phpgw_return_as' => 'json',
+			'api_mode' => true,
+			'id' => $id
+		]);
 
-        $location_code = !empty($user_info['location_code']) ? $user_info['location_code'] : '';
-        $address = !empty($user_info['address']) ? $user_info['address'] : '';
-        $user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
+		$content_range = $request->getServerParams()['HTTP_CONTENT_RANGE'] ?? null;
+		$content_disposition = $request->getServerParams()['HTTP_CONTENT_DISPOSITION'] ?? null;
 
-        // Get config
-        $config = $this->twig->getEnvironment()->getGlobals()['config'];
-        $enable_fileupload = $config['helpdesk']['enable_fileupload'] ?? 0;
+		$return_data = $this->apiClient->exchange_data($url, [], $content_range, $content_disposition);
 
-        // Generate and set CSRF token
-        $rand = rand();
-        $_SESSION['rand'] = $rand;
+		$response = $response->withHeader('Content-Type', 'application/json');
+		$response->getBody()->write($return_data);
+		return $response;
+	}
 
-        try
-        {
-            // Render template with Twig
-            return $this->twig->render($response, 'helpdesk.twig', [
-                'location_code' => $location_code,
-                'address' => $address,
-                'user_name' => $user_name,
-                'action_url' => self::get_route_url('helpdesk', $get_data),
-                'saved' => $saved,
-                'error' => $error,
-                'id' => $id,
-                'enable_fileupload' => $enable_fileupload,
-                'rand' => $rand,
-                'currentRoute' => 'helpdesk'
-            ]);
-        }
-        catch (\Exception $e)
-        {
-            // Fall back to rendering minimal content
-            $response->getBody()->write('<h1>Error loading template: ' . $e->getMessage() . '</h1>');
-            return $response;
-        }
-    }
+	private function buildUserInfo(array $user_info, array $post): string
+	{
+		$userinfo = [];
+		$user_name = !empty($user_info['first_name']) ?
+			"{$user_info['first_name']} {$user_info['last_name']}" : '';
 
-    public function handleMultiUploadFile(Request $request, Response $response): Response
-    {
-        $id = (int)($request->getQueryParams()['id'] ?? 0);
-        $session_info = $this->apiClient->get_session_info();
+		if (!empty($user_info['location_code']) && $user_name)
+		{
+			$userinfo[] = "Innmeldt av leietaker: {$user_name}";
+		}
+		elseif ($user_name)
+		{
+			$userinfo[] = "Innmeldt av: {$user_name}";
+		}
 
-        $url = $this->apiClient->get_backend_url() . "/?" . http_build_query([
-            'menuaction' => 'property.uitts.handle_multi_upload_file',
-            $session_info['session_name'] => $session_info['session_id'],
-            'domain' => $this->apiClient->get_logindomain(),
-            'phpgw_return_as' => 'json',
-            'api_mode' => true,
-            'id' => $id
-        ]);
+		if (!empty($post['phone']))
+		{
+			$userinfo[] = "Telefon: {$post['phone']}";
+		}
+		if (!empty($post['email']))
+		{
+			$userinfo[] = "E-post: {$post['email']}";
+		}
 
-        $content_range = $request->getServerParams()['HTTP_CONTENT_RANGE'] ?? null;
-        $content_disposition = $request->getServerParams()['HTTP_CONTENT_DISPOSITION'] ?? null;
+		return $userinfo ? "<p>" . implode("</p>\n<p>", $userinfo) . "</p>\n" : '';
+	}
 
-        $return_data = $this->apiClient->exchange_data($url, [], $content_range, $content_disposition);
+	private function processErrors(array $ret): array
+	{
+		if (!empty($ret['receipt']['error']))
+		{
+			return array_map(fn($error) => $error['msg'], $ret['receipt']['error']);
+		}
+		return ['Noe gikk galt med innsendingen'];
+	}
 
-        $response = $response->withHeader('Content-Type', 'application/json');
-        $response->getBody()->write($return_data);
-        return $response;
-    }
+	private function handleFormResponse(Request $request, Response $response, bool $saved, array $error, ?int $id): Response
+	{
+		ApiClient::session_set('helpdesk', 'id', $id);
+		ApiClient::session_set('helpdesk', 'error', $error);
+		ApiClient::session_set('helpdesk', 'saved', $saved);
 
-    private function buildUserInfo(array $user_info, array $post): string
-    {
-        $userinfo = [];
-        $user_name = !empty($user_info['first_name']) ?
-            "{$user_info['first_name']} {$user_info['last_name']}" : '';
-
-        if (!empty($user_info['location_code']) && $user_name)
-        {
-            $userinfo[] = "Innmeldt av leietaker: {$user_name}";
-        }
-        elseif ($user_name)
-        {
-            $userinfo[] = "Innmeldt av: {$user_name}";
-        }
-
-        if (!empty($post['phone']))
-        {
-            $userinfo[] = "Telefon: {$post['phone']}";
-        }
-        if (!empty($post['email']))
-        {
-            $userinfo[] = "E-post: {$post['email']}";
-        }
-
-        return $userinfo ? "<p>" . implode("</p>\n<p>", $userinfo) . "</p>\n" : '';
-    }
-
-    private function processErrors(array $ret): array
-    {
-        if (!empty($ret['receipt']['error']))
-        {
-            return array_map(fn($error) => $error['msg'], $ret['receipt']['error']);
-        }
-        return ['Noe gikk galt med innsendingen'];
-    }
-
-    private function handleFormResponse(Request $request, Response $response, bool $saved, array $error, ?int $id): Response
-    {
-        ApiClient::session_set('helpdesk', 'id', $id);
-        ApiClient::session_set('helpdesk', 'error', $error);
-        ApiClient::session_set('helpdesk', 'saved', $saved);
-
-        $response = $response->withHeader('Content-Type', 'application/json');
-        $response->getBody()->write(json_encode([
-            'id' => $id,
-            'status' => $saved ? 'saved' : 'error',
-            'message' => $error
-        ]));
-        return $response;
-    }
+		$response = $response->withHeader('Content-Type', 'application/json');
+		$response->getBody()->write(json_encode([
+			'id' => $id,
+			'status' => $saved ? 'saved' : 'error',
+			'message' => $error
+		]));
+		return $response;
+	}
 }

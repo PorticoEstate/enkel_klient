@@ -4,6 +4,8 @@ namespace App\Controller;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\Twig;
+use App\Service\ApiClient;
+
 
 abstract class BaseFormController
 {
@@ -35,4 +37,31 @@ abstract class BaseFormController
         // Implement in child
         return true;
     }
+
+	protected function getLoggedIn(): array
+	{
+		$headers = getallheaders();
+		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
+		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
+		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
+
+		ApiClient::session_set('invoicerequest', 'ssn', $ssn);
+
+		$session_info = $this->apiClient->get_session_info();
+		$url = $this->apiClient->get_backend_url() . "/property/tenant/?";
+
+		$get_data = [
+			'ssn' => $ssn,
+			$session_info['session_name'] => $session_info['session_id'],
+			'domain' => $this->apiClient->get_logindomain(),
+			'phpgw_return_as' => 'json',
+		];
+
+		$url .= http_build_query($get_data);
+
+		$empty = ['first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => ''];
+		$result = (array)json_decode($this->apiClient->exchange_data($url, []), true);
+
+		return array_merge($empty, $result);
+	}
 }

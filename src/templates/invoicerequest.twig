@@ -156,9 +156,12 @@
 							<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('subject_help') }}</small>
 							<input type="text" class="form-control" id="subject" name="subject" tabindex="5" value="{{ subject }}" aria-describedby="subjectHelp" required="required">
 						</div>
+
 						<div class="form-group mt-4">
-							<label for="message">{{ __('message') }}</label>
-							<small id="messageHelp" class="form-text text-muted d-block mb-2">{{ __('message_help') }}</small>
+							<label for="message">{{ __('additional_info') }}</label>
+							<small id="messageHelp" class="form-text text-muted d-block mb-2">
+								{{ __('additional_info_help') }}
+							</small>
 							<textarea class="form-control" id="message" name="message" tabindex="6" required="required">{{ message }}</textarea>
 						</div>
 

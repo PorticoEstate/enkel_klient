@@ -37,8 +37,6 @@ $(document).ready(function ()
 	// Initialize file uploader if enabled
 	initializeFileUploader();
 
-	// Setup rich text editor for the message field
-	setupRichTextEditor();
 });
 
 function markRequiredFields()
@@ -134,38 +132,6 @@ function initializeFileUploader()
 	}
 }
 
-function setupRichTextEditor()
-{
-	try
-	{
-		// Initialize Quill rich text editor if needed
-		if ($("#message").length > 0)
-		{
-			var quill = new Quill('#message', {
-				modules: {
-					toolbar: [
-						['bold', 'italic', 'underline'],
-						[{ 'list': 'ordered' }, { 'list': 'bullet' }],
-						['clean']
-					]
-				},
-				theme: 'snow'
-			});
-
-			// Set up form to collect rich text content before submission
-			$('form').on('submit', function ()
-			{
-				var messageContent = quill.root.innerHTML;
-				$("#message").val(messageContent);
-				return true;
-			});
-		}
-	}
-	catch (error)
-	{
-		console.error("Error setting up rich text editor:", error);
-	}
-}
 
 $('form').on('submit', function (e)
 {

@@ -47,11 +47,10 @@ class MyCasesController extends BaseFormController
 		// Format user data for display
 		$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
 		$user_email = $user_info['email'] ?? '';
-		$ssn = 	ApiClient::session_get('my_cases', 'ssn');
+		$ssn = 	ApiClient::session_get('common', 'ssn');
 
 		// Fetch cases from API
 		$result = $this->fetchCasesFromApi($ssn);
-		// print_r($result);die();
 		// Format dates for display
 
 
@@ -111,7 +110,7 @@ class MyCasesController extends BaseFormController
 		$preservedContent = isset($queryParams['preserved_content']) ? urldecode($queryParams['preserved_content']) : '';
 
 		// Get user information to verify ownership
-		$ssn = ApiClient::session_get('my_cases', 'ssn');
+		$ssn = ApiClient::session_get('common', 'ssn');
 
 		// Fetch case details from API
 		$caseDetails = $this->fetchCaseDetails($caseId, $ssn);
@@ -259,7 +258,7 @@ class MyCasesController extends BaseFormController
 		// Get user information
 		$user_info = ApiClient::session_get('my_cases', 'user_info');
 
-		$ssn = ApiClient::session_get('my_cases', 'ssn');
+		$ssn = ApiClient::session_get('common', 'ssn');
 
 		// Get form data
 		$post = $request->getParsedBody();

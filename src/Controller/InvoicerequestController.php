@@ -109,7 +109,7 @@ class InvoicerequestController extends BaseFormController
                 $details = "<p><strong>Ønsket faktura for periode: " . $sanitizedPost['invoice_date'] . "</strong></p>\n" . $details;
             }
 
-            $ssn = ApiClient::session_get('invoicerequest', 'ssn');
+            $ssn = ApiClient::session_get('common', 'ssn');
 
             if (!empty($ssn))
             {
@@ -134,7 +134,7 @@ class InvoicerequestController extends BaseFormController
                     'details' => $details,
                     'extra' => [
                         'tenant_id' => $tenant_data['id'] ?? null,
-                        'external_owner_ssn' => ApiClient::session_get('invoicerequest', 'ssn')
+                        'external_owner_ssn' => ApiClient::session_get('common', 'ssn')
                     ]
                 ]
             ];

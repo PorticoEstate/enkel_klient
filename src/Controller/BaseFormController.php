@@ -38,6 +38,9 @@ abstract class BaseFormController
         return true;
     }
 
+	/**
+	 * Check if the user is logged in, if the user is a tenant - and return their information
+	 */
 	protected function getLoggedIn(): array
 	{
 		$headers = getallheaders();
@@ -45,7 +48,7 @@ abstract class BaseFormController
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
 		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
 
-		ApiClient::session_set('invoicerequest', 'ssn', $ssn);
+		ApiClient::session_set('common', 'ssn', $ssn);
 
 		$session_info = $this->apiClient->get_session_info();
 		$url = $this->apiClient->get_backend_url() . "/property/tenant/?";

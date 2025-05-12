@@ -1,5 +1,4 @@
 <?php
-// filepath: /home/hc483/public_html/enkel_klient/src/Service/ApiClient.php
 
 namespace App\Service;
 

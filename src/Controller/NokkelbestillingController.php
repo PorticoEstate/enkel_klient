@@ -196,7 +196,7 @@ class NokkelbestillingController extends BaseFormController
 					'details' => $details,
 					'extra' => [
 						'tenant_id' => $tenant_data['id'] ?? null,
-						'external_owner_ssn' => ApiClient::session_get('nokkelbestilling', 'ssn')
+						'external_owner_ssn' => ApiClient::session_get('common', 'ssn')
 					]
 				]
 			];

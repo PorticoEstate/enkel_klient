@@ -19,7 +19,7 @@ class Inspection1Controller extends BaseFormController
             // Render error template for access denied
             http_response_code(403);
             // Fetch translation directly from Translator
-            $translator = new \App\Service\Translator($_SESSION['lang']); // Optionally pass language code
+            $translator = new \App\Service\Translator($_SESSION['lang'] ?? 'no'); // Optionally pass language code
             $error_message = $translator->translate('access_denied', 'common');
             echo $twig->fetch('error.twig', array(
                 'error_code' => 403,

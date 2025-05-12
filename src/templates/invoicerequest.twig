@@ -80,128 +80,130 @@
 	</style>
 
 	<div class="container">
-		<h1>{{ __('form_header') }}</h1>
+		<main role="main">
+			<h1>{{ __('form_header') }}</h1>
 
-		{% if saved == 1 %}
-			<div class="alert alert-success">
-				<p>{{ __('case_registered') }}
-					#{{ id }}</p>
-			</div>
-			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">{{ __('new_registration') }}</button>
-		{% else %}
-			{% if error|length > 0 %}
-				<div class="alert alert-danger alert-dismissible">
-					{% for message in error %}
-						<p>{{ message }}</p>
-					{% endfor %}
+			{% if saved == 1 %}
+				<div class="alert alert-success">
+					<p>{{ __('case_registered') }}
+						#{{ id }}</p>
 				</div>
+				<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">{{ __('new_registration') }}</button>
 			{% else %}
-				<p>{{ __('form_info')| raw }}</p>
-			{% endif %}
-
-			<form method="post" action="{{ action_url }}" enctype="multipart/form-data">
-				<input type="hidden" value="{{ rand }}" name="randcheck"/>
-				<fieldset>
-					{% if user_name %}
-						<p>{{ __('name') }}:
-							{{ user_name }}</p>
-					{% endif %}
-
-					{% if location_code %}
-						<div class="form-group mt-2">
-							<label for="location_name">
-								{{ __('address') }}
-							</label>
-							<span class="form-control">{{ address }}</span>
-							<input type="hidden" id="location_code" name="location_code" value="{{ location_code }}">
-							<input type="hidden" id="address" name="address" value="{{ address }}">
-							<input type="hidden" id="user_name" name="user_name" value="{{ user_name }}">
-						</div>
-					{% else %}
-						<div class="form-group mt-2">
-							<label for="location_name">
-								<i class="fas fa-search"></i>
-								{{ __('address') }}
-							</label>
-							<input type="text" id="location_name" name="location_name" tabindex="1" class="form-control" autocomplete="off" required="required"/>
-							<div class="selection"></div>
-							<input type="hidden" id="location_code" name="location_code">
-						</div>
-					{% endif %}
-
-					<div class="form-group mt-2">
-						<label for="phone">{{ __('phone') }}</label>
-						<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">{{ __('phone_help') }}</small>
-						<input type="text" id="phone" name="phone" tabindex="2" class="form-control" autocomplete="off" required="required"/>
+				{% if error|length > 0 %}
+					<div class="alert alert-danger alert-dismissible">
+						{% for message in error %}
+							<p>{{ message }}</p>
+						{% endfor %}
 					</div>
-					<!--email-->
-					<div class="form-group mt-2">
-						<label for="email">{{ __('email') }}</label>
-						<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">{{ __('email_help') }}</small>
-						<input type="email" id="email" name="email" tabindex="3" class="form-control" autocomplete="off" required="required"/>
-					</div>
-				</fieldset>
+				{% else %}
+					<p>{{ __('form_info')| raw }}</p>
+				{% endif %}
 
-				<div id="details">
+				<form method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form">
+					<input type="hidden" value="{{ rand }}" name="randcheck"/>
 					<fieldset>
-						<!-- Invoice Month/Year Datepicker -->
-						<div class="form-group mt-2">
-							<label for="invoice_date">{{ __('invoice_date') }}</label>
-							<small id="invoiceDateHelp" class="form-text text-muted d-block mb-2">{{ __('invoice_date_help') }}</small>
-							<input type="text" class="form-control" id="invoice_date" name="invoice_date" tabindex="4" required="required" readonly>
-						</div>
-						
-						<div class="form-group mt-2">
-							<label for="subject">{{ __('subject') }}</label>
-							<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('subject_help') }}</small>
-							<input type="text" class="form-control" id="subject" name="subject" tabindex="5" value="{{ subject }}" aria-describedby="subjectHelp" required="required">
-						</div>
+						{% if user_name %}
+							<p>{{ __('name') }}:
+								{{ user_name }}</p>
+						{% endif %}
 
-						<div class="form-group mt-4">
-							<label for="message">{{ __('additional_info') }}</label>
-							<small id="messageHelp" class="form-text text-muted d-block mb-2">
-								{{ __('additional_info_help') }}
-							</small>
-							<textarea class="form-control" id="message" name="message" tabindex="6" required="required">{{ message }}</textarea>
-						</div>
-
-						{% if enable_fileupload == 1 %}
-							<div class="form-group mt-4">
-								<label>{{ __('upload_file') }}</label>
-								<div id="drop-area">
-									<div style="border: 2px dashed #ccc; padding: 20px;">
-										<p>{{ __('upload_instructions') }}</p>
-										<div class="fileupload-buttonbar">
-											<div class="fileupload-buttons">
-												<span class="fileinput-button btn btn-success">
-													<i class="fas fa-plus"></i>
-													<span>{{ __('add_files') }}</span>
-													<input id="fileupload" type="file" name="files[]" multiple="" data-url="">
-												</span>
-												<span class="fileupload-process"></span>
-											</div>
-											<div class="fileupload-count">
-												{{ __('number_of_files') }}:
-												<span id="files-count">0</span>
-											</div>
-											<div class="fileupload-progress" style="display:none">
-												<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-												<div class="progress-extended"></div>
-											</div>
-										</div>
-										<div class="content_upload_download">
-											<div class="presentation files" style="display: inline-table;"></div>
-										</div>
-									</div>
-								</div>
+						{% if location_code %}
+							<div class="form-group mt-2">
+								<label for="location_name">
+									{{ __('address') }}
+								</label>
+								<span class="form-control">{{ address }}</span>
+								<input type="hidden" id="location_code" name="location_code" value="{{ location_code }}">
+								<input type="hidden" id="address" name="address" value="{{ address }}">
+								<input type="hidden" id="user_name" name="user_name" value="{{ user_name }}">
+							</div>
+						{% else %}
+							<div class="form-group mt-2">
+								<label for="location_name">
+									<i class="fas fa-search"></i>
+									{{ __('address') }}
+								</label>
+								<input type="text" id="location_name" name="location_name" tabindex="1" class="form-control" autocomplete="off" required="required"/>
+								<div class="selection"></div>
+								<input type="hidden" id="location_code" name="location_code">
 							</div>
 						{% endif %}
 
-						<button type="submit" class="btn btn-primary mt-4">{{ __('send') }}</button>
+						<div class="form-group mt-2">
+							<label for="phone">{{ __('phone') }}</label>
+							<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">{{ __('phone_help') }}</small>
+							<input type="text" id="phone" name="phone" tabindex="2" class="form-control" autocomplete="off" required="required"/>
+						</div>
+						<!--email-->
+						<div class="form-group mt-2">
+							<label for="email">{{ __('email') }}</label>
+							<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">{{ __('email_help') }}</small>
+							<input type="email" id="email" name="email" tabindex="3" class="form-control" autocomplete="off" required="required"/>
+						</div>
 					</fieldset>
-				</div>
-			</form>
-		{% endif %}
+
+					<div id="details">
+						<fieldset>
+							<!-- Invoice Month/Year Datepicker -->
+							<div class="form-group mt-2">
+								<label for="invoice_date">{{ __('invoice_date') }}</label>
+								<small id="invoiceDateHelp" class="form-text text-muted d-block mb-2">{{ __('invoice_date_help') }}</small>
+								<input type="text" class="form-control" id="invoice_date" name="invoice_date" tabindex="4" required="required" readonly>
+							</div>
+							
+							<div class="form-group mt-2">
+								<label for="subject">{{ __('subject') }}</label>
+								<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('subject_help') }}</small>
+								<input type="text" class="form-control" id="subject" name="subject" tabindex="5" value="{{ subject }}" aria-describedby="subjectHelp" required="required">
+							</div>
+
+							<div class="form-group mt-4">
+								<label for="message">{{ __('additional_info') }}</label>
+								<small id="messageHelp" class="form-text text-muted d-block mb-2">
+									{{ __('additional_info_help') }}
+								</small>
+								<textarea class="form-control" id="message" name="message" tabindex="6" required="required">{{ message }}</textarea>
+							</div>
+
+							{% if enable_fileupload == 1 %}
+								<div class="form-group mt-4">
+									<label>{{ __('upload_file') }}</label>
+									<div id="drop-area">
+										<div style="border: 2px dashed #ccc; padding: 20px;">
+											<p>{{ __('upload_instructions') }}</p>
+											<div class="fileupload-buttonbar">
+												<div class="fileupload-buttons">
+													<span class="fileinput-button btn btn-success">
+														<i class="fas fa-plus"></i>
+														<span>{{ __('add_files') }}</span>
+														<input id="fileupload" type="file" name="files[]" multiple="" data-url="">
+													</span>
+													<span class="fileupload-process"></span>
+												</div>
+												<div class="fileupload-count">
+													{{ __('number_of_files') }}:
+													<span id="files-count">0</span>
+												</div>
+												<div class="fileupload-progress" style="display:none">
+													<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+													<div class="progress-extended"></div>
+												</div>
+											</div>
+											<div class="content_upload_download">
+												<div class="presentation files" style="display: inline-table;"></div>
+											</div>
+										</div>
+									</div>
+								</div>
+							{% endif %}
+
+							<button type="submit" class="btn btn-primary mt-4">{{ __('send') }}</button>
+						</fieldset>
+					</div>
+				</form>
+			{% endif %}
+		</main>
 	</div>
 
 	<script>

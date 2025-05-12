@@ -7,7 +7,6 @@
 		"slim/slim": "^4.14",
 		"slim/psr7": "^1.7",
 		"php-di/php-di": "^7.0",
-		"smarty/smarty": "^4.3",
 		"components/font-awesome": "^5.15",
 		"oomphinc/composer-installers-extender": "^2.0",
 		"components/jquery": "^3.7",

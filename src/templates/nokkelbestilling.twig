@@ -165,17 +165,11 @@
 					{% if enable_fileupload == 1 %}
 						<div class="form-group mt-2">
 							<label>{{ __('upload_file') }}
-								{% if not location_code %}
-									<span class="text-danger">*</span>
-								{% endif %}
 							</label>
 							<div id="drop-area" class="">
 								<div style="border: 2px dashed #ccc; padding: 20px;">
 									<p>
 										{{ __('upload_instructions') }}
-										{% if not location_code %}
-											<br><small class="text-danger">{{ __('upload_authorization') }}</small>
-										{% endif %}
 									</p>
 									<div class="fileupload-buttonbar">
 										<div class="fileupload-buttons">

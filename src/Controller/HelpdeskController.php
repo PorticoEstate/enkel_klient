@@ -10,19 +10,14 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Traits\UtilityTrait;
 use App\Service\Sanitizer;
 
-class HelpdeskController
+class HelpdeskController extends BaseFormController
 {
-	private $twig;
-	private $api;
-
 	use UtilityTrait;
 
-	public function __construct(Twig $twig, ApiClient $api)
+	public function __construct(Twig $twig, ApiClient $apiClient)
 	{
-		// Load configurations
+		parent::__construct($twig, $apiClient);
 		$str_base_url = self::current_site_url();
-
-		// Basic assignments as global variables
 		$twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
 		$twig->getEnvironment()->addGlobal('action_url', $str_base_url);
 		$twig->getEnvironment()->addGlobal('saved', 0);
@@ -30,54 +25,29 @@ class HelpdeskController
 		$twig->getEnvironment()->addGlobal('subject', '');
 		$twig->getEnvironment()->addGlobal('message', '');
 		$twig->getEnvironment()->addGlobal('current_section', 'helpdesk');
-
-		$this->twig = $twig;
-		$this->api = $api;
 	}
 
-	private function getLoggedIn(): array
+	function getLoggedIn(): array
 	{
-		$headers = getallheaders();
-		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
-		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
-		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
-
-		ApiClient::session_set('helpdesk', 'ssn', $ssn);
-
-		$session_info = $this->api->get_session_info();
-		$url = $this->api->get_backend_url() . "/property/tenant/?";
-
-		$get_data = [
-			'ssn' => $ssn,
-			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
-			'phpgw_return_as' => 'json',
-		];
-
-		$url .= http_build_query($get_data);
-
-		$empty = ['first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => ''];
-		$result = (array)json_decode($this->api->exchange_data($url, []), true);
-
-		return array_merge($empty, $result);
+		return parent::getLoggedIn();
 	}
 
 	public function getLocations(Request $request, Response $response): Response
 	{
-		$session_info = $this->api->get_session_info();
-		$url = $this->api->get_backend_url() . "/?";
+		$session_info = $this->apiClient->get_session_info();
+		$url = $this->apiClient->get_backend_url() . "/?";
 
 		$get_data = [
 			'menuaction' => 'property.bolocation.get_locations',
 			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
+			'domain' => $this->apiClient->get_logindomain(),
 			'phpgw_return_as' => 'json',
 			'api_mode' => true,
 			'query' => $request->getQueryParams()['query'] ?? ''
 		];
 
 		$url .= http_build_query($get_data);
-		$result = json_decode($this->api->exchange_data($url, []), true);
+		$result = json_decode($this->apiClient->exchange_data($url, []), true);
 		$locations = empty($result['ResultSet']['Result']) ? [] : $result['ResultSet']['Result'];
 
 		$response = $response->withHeader('Content-Type', 'application/json');
@@ -101,8 +71,8 @@ class HelpdeskController
 				return $this->handleFormResponse($request, $response, false, $error, null);
 			}
 
-			$session_info = $this->api->get_session_info();
-			$url = $this->api->get_backend_url() . "/?";
+			$session_info = $this->apiClient->get_session_info();
+			$url = $this->apiClient->get_backend_url() . "/?";
 
 			// Sanitize input data
 			$sanitizedPost = [
@@ -118,7 +88,7 @@ class HelpdeskController
 			$get_data = [
 				'menuaction' => 'property.uitts.add',
 				$session_info['session_name'] => $session_info['session_id'],
-				'domain' => $this->api->get_logindomain(),
+				'domain' => $this->apiClient->get_logindomain(),
 				'phpgw_return_as' => 'json',
 				'api_mode' => true
 			];
@@ -137,7 +107,7 @@ class HelpdeskController
 				$details = $userinfo . $details;
 			}
 
-			$tenant_data = $this->api->get_tenant($post['location_code']);
+			$tenant_data = $this->apiClient->get_tenant($post['location_code']);
 
 			$post_data = [
 				'values' => [
@@ -150,13 +120,13 @@ class HelpdeskController
 					'details' => $details,
 					'extra' => [
 						'tenant_id' => $tenant_data['id'] ?? null,
-						'external_owner_ssn' => ApiClient::session_get('helpdesk', 'ssn')
+						'external_owner_ssn' => ApiClient::session_get('common', 'ssn')
 					]
 				]
 			];
 
 			$url .= http_build_query($get_data);
-			$ret = json_decode($this->api->exchange_data($url, $post_data), true);
+			$ret = json_decode($this->apiClient->exchange_data($url, $post_data), true);
 
 			if (isset($ret['status']) && $ret['status'] === 'saved')
 			{
@@ -253,12 +223,12 @@ class HelpdeskController
 	public function handleMultiUploadFile(Request $request, Response $response): Response
 	{
 		$id = (int)($request->getQueryParams()['id'] ?? 0);
-		$session_info = $this->api->get_session_info();
+		$session_info = $this->apiClient->get_session_info();
 
-		$url = $this->api->get_backend_url() . "/?" . http_build_query([
+		$url = $this->apiClient->get_backend_url() . "/?" . http_build_query([
 			'menuaction' => 'property.uitts.handle_multi_upload_file',
 			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
+			'domain' => $this->apiClient->get_logindomain(),
 			'phpgw_return_as' => 'json',
 			'api_mode' => true,
 			'id' => $id
@@ -267,7 +237,7 @@ class HelpdeskController
 		$content_range = $request->getServerParams()['HTTP_CONTENT_RANGE'] ?? null;
 		$content_disposition = $request->getServerParams()['HTTP_CONTENT_DISPOSITION'] ?? null;
 
-		$return_data = $this->api->exchange_data($url, [], $content_range, $content_disposition);
+		$return_data = $this->apiClient->exchange_data($url, [], $content_range, $content_disposition);
 
 		$response = $response->withHeader('Content-Type', 'application/json');
 		$response->getBody()->write($return_data);

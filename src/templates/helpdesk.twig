@@ -88,13 +88,13 @@
 
 					<div class="form-group mt-2">
 						<label for="phone">{{ __('phone') }}</label>
-						<small id="contact_infoHelpPhone" class="form-text text-muted">{{ __('phone_help') }}</small>
+						<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">{{ __('phone_help') }}</small>
 						<input type="text" id="phone" name="phone" tabindex="2" class="form-control" autocomplete="off" required="required"/>
 					</div>
 					<!--email-->
 					<div class="form-group mt-2">
 						<label for="email">{{ __('email') }}</label>
-						<small id="contact_infoHelpEmail" class="form-text text-muted">{{ __('email_help') }}</small>
+						<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">{{ __('email_help') }}</small>
 						<input type="email" id="email" name="email" tabindex="3" class="form-control" autocomplete="off" required="required"/>
 					</div>
 				</fieldset>
@@ -103,12 +103,15 @@
 					<fieldset>
 						<div class="form-group mt-2">
 							<label for="subject">{{ __('subject') }}</label>
-							<small id="subjectHelp" class="form-text text-muted">{{ __('subject_help') }}</small>
+							<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('subject_help') }}</small>
 							<input type="text" class="form-control" id="title" name="subject" tabindex="5" value="{{ subject }}" aria-describedby="subjectHelp" required="required">
 						</div>
 						<div class="form-group mt-4">
 							<label for="message">{{ __('message') }}</label>
-							<textarea class="form-control" id="message" name="message" tabindex="6" required="required">{{ message }}</textarea>
+						<small id="messageHelp" class="form-text text-muted d-block mb-2">
+							{{ __('additional_info_help') }}
+						</small>
+						<textarea class="form-control" id="message" name="message" tabindex="6" required="required">{{ message }}</textarea>
 						</div>
 
 						{% if enable_fileupload == 1 %}

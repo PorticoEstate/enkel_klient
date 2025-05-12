@@ -131,13 +131,13 @@
 
 					<div class="form-group mt-2">
 						<label for="phone">{{ __('phone') }}</label>
-						<small id="contact_infoHelpPhone" class="form-text text-muted">{{ __('phone_help') }}</small>
+						<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">{{ __('phone_help') }}</small>
 						<input type="text" id="phone" name="phone" tabindex="2" class="form-control" autocomplete="off" required="required"/>
 					</div>
 					<!--email-->
 					<div class="form-group mt-2">
 						<label for="email">{{ __('email') }}</label>
-						<small id="contact_infoHelpEmail" class="form-text text-muted">{{ __('email_help') }}</small>
+						<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">{{ __('email_help') }}</small>
 						<input type="email" id="email" name="email" tabindex="3" class="form-control" autocomplete="off" required="required"/>
 					</div>
 				</fieldset>
@@ -147,18 +147,18 @@
 						<!-- Invoice Month/Year Datepicker -->
 						<div class="form-group mt-2">
 							<label for="invoice_date">{{ __('invoice_date') }}</label>
-							<small id="invoiceDateHelp" class="form-text text-muted">{{ __('invoice_date_help') }}</small>
+							<small id="invoiceDateHelp" class="form-text text-muted d-block mb-2">{{ __('invoice_date_help') }}</small>
 							<input type="text" class="form-control" id="invoice_date" name="invoice_date" tabindex="4" required="required" readonly>
 						</div>
 						
 						<div class="form-group mt-2">
 							<label for="subject">{{ __('subject') }}</label>
-							<small id="subjectHelp" class="form-text text-muted">{{ __('subject_help') }}</small>
+							<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('subject_help') }}</small>
 							<input type="text" class="form-control" id="subject" name="subject" tabindex="5" value="{{ subject }}" aria-describedby="subjectHelp" required="required">
 						</div>
 						<div class="form-group mt-4">
 							<label for="message">{{ __('message') }}</label>
-							<small id="messageHelp" class="form-text text-muted">{{ __('message_help') }}</small>
+							<small id="messageHelp" class="form-text text-muted d-block mb-2">{{ __('message_help') }}</small>
 							<textarea class="form-control" id="message" name="message" tabindex="6" required="required">{{ message }}</textarea>
 						</div>
 

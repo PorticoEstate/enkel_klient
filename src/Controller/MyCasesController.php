@@ -10,58 +10,30 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Traits\UtilityTrait;
 use App\Service\Sanitizer;
 
-class MyCasesController
+class MyCasesController extends BaseFormController
 {
-	private $twig;
-	private $api;
+    use UtilityTrait;
 
-	use UtilityTrait;
+    public function __construct(Twig $twig, ApiClient $apiClient)
+    {
+        parent::__construct($twig, $apiClient);
+        $str_base_url = self::current_site_url();
+        $twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
+        $twig->getEnvironment()->addGlobal('action_url', $str_base_url);
+        $twig->getEnvironment()->addGlobal('current_section', 'my_cases');
+    }
 
-	public function __construct(Twig $twig, ApiClient $api)
+
+	function getLoggedIn(): array
 	{
-		// Load configurations
-		$str_base_url = self::current_site_url();
-
-		// Basic assignments as globals
-		$twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
-		$twig->getEnvironment()->addGlobal('action_url', $str_base_url);
-		$twig->getEnvironment()->addGlobal('current_section', 'my_cases');
-
-		$this->twig = $twig;
-		$this->api = $api;
+		return parent::getLoggedIn();
 	}
 
-	public function get_logged_in()
-	{
-		$headers = getallheaders();
-		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
-		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
-		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
-
-		ApiClient::session_set('my_cases', 'ssn', $ssn);
-
-		$session_info = $this->api->get_session_info();
-		$url = $this->api->get_backend_url() . "/property/tenant/?";
-
-		$get_data = [
-			'ssn' => $ssn,
-			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
-			'phpgw_return_as' => 'json',
-		];
-
-		$url .= http_build_query($get_data);
-
-		$empty = ['first_name' => '', 'last_name' => '', 'location_code' => '', 'address' => '', 'email' => ''];
-		$result = (array)json_decode($this->api->exchange_data($url, []), true);
-
-		return array_merge($empty, $result);
-	}
 
 	public function displayCases(Request $request, Response $response): Response
 	{
 		// Get user information
-		$user_info = $this->get_logged_in();
+		$user_info = $this->getLoggedIn();
 
 		// Use Fiks service to enhance user data
 		$fiks = new Fiks();
@@ -75,11 +47,10 @@ class MyCasesController
 		// Format user data for display
 		$user_name = !empty($user_info['first_name']) ? "{$user_info['first_name']} {$user_info['last_name']}" : '';
 		$user_email = $user_info['email'] ?? '';
-		$ssn = 	ApiClient::session_get('my_cases', 'ssn');
+		$ssn = 	ApiClient::session_get('common', 'ssn');
 
 		// Fetch cases from API
 		$result = $this->fetchCasesFromApi($ssn);
-		// print_r($result);die();
 		// Format dates for display
 
 
@@ -139,7 +110,7 @@ class MyCasesController
 		$preservedContent = isset($queryParams['preserved_content']) ? urldecode($queryParams['preserved_content']) : '';
 
 		// Get user information to verify ownership
-		$ssn = ApiClient::session_get('my_cases', 'ssn');
+		$ssn = ApiClient::session_get('common', 'ssn');
 
 		// Fetch case details from API
 		$caseDetails = $this->fetchCaseDetails($caseId, $ssn);
@@ -207,12 +178,12 @@ class MyCasesController
 			return [];
 		}
 
-		$session_info = $this->api->get_session_info();
-		$url = $this->api->get_backend_url() . "/property/usercase/?";
+		$session_info = $this->apiClient->get_session_info();
+		$url = $this->apiClient->get_backend_url() . "/property/usercase/?";
 
 		$get_data = [
 			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
+			'domain' => $this->apiClient->get_logindomain(),
 			'phpgw_return_as' => 'json',
 			'api_mode' => true,
 			'ssn' => $ssn,
@@ -222,7 +193,7 @@ class MyCasesController
 		];
 
 		$url .= http_build_query($get_data);
-		$result = json_decode($this->api->exchange_data($url, []), true);
+		$result = json_decode($this->apiClient->exchange_data($url, []), true);
 
 		return !empty($result) ? $result : [];
 	}
@@ -232,20 +203,20 @@ class MyCasesController
 	 */
 	private function fetchCaseDetails(int $caseId,  ?string $ssn): array
 	{
-		$session_info = $this->api->get_session_info();
-		$url = $this->api->get_backend_url() . "/property/usercase/$caseId/?";
+		$session_info = $this->apiClient->get_session_info();
+		$url = $this->apiClient->get_backend_url() . "/property/usercase/$caseId/?";
 
 		$get_data = [
 			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
+			'domain' => $this->apiClient->get_logindomain(),
 			'phpgw_return_as' => 'json',
 			'api_mode' => true,
 			'ssn' => $ssn
 		];
 
 		$url .= http_build_query($get_data);
-		$result = json_decode($this->api->exchange_data($url, []), true);
-		if ($this->api->get_http_status() !== 200)
+		$result = json_decode($this->apiClient->exchange_data($url, []), true);
+		if ($this->apiClient->get_http_status() !== 200)
 		{
 			return [];
 		}
@@ -258,20 +229,20 @@ class MyCasesController
 	 */
 	private function fetchCaseAttachments(int $caseId): array
 	{
-		$session_info = $this->api->get_session_info();
-		$url = $this->api->get_backend_url() . "/?";
+		$session_info = $this->apiClient->get_session_info();
+		$url = $this->apiClient->get_backend_url() . "/?";
 
 		$get_data = [
 			'menuaction' => 'property.uitts.get_attachments',
 			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
+			'domain' => $this->apiClient->get_logindomain(),
 			'phpgw_return_as' => 'json',
 			'api_mode' => true,
 			'id' => $caseId
 		];
 
 		$url .= http_build_query($get_data);
-		$result = json_decode($this->api->exchange_data($url, []), true);
+		$result = json_decode($this->apiClient->exchange_data($url, []), true);
 
 		return !empty($result['ResultSet']['Result']) ? $result['ResultSet']['Result'] : [];
 	}
@@ -287,7 +258,7 @@ class MyCasesController
 		// Get user information
 		$user_info = ApiClient::session_get('my_cases', 'user_info');
 
-		$ssn = ApiClient::session_get('my_cases', 'ssn');
+		$ssn = ApiClient::session_get('common', 'ssn');
 
 		// Get form data
 		$post = $request->getParsedBody();
@@ -385,12 +356,12 @@ class MyCasesController
 	 */
 	private function submitCaseResponse(int $caseId, string $content, $attachment = null, ?array $user_info = [], string $ssn = ''): array
 	{
-		$session_info = $this->api->get_session_info();
-		$url = $this->api->get_backend_url() . "/property/usercase/{$caseId}/response/?";
+		$session_info = $this->apiClient->get_session_info();
+		$url = $this->apiClient->get_backend_url() . "/property/usercase/{$caseId}/response/?";
 
 		$post_data = [
 			$session_info['session_name'] => $session_info['session_id'],
-			'domain' => $this->api->get_logindomain(),
+			'domain' => $this->apiClient->get_logindomain(),
 			'phpgw_return_as' => 'json',
 			'api_mode' => true,
 			'ssn' => $ssn,
@@ -420,9 +391,9 @@ class MyCasesController
 		}
 
 		// POST the response to the API
-		$result = json_decode($this->api->exchange_data($url, $post_data), true);
+		$result = json_decode($this->apiClient->exchange_data($url, $post_data), true);
 
-		if ($this->api->get_http_status() !== 200)
+		if ($this->apiClient->get_http_status() !== 200)
 		{
 			return ['error' => 'api_error'];
 		}

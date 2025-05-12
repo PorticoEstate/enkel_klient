@@ -42,4 +42,13 @@ class Translator
         }
         return $key;
     }
+
+    /**
+     * Get the full translations array
+     * @return array
+     */
+    public function getTranslations()
+    {
+        return $this->translations;
+    }
 }

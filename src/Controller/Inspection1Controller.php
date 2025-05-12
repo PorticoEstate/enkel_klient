@@ -15,6 +15,19 @@ class Inspection1Controller extends BaseFormController
     public function __construct(Twig $twig, ApiClient $api)
     {
         parent::__construct($twig, $api);
+        if (!$this->checkAcl()) {
+            // Render error template for access denied
+            http_response_code(403);
+            // Fetch translation directly from Translator
+            $translator = new \App\Service\Translator($_SESSION['lang']); // Optionally pass language code
+            $error_message = $translator->translate('access_denied', 'common');
+            echo $twig->fetch('error.twig', array(
+                'error_code' => 403,
+                'error_message' => $error_message,
+                'base_path' => self::current_site_url()
+            ));
+            exit;
+        }
         $str_base_url = self::current_site_url();
         $twig->getEnvironment()->addGlobal('str_base_url', $str_base_url);
         $twig->getEnvironment()->addGlobal('action_url', $str_base_url);
@@ -23,6 +36,11 @@ class Inspection1Controller extends BaseFormController
         $twig->getEnvironment()->addGlobal('subject', '');
         $twig->getEnvironment()->addGlobal('message', '');
         $twig->getEnvironment()->addGlobal('current_section', 'inspection_1');
+    }
+
+    private function checkAcl(): bool
+    {
+        return false;
     }
 
     public function getLocations(Request $request, Response $response): Response

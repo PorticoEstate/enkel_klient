@@ -29,7 +29,7 @@ return [
         'subject' => 'Emne',
         'summary' => 'Sammendrag',
         'additional_info' => 'Tilleggsinformasjon',
-        'additional_info_help' => 'Beskriv din henvendelse nærmere',
+        'additional_info_help' => 'Beskriv din henvendelse nærmere, men ikke skriv inn sensitiv informasjon her.',
         'upload_file' => 'Last opp fil',
         'upload_instructions' => 'Dra og slipp filer her eller klikk for å velge filer',
         'upload_authorization' => 'Autorisasjon kreves for opplasting',
@@ -78,6 +78,8 @@ return [
         'attach_file_optional' => 'Legg ved fil (valgfritt)',
         'supported_file_types' => 'Støttede filtyper: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (maks 10MB)',
         'send_comment' => 'Send kommentar',
+        'access_denied' => 'Beklager, du har ikke tilgang til dette området.',
+        'error' => 'Feil'
     ],
     'landing' => [
         'title' => 'Velkommen til Bergen kommune, etat for boligforvaltning',

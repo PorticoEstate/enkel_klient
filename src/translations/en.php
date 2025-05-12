@@ -29,7 +29,7 @@ return [
         'subject' => 'Subject',
         'summary' => 'Summary',
         'additional_info' => 'Additional information',
-        'additional_info_help' => 'Describe your request in more detail',
+        'additional_info_help' => 'Describe your request in more detail, but do not enter sensitive information here.',
         'upload_file' => 'Upload file',
         'upload_instructions' => 'Drag and drop files here or click to select files',
         'upload_authorization' => 'Authorization required for upload',
@@ -78,6 +78,8 @@ return [
         'attach_file_optional' => 'Attach file (optional)',
         'supported_file_types' => 'Supported file types: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (max 10MB)',
         'send_comment' => 'Send comment',
+        'access_denied' => 'You do not have access to this area.',
+        'error' => 'Error',
     ],
     'landing' => [
         'title' => 'Welcome to Bergen Municipality, Housing Management Department',

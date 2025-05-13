@@ -294,6 +294,116 @@ $entityAttributes = [
 - `form_name`: label in the form
 - `html_element`: textfield, textarea, datepicker, hidden, etc.
 
+### 15.1.1. Recommended Additional Qualities for `$entityAttributes`
+
+To make your entities and forms more robust and flexible, consider adding these qualities to each attribute definition:
+
+- `required` (bool): Whether the field is mandatory.
+- `default` (mixed): Default value if not set.
+- `readonly` (bool): If true, field is shown but not editable.
+- `options` (array): For select/radio fields, the available choices.
+- `validation` (string/array): Validation rules or regex pattern.
+- `min`, `max`, `length` (int): For numeric or text fields, min/max values or length.
+- `placeholder` (string): Placeholder text for form fields.
+- `help_text` (string): Additional help or tooltip for the user.
+- `visible` (bool): Whether the field should be shown in the form or list.
+- `unique` (bool): Whether the value must be unique in the database.
+- `sortable` (bool): If the field can be used for sorting in lists.
+- `searchable` (bool): If the field can be used in search/filtering.
+- `form_order` (int): To control the order of fields in the form.
+- `list_order` (int): To control the order of fields in list views.
+- `css_class` (string): Custom CSS class for styling the field.
+
+**Example attribute with extended qualities:**
+
+```php
+[
+    'name' => 'priority',
+    'datatype' => 'integer',
+    'description' => 'Priority (1-5)',
+    'form_name' => 'Priority',
+    'html_element' => 'textfield',
+    'required' => true,
+    'default' => 1,
+    'min' => 1,
+    'max' => 5,
+    'placeholder' => 'Enter priority (1-5)',
+    'help_text' => 'Set the priority for this task.',
+    'visible' => true,
+    'unique' => false,
+    'sortable' => true,
+    'searchable' => true,
+    'form_order' => 4,
+    'list_order' => 2,
+    'css_class' => 'priority-field'
+]
+```
+
+### 15.1.2. Defining Entity Relations for Automatic Query Building
+
+To enable automatic rule-based query building with JOINs on related tables, define each entity in a dedicated Model (e.g., in `src/Model/`). Each model should include:
+- Custom attributes (as described above)
+- Relations to other entities (one-to-one, one-to-many, many-to-many)
+
+**Recommended structure for a model:**
+
+```php
+$projectModel = [
+    'attributes' => [
+        // ...attribute definitions as above...
+    ],
+    'relations' => [
+        [
+            'type' => 'one_to_many',
+            'entity' => 'Task',
+            'local_key' => 'id',
+            'foreign_key' => 'project_id',
+            'label' => 'Tasks'
+        ],
+        // Add more relations as needed
+    ]
+];
+
+$taskModel = [
+    'attributes' => [
+        // ...attribute definitions as above...
+    ],
+    'relations' => [
+        [
+            'type' => 'many_to_one',
+            'entity' => 'Project',
+            'local_key' => 'project_id',
+            'foreign_key' => 'id',
+            'label' => 'Project'
+        ],
+        [
+            'type' => 'many_to_many',
+            'entity' => 'User',
+            'pivot_table' => 'task_user',
+            'local_key' => 'task_id',
+            'foreign_key' => 'user_id',
+            'label' => 'Assigned Users'
+        ]
+    ]
+];
+```
+
+**Relation types:**
+- `one_to_one`
+- `one_to_many`
+- `many_to_one`
+- `many_to_many`
+
+**How to use:**
+- Store each entity model in a separate file in `src/Model/` (e.g., `ProjectModel.php`, `TaskModel.php`).
+- Use the `relations` array to automatically build JOINs or subqueries in your queries.
+- Use the `relations` definition to generate select fields, multi-selects, or related entity lists in your forms and views.
+
+This approach allows you to:
+- Keep all entity metadata (attributes and relations) in one place
+- Build dynamic queries and forms based on the model definition
+- Easily extend your application with new entities and relationships
+
 ### 15.2. Dynamic Form Rendering in Controller
 
 - Pass the `$entityAttributes` array to the Twig template.
@@ -329,6 +439,47 @@ Example for `form.twig`:
 - Pass it to the Twig template along with any form data.
 - Render the form fields dynamically as shown above.
 - On form submission, validate and process each field according to its datatype.
+
+---
+
+## 15.5. Example: Multiple Entity Types with Configurable Attributes
+
+Suppose you have two entity types: `Project` and `Task`. Each has its own set of attributes and corresponding views, add/edit, and list pages.
+
+
+### Routing Example
+
+Add routes for each entity type in `src/routes/web.php`:
+
+```php
+// Project routes
+$app->get('/projects', [ProjectController::class, 'list']);
+$app->get('/project/add', [ProjectController::class, 'add']);
+$app->post('/project/add', [ProjectController::class, 'add']);
+$app->get('/project/{id}', [ProjectController::class, 'view']);
+$app->get('/project/{id}/edit', [ProjectController::class, 'edit']);
+$app->post('/project/{id}/edit', [ProjectController::class, 'edit']);
+
+// Task routes
+$app->get('/tasks', [TaskController::class, 'list']);
+$app->get('/task/add', [TaskController::class, 'add']);
+$app->post('/task/add', [TaskController::class, 'add']);
+$app->get('/task/{id}', [TaskController::class, 'view']);
+$app->get('/task/{id}/edit', [TaskController::class, 'edit']);
+$app->post('/task/{id}/edit', [TaskController::class, 'edit']);
+```
+
+### Controller Example
+
+Each controller (e.g., `ProjectController`, `TaskController`) should:
+- Use its own `$entityAttributes` array
+- Pass the attributes to the Twig template for dynamic form rendering
+- Implement `list`, `add`, `edit`, and `view` methods
+
+### Twig Templates
+
+- Create separate Twig templates for each entity type (e.g., `project_form.twig`, `project_list.twig`, `project_view.twig`, `task_form.twig`, etc.)
+- Use the dynamic form rendering pattern from above, passing the appropriate `$entityAttributes` for each entity type
 
 ---
 

@@ -1,5 +1,11 @@
 # PHP Slim + Twig Web Application Setup Guide
 
+**Coding Style:**  
+Use **Allman Style** for all PHP and JavaScript code. This means opening braces are placed on a new line.
+
+**Documentation Style:**
+Use **Markdown** for all documentation. Use **GitHub Flavored Markdown** for code blocks.
+Use **HTML5** for all HTML code. Use **HTML5** syntax for all HTML5 elements.
 This guide describes how to create a PHP web application from scratch using Slim Framework and Twig templating. The application will include a landing page, a navigation menu, a form, and a list of items.
 
 ---

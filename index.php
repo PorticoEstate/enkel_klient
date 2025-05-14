@@ -2,11 +2,13 @@
 
 use DI\ContainerBuilder;
 use Slim\Factory\AppFactory;
-use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Psr7\Response;
 use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
-use Twig\Loader\FilesystemLoader;
+use App\Service\ApiClient;
+use App\Service\Translator;
+use Dotenv\Dotenv;
 
 // Set base paths for the application
 define('APP_ROOT', '/var/www/html');
@@ -16,7 +18,7 @@ define('SRC_ROOT', APP_ROOT . '/src');
 require APP_ROOT . '/vendor/autoload.php';
 
 $configs_dir = SRC_ROOT . '/configs';
-$dotenv = \Dotenv\Dotenv::createImmutable($configs_dir);
+$dotenv = Dotenv::createImmutable($configs_dir);
 $dotenv->load();
 
 // Detect language from query parameter or session
@@ -82,15 +84,15 @@ $containerBuilder->addDefinitions([
 	},
 
 	// API Client service
-	\App\Service\ApiClient::class => function ()
+	ApiClient::class => function ()
 	{
-		return new \App\Service\ApiClient();
+		return new ApiClient();
 	},
 
 	// Register Translator in container
-	\App\Service\Translator::class => function () use ($lang)
+	Translator::class => function () use ($lang)
 	{
-		return new \App\Service\Translator($lang);
+		return new Translator($lang);
 	},
 
 	// Controller definitions
@@ -98,7 +100,7 @@ $containerBuilder->addDefinitions([
 	{
 		return new \App\Controller\LandingController(
 			$container->get(Twig::class),
-			$container->get(\App\Service\ApiClient::class)
+			$container->get(ApiClient::class)
 		);
 	},
 
@@ -106,7 +108,7 @@ $containerBuilder->addDefinitions([
 	{
 		return new \App\Controller\NokkelbestillingController(
 			$container->get(Twig::class),
-			$container->get(\App\Service\ApiClient::class)
+			$container->get(ApiClient::class)
 		);
 	},
 
@@ -114,7 +116,7 @@ $containerBuilder->addDefinitions([
 	{
 		return new \App\Controller\HelpdeskController(
 			$container->get(Twig::class),
-			$container->get(\App\Service\ApiClient::class)
+			$container->get(ApiClient::class)
 		);
 	},
 
@@ -122,7 +124,7 @@ $containerBuilder->addDefinitions([
 	{
 		return new \App\Controller\Inspection1Controller(
 			$container->get(Twig::class),
-			$container->get(\App\Service\ApiClient::class)
+			$container->get(ApiClient::class)
 		);
 	},
 	
@@ -130,7 +132,7 @@ $containerBuilder->addDefinitions([
 	{
 		return new \App\Controller\InvoicerequestController(
 			$container->get(Twig::class),
-			$container->get(\App\Service\ApiClient::class)
+			$container->get(ApiClient::class)
 		);
 	},
 	
@@ -139,8 +141,12 @@ $containerBuilder->addDefinitions([
 	{
 		return new \App\Controller\MyCasesController(
 			$container->get(Twig::class),
-			$container->get(\App\Service\ApiClient::class)
+			$container->get(ApiClient::class)
 		);
+	},
+	\App\Helper\ErrorHandler::class => function ($container)
+	{
+		return new \App\Helper\ErrorHandler($container->get(Twig::class));
 	},
 ]);
 
@@ -168,22 +174,15 @@ $errorMiddleware = $app->addErrorMiddleware(
 	true                   // log error details
 );
 
-// Set up custom error handler for production environment
-$errorHandler = $errorMiddleware->getDefaultErrorHandler();
-$errorHandler->forceContentType('text/html');
-$errorHandler->setDefaultErrorRenderer('text/html', function ($exception, $request) use ($container)
-{
-	// Log the actual error for administrators
-	error_log($exception->getMessage() . "\n" . $exception->getTraceAsString());
-
-	// For users, display a friendly error page
-	$twig = $container->get(Twig::class);
-	$response = new \Slim\Psr7\Response();
-	return $twig->render($response, 'error.twig', [
-		'error_message' => 'Det oppstod en feil på serveren. Vennligst prøv igjen senere.',
-		'error_code' => 500
-	]);
+// Create and register the custom error handler
+$container->set(\App\Helper\ErrorHandler::class, function($container) {
+    return new \App\Helper\ErrorHandler($container->get(Twig::class));
 });
+
+// Set the error handler (using our custom implementation)
+$customErrorHandler = $container->get(\App\Helper\ErrorHandler::class);
+$errorMiddleware->setDefaultErrorHandler($customErrorHandler);
+
 // Add CORS middleware
 $app->add(function (Request $request, $handler)
 {
@@ -196,7 +195,7 @@ $app->add(function (Request $request, $handler)
 
 // After Twig is created, add translation function to Twig
 $twig = $container->get(Twig::class);
-$translator = $container->get(\App\Service\Translator::class);
+$translator = $container->get(Translator::class);
 $twig->getEnvironment()->addGlobal('current_section', null);
 $twig->getEnvironment()->addFunction(new \Twig\TwigFunction('__', function ($key, $section = null) use ($translator, $twig)
 {

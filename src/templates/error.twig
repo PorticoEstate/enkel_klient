@@ -16,6 +16,16 @@
 					<div class="card-body">
 						<p class="mb-4">{{ error_message }}</p>
 
+						{% if error_trace is defined %}
+							<div class="mt-4 mb-4">
+								<h5>Error details:</h5>
+								<p><strong>File:</strong> {{ error_file }} (line {{ error_line }})</p>
+								<div class="bg-light p-3" style="overflow-x: auto;">
+									<pre style="white-space: pre-wrap;">{{ error_trace }}</pre>
+								</div>
+							</div>
+						{% endif %}
+
 						<div class="d-flex justify-content-between align-items-center">
 							<a href="{{ base_path }}/" class="btn btn-primary">
 								<i class="fas fa-home me-2"></i>{{ __('go_to_homepage') }}

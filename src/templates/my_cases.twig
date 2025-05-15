@@ -2,46 +2,109 @@
 {% extends 'head.twig' %}
 
 {% block body %}
+	<style>
+		/* Accessibility styles */
+		.skip-link {
+			position: absolute;
+			top: -40px;
+			left: 0;
+			background: #000;
+			color: white;
+			padding: 8px;
+			z-index: 100;
+			transition: top 0.3s;
+		}
+		
+		.skip-link:focus {
+			top: 0;
+		}
+		
+		/* Focus styling */
+		a:focus, button:focus, input:focus, select:focus, textarea:focus {
+			outline: 2px solid #4a90e2;
+			outline-offset: 2px;
+		}
+		
+		/* Screen reader only text */
+		.sr-only {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			border: 0;
+		}
+		
+		/* Improve table row hover focus */
+		.table-hover tr:hover {
+			background-color: rgba(0, 0, 0, 0.075);
+		}
+		
+		tr.clickable:focus {
+			outline: 2px solid #4a90e2;
+			outline-offset: -2px;
+		}
+		
+		/* Better contrast for badges */
+		.badge.bg-warning {
+			color: #000 !important;
+		}
+		
+		.badge.bg-info {
+			color: #000 !important;
+		}
+	</style>
+
+	<!-- Skip link for keyboard navigation -->
+	<a href="#main-content" class="skip-link">{{ __('Skip to content') }}</a>
+
 	<div class="container mt-4">
+		<main id="main-content" role="main">
 		<h1 class="mb-4">{{ __('my_cases') }}</h1>
 
-		<div class="card mb-4">
-			<div class="card-body">
-				<h5 class="card-title">{{ __('user_info') }}</h5>
-				<p class="card-text">{{ __('name') }}:
-					{{ user_name }}</p>
-				{% if user_email %}
-					<p class="card-text">{{ __('email') }}:
-						{{ user_email }}</p>
-				{% endif %}
+		<section aria-label="{{ __('user_information') }}">
+			<div class="card mb-4">
+				<div class="card-body">
+					<h2 class="h5 card-title">{{ __('user_info') }}</h2>
+					<p class="card-text">{{ __('name') }}:
+						{{ user_name }}</p>
+					{% if user_email %}
+						<p class="card-text">{{ __('email') }}:
+							{{ user_email }}</p>
+					{% endif %}
+				</div>
 			</div>
-		</div>
+		</section>
 
 		{% if result and result.results and result.results|length > 0 %}
-			<div class="table-responsive">
-				<table class="table table-striped table-hover">
-					<thead class="table-light">
-						<tr>
-							{# Sortable ID column #}
-							<th scope="col">
-								<a href="{{ base_path }}/my_cases?sort=id&sort=id&dir={{ result.sort == 'id' and result.dir == 'asc' ? 'desc' : 'asc' }}&start={{ result.start }}" class="text-decoration-none text-dark">
-									#
-									{% if result.sort == 'id' %}
-										<i class="fas fa-sort-{{ result.dir == 'asc' ? 'up' : 'down' }} ms-1"></i>
-									{% else %}
-										<i class="fas fa-sort text-muted ms-1"></i>
-									{% endif %}
-								</a>
-							</th>
+			<section aria-label="{{ __('your_cases_list') }}">
+				<div class="table-responsive">
+					<table class="table table-striped table-hover" aria-describedby="cases-table-desc">
+						<caption id="cases-table-desc" class="sr-only">{{ __('list_of_your_cases') }}</caption>
+						<thead class="table-light">
+							<tr>
+								{# Sortable ID column #}
+								<th scope="col">
+									<a href="{{ base_path }}/my_cases?sort=id&dir={{ result.sort == 'id' and result.dir == 'asc' ? 'desc' : 'asc' }}&start={{ result.start }}" class="text-decoration-none text-dark" aria-label="{{ __('sort_by_id') }} {{ result.sort == 'id' ? (result.dir == 'asc' ? __('sorted_ascending') : __('sorted_descending')) : '' }}">
+										#
+										{% if result.sort == 'id' %}
+											<i class="fas fa-sort-{{ result.dir == 'asc' ? 'up' : 'down' }} ms-1" aria-hidden="true"></i>
+										{% else %}
+											<i class="fas fa-sort text-muted ms-1" aria-hidden="true"></i>
+										{% endif %}
+									</a>
+								</th>
 
 							{# Sortable Registration Date column #}
 							<th scope="col">
-								<a href="{{ base_path }}/my_cases?sort=entry_date&sort=entry_date&dir={{ result.sort == 'entry_date' and result.dir == 'asc' ? 'desc' : 'asc' }}&start={{ result.start }}" class="text-decoration-none text-dark">
+								<a href="{{ base_path }}/my_cases?sort=entry_date&dir={{ result.sort == 'entry_date' and result.dir == 'asc' ? 'desc' : 'asc' }}&start={{ result.start }}" class="text-decoration-none text-dark" aria-label="{{ __('sort_by_registration_date') }} {{ result.sort == 'entry_date' ? (result.dir == 'asc' ? __('sorted_ascending') : __('sorted_descending')) : '' }}">
 									{{ __('registered_date') }}
 									{% if result.sort == 'entry_date' %}
-										<i class="fas fa-sort-{{ result.dir == 'asc' ? 'up' : 'down' }} ms-1"></i>
+										<i class="fas fa-sort-{{ result.dir == 'asc' ? 'up' : 'down' }} ms-1" aria-hidden="true"></i>
 									{% else %}
-										<i class="fas fa-sort text-muted ms-1"></i>
+										<i class="fas fa-sort text-muted ms-1" aria-hidden="true"></i>
 									{% endif %}
 								</a>
 							</th>
@@ -51,12 +114,12 @@
 
 							{# Sortable Last Updated column #}
 							<th scope="col">
-								<a href="{{ base_path }}/my_cases?sort=modified_date&sort=modified_date&dir={{ result.sort == 'modified_date' and result.dir == 'asc' ? 'desc' : 'asc' }}&start={{ result.start }}" class="text-decoration-none text-dark">
+								<a href="{{ base_path }}/my_cases?sort=modified_date&dir={{ result.sort == 'modified_date' and result.dir == 'asc' ? 'desc' : 'asc' }}&start={{ result.start }}" class="text-decoration-none text-dark" aria-label="{{ __('sort_by_last_updated') }} {{ result.sort == 'modified_date' ? (result.dir == 'asc' ? __('sorted_ascending') : __('sorted_descending')) : '' }}">
 									{{ __('last_updated') }}
 									{% if result.sort == 'modified_date' %}
-										<i class="fas fa-sort-{{ result.dir == 'asc' ? 'up' : 'down' }} ms-1"></i>
+										<i class="fas fa-sort-{{ result.dir == 'asc' ? 'up' : 'down' }} ms-1" aria-hidden="true"></i>
 									{% else %}
-										<i class="fas fa-sort text-muted ms-1"></i>
+										<i class="fas fa-sort text-muted ms-1" aria-hidden="true"></i>
 									{% endif %}
 								</a>
 							</th>
@@ -68,13 +131,13 @@
 					</thead>
 					<tbody>
 						{% for case in result.results %}
-							<tr>
+							<tr class="clickable" tabindex="0" aria-label="{{ __('case') }} {{ case.id }}: {{ case.subject }}" data-case-url="{{ base_path }}/view_case/{{ case.id }}">
 								<td>{{ case.id }}</td>
 								<td>
 									{% if case.registered_date is defined %}
-										{{ case.registered_date|date('d.m.Y H:i') }}
+										<time datetime="{{ case.registered_date|date('Y-m-d\\TH:i:s') }}">{{ case.registered_date|date('d.m.Y H:i') }}</time>
 									{% elseif case.entry_date is defined %}
-										{{ case.entry_date|date('d.m.Y H:i') }}
+										<time datetime="{{ case.entry_date|date('Y-m-d\\TH:i:s') }}">{{ case.entry_date|date('d.m.Y H:i') }}</time>
 									{% else %}
 										-
 									{% endif %}
@@ -82,34 +145,34 @@
 								<td>{{ case.subject }}</td>
 								<td>
 									{% if case.status_change_date is defined %}
-										{{ case.status_change_date|date('d.m.Y H:i') }}
+										<time datetime="{{ case.status_change_date|date('Y-m-d\\TH:i:s') }}">{{ case.status_change_date|date('d.m.Y H:i') }}</time>
 									{% elseif case.modified_date is defined %}
-										{{ case.modified_date|date('d.m.Y H:i') }}
+										<time datetime="{{ case.modified_date|date('Y-m-d\\TH:i:s') }}">{{ case.modified_date|date('d.m.Y H:i') }}</time>
 									{% else %}
 										-
 									{% endif %}
 								</td>
 								<td>
 									{% if case.status == 'O' %}
-										<span class="badge bg-success">{{case.status_text}}</span>
+										<span class="badge bg-success" aria-label="{{ __('status') }}: {{case.status_text}}">{{case.status_text}}</span>
 									{% elseif case.status == 'C1' %}
-										<span class="badge bg-warning text-dark">{{case.status_text}}</span>
+										<span class="badge bg-warning text-dark" aria-label="{{ __('status') }}: {{case.status_text}}">{{case.status_text}}</span>
 
 									{% elseif case.status == 'X' %}
-										<span class="badge bg-secondary">{{case.status_text}}</span>
+										<span class="badge bg-secondary" aria-label="{{ __('status') }}: {{case.status_text}}">{{case.status_text}}</span>
 
 									{% elseif case.status == 'C' %}
-										<span class="badge bg-secondary">{{case.status_text}}</span>
+										<span class="badge bg-secondary" aria-label="{{ __('status') }}: {{case.status_text}}">{{case.status_text}}</span>
 
 									{% else %}
-										<span class="badge bg-info">{{ case.status_text }}</span>
+										<span class="badge bg-info" aria-label="{{ __('status') }}: {{ case.status_text }}">{{ case.status_text }}</span>
 
 									{% endif %}
 								</td>
 								<td>
-									<a href="{{ base_path }}/view_case/{{ case.id }}" class="btn btn-sm btn-outline-primary">
-										<i class="fas fa-eye"></i>
-										{{ __('view_details') }}
+									<a href="{{ base_path }}/view_case/{{ case.id }}" class="btn btn-sm btn-outline-primary" aria-label="{{ __('view_details_for_case') }} {{ case.id }}">
+										<i class="fas fa-eye" aria-hidden="true"></i>
+										<span>{{ __('view_details') }}</span>
 									</a>
 								</td>
 							</tr>
@@ -119,7 +182,7 @@
 			</div>
 
 			<div class="mt-3 d-flex justify-content-between">
-				<p class="text-muted">
+				<p class="text-muted" id="results-summary" aria-live="polite">
 					<small>{{ __('showing') }}
 						{{ result.start + 1 }}
 						-
@@ -130,30 +193,34 @@
 				</p>
 
 				{% if result.total_records > result.results|length %}
-					<nav aria-label="Page navigation">
+					<nav aria-label="{{ __('case_pagination') }}">
 						<ul class="pagination pagination-sm">
 							{% if result.start > 0 %}
 								<li class="page-item">
-									<a class="page-link" href="{{ base_path }}/my_cases?start=0&sort={{ result.sort }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="First">
+									<a class="page-link" href="{{ base_path }}/my_cases?start=0&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="{{ __('first_page') }}">
 										<span aria-hidden="true">&laquo;&laquo;</span>
+										<span class="sr-only">{{ __('first_page') }}</span>
 									</a>
 								</li>
 								<li class="page-item">
-									<a class="page-link" href="{{ base_path }}/my_cases?start={{ result.start - result.perPage }}&sort={{ result.sort }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="Previous">
+									<a class="page-link" href="{{ base_path }}/my_cases?start={{ result.start - result.perPage }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="{{ __('previous_page') }}">
 										<span aria-hidden="true">&laquo;</span>
+										<span class="sr-only">{{ __('previous_page') }}</span>
 									</a>
 								</li>
 							{% endif %}
 
 							{% if result.start + result.results|length < result.total_records %}
 								<li class="page-item">
-									<a class="page-link" href="{{ base_path }}/my_cases?start={{ result.start + result.perPage }}&sort={{ result.sort }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="Next">
+									<a class="page-link" href="{{ base_path }}/my_cases?start={{ result.start + result.perPage }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="{{ __('next_page') }}">
 										<span aria-hidden="true">&raquo;</span>
+										<span class="sr-only">{{ __('next_page') }}</span>
 									</a>
 								</li>
 								<li class="page-item">
-									<a class="page-link" href="{{ base_path }}/my_cases?start={{ result.total_records - result.perPage }}&sort={{ result.sort }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="Last">
+									<a class="page-link" href="{{ base_path }}/my_cases?start={{ result.total_records - result.perPage }}&sort={{ result.sort }}&dir={{ result.dir }}" aria-label="{{ __('last_page') }}">
 										<span aria-hidden="true">&raquo;&raquo;</span>
+										<span class="sr-only">{{ __('last_page') }}</span>
 									</a>
 								</li>
 							{% endif %}
@@ -161,21 +228,22 @@
 					</nav>
 				{% endif %}
 			</div>
+			</section>
 		{% else %}
-			<div class="alert alert-info">
+			<div class="alert alert-info" role="alert">
 				<p>{{ __('no_cases') }}</p>
 			</div>
 		{% endif %}
 
-		<div class="mt-4">
-			<h2 class="h4 mb-3">{{ __('create_new_case') }}</h2>
+		<section aria-labelledby="create-case-heading" class="mt-4">
+			<h2 id="create-case-heading" class="h4 mb-3">{{ __('create_new_case') }}</h2>
 			<div class="row">
 				{% if config.services.helpdesk %}
 					<div class="col-md-4 mb-3">
 						<div class="d-grid">
 							<a href="{{ base_path }}/helpdesk" class="btn btn-outline-primary">
-								<i class="fas fa-ticket-alt me-2"></i>
-								{{ __('form_header', 'helpdesk') }}
+								<i class="fas fa-ticket-alt me-2" aria-hidden="true"></i>
+								<span>{{ __('form_header', 'helpdesk') }}</span>
 							</a>
 						</div>
 					</div>
@@ -185,8 +253,8 @@
 					<div class="col-md-4 mb-3">
 						<div class="d-grid">
 							<a href="{{ base_path }}/nokkelbestilling" class="btn btn-outline-primary">
-								<i class="fas fa-key me-2"></i>
-								{{ __('form_header', 'nokkelbestilling') }}
+								<i class="fas fa-key me-2" aria-hidden="true"></i>
+								<span>{{ __('form_header', 'nokkelbestilling') }}</span>
 							</a>
 						</div>
 					</div>
@@ -196,30 +264,57 @@
 					<div class="col-md-4 mb-3">
 						<div class="d-grid">
 							<a href="{{ base_path }}/invoicerequest" class="btn btn-outline-primary">
-								<i class="fas fa-file-invoice-dollar me-2"></i>
-								{{ __('form_header', 'invoicerequest') }}
+								<i class="fas fa-file-invoice-dollar me-2" aria-hidden="true"></i>
+								<span>{{ __('form_header', 'invoicerequest') }}</span>
 							</a>
 						</div>
 					</div>
 				{% endif %}
 			</div>
-		</div>
+		</section>
+		</main>
+	</div>
 	</div>
 
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
-			// Make table rows clickable but exclude header row and clicks on buttons/links
-			const rows = document.querySelectorAll('tbody tr');
+			// Make table rows accessible for keyboard and mouse users
+			const rows = document.querySelectorAll('tbody tr.clickable');
 			rows.forEach(row => {
+				// Handle mouse clicks
 				row.addEventListener('click', function(e) {
 					if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && !e.target.closest('a') && !e.target.closest('button')) {
-						const link = this.querySelector('a.btn-outline-primary');
-						if (link) {
-							link.click();
+						const url = this.getAttribute('data-case-url');
+						if (url) {
+							window.location.href = url;
 						}
 					}
 				});
+				
+				// Handle keyboard events
+				row.addEventListener('keydown', function(e) {
+					// Activate on Enter or Space
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						const url = this.getAttribute('data-case-url');
+						if (url) {
+							window.location.href = url;
+						}
+					}
+				});
+				
 				row.style.cursor = 'pointer';
+			});
+			
+			// Announce page changes for screen readers
+			const paginationLinks = document.querySelectorAll('.pagination .page-link');
+			paginationLinks.forEach(link => {
+				link.addEventListener('click', function() {
+					const summaryElement = document.getElementById('results-summary');
+					if (summaryElement) {
+						summaryElement.setAttribute('aria-live', 'assertive');
+					}
+				});
 			});
 		});
 	</script>

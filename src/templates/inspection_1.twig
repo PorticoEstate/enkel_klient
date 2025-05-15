@@ -25,119 +25,190 @@
 		}
 		.file.done {
 			background: lightgreen;
+			}
+		
+		/* Accessibility styles */
+		.skip-link {
+			position: absolute;
+			top: -40px;
+			left: 0;
+			background: #000;
+			color: white;
+			padding: 8px;
+			z-index: 100;
+			transition: top 0.3s;
+		}
+		
+		.skip-link:focus {
+			top: 0;
+		}
+		
+		/* Add a subtle left border to required fields */
+		input[required],
+		select[required],
+		textarea[required] {
+			border-left: 3px solid #dc3545;
+		}
+		
+		/* Add a "required" pseudo-element to labels of required fields */
+		label.required::after {
+			content: " *";
+			color: #dc3545;
+		}
+		
+		/* Focus styling */
+		a:focus, button:focus, input:focus, select:focus, textarea:focus {
+			outline: 2px solid #4a90e2;
+			outline-offset: 2px;
+		}
+		
+		/* Error message styling for screen readers */
+		.sr-only {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			border: 0;
+		}
+		
+		/* Legends need proper styling */
+		legend {
+			font-weight: bold;
+			margin-bottom: 0.5rem;
+		}
+		
+		/* Radio and checkbox groups need visual indication */
+		.form-group fieldset {
+			border: 1px solid #ddd;
+			padding: 1rem;
+			border-radius: 4px;
+			margin-bottom: 1rem;
 		}
 	</style>
 
+	<!-- Skip to content link for keyboard users -->
+	<a href="#main-content" class="skip-link">{{ __('Skip to content') }}</a>
+
 	<div class="container">
-		<h1>{{ __('form_header') }}</h1>
+		<main id="main-content" role="main">
+		<h1 id="form-header">{{ __('form_header') }}</h1>
 
 		{% if saved == 1 %}
-			<div class="alert alert-success">
+			<div class="alert alert-success" role="alert" aria-live="polite">
 				<p>{{ __('case_registered') }}
 					#{{ id }}</p>
 			</div>
-			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();">{{ __('new_registration') }}</button>
+			<button type="button" class="btn btn-primary mt-2" onclick="refresh_form();" aria-label="{{ __('new_registration') }}">{{ __('new_registration') }}</button>
 		{% else %}
 			{% if error|length > 0 %}
-				<div class="alert alert-danger alert-dismissible">
+				<div class="alert alert-danger alert-dismissible" role="alert" aria-live="assertive">
+					<h2 class="sr-only">{{ __('Form errors') }}</h2>
 					{% for message in error %}
 						<p>{{ message }}</p>
 					{% endfor %}
 				</div>
 			{% endif %}
+			
+			<p class="text-muted small mb-3" id="required-fields-notice">{{ __('required_fields') }} <span aria-hidden="true">*</span></p>
 
-			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data">
+			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header">
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
+					<legend class="sr-only">{{ __('inspection_details') }}</legend>
 					<div class="form-group mt-2">
-						<label for="location_name">
-							<i class="fas fa-search"></i>
+						<label for="location_name" class="required">
+							<i class="fas fa-search" aria-hidden="true"></i>
 							{{ __('address') }}
 						</label>
-						<input type="text" id="location_name" name="values[location_name]" tabindex="1" class="form-control" autocomplete="off" required="required"/>
-						<div class="selection"></div>
+						<input type="text" id="location_name" name="values[location_name]" class="form-control" autocomplete="off" required="required" aria-required="true"/>
+						<div class="selection" aria-live="polite"></div>
 						<input type="hidden" id="location_code" name="location_code">
 					</div>
-					<div id="details" style="display: none;">
+					<div id="details" style="display: none;" aria-hidden="true">
 						<div class="form-check">
-							<input class="form-check-input" type="checkbox" name="values_attribute[7][value]" id="tilgang" value="1" onchange="handleChangeTilgang(this);"/>
+							<input class="form-check-input" type="checkbox" name="values_attribute[7][value]" id="tilgang" value="1" onchange="handleChangeTilgang(this);" aria-controls="inner_details"/>
 							<label class="form-check-label" for="tilgang">
 								{{ __('missing_access') }}
 							</label>
 						</div>
 						<div id="inner_details">
-							<div id="slukkeutstyr" class="form-group mt-2">
-								<label for="location_name">{{ __('fire_equipment') }}</label>
+							<fieldset id="slukkeutstyr" class="form-group mt-2">
+								<legend>{{ __('fire_equipment') }}</legend>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_2" value="2" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_2" value="2" required="required" onchange="handleChangeSlukkeutstyr(this);" aria-required="true"/>
 									<label class="form-check-label" for="type_br_slokking_2">
 										{{ __('fire_hose') }}
 									</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_3" value="3" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_3" value="3" required="required" onchange="handleChangeSlukkeutstyr(this);" aria-required="true"/>
 									<label class="form-check-label" for="type_br_slokking_3">
 										{{ __('powder') }}
 									</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_4" value="4" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_4" value="4" required="required" onchange="handleChangeSlukkeutstyr(this);" aria-required="true"/>
 									<label class="form-check-label" for="type_br_slokking_4">
 										{{ __('foam') }}
 									</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_1" value="1" required="required" onchange="handleChangeSlukkeutstyr(this);"/>
+									<input class="form-check-input" type="radio" name="values_attribute[2][value][]" id="type_br_slokking_1" value="1" required="required" onchange="handleChangeSlukkeutstyr(this);" aria-required="true"/>
 									<label class="form-check-label" for="type_br_slokking_1">
 										{{ __('changed_extinguisher') }}
 									</label>
 								</div>
-							</div>
+							</fieldset>
 
-							<div id="dateblock" class="form-group mt-2" style="display: none;">
-								<label for="subject">{{ __('date_stamp_extinguisher') }}</label>
+							<div id="dateblock" class="form-group mt-2" style="display: none;" aria-hidden="true">
+								<label for="datestamp">{{ __('date_stamp_extinguisher') }}</label>
 								<!--the parsed value is always formatted yyyy-mm-dd.-->
-								<input id="datestamp" type="date" class="form-control" id="title" name="values_attribute[1][value]"/>
+								<input id="datestamp" type="date" class="form-control" name="values_attribute[1][value]" aria-describedby="datestampHelp"/>
+								<small id="datestampHelp" class="form-text text-muted">{{ __('date_format_yyyy_mm_dd') }}</small>
 							</div>
 
-							<div class="form-group mt-2">
-								<label>{{ __('smoke_detector') }}</label>
+							<fieldset class="form-group mt-2">
+								<legend>{{ __('smoke_detector') }}</legend>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_1" value="1" required="required"/>
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_1" value="1" required="required" aria-required="true"/>
 									<label class="form-check-label" for="rokvarsler_1">
 										{{ __('checked_ok') }}
 									</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_2" value="2" required="required"/>
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_2" value="2" required="required" aria-required="true"/>
 									<label class="form-check-label" for="rokvarsler_2">
 										{{ __('changed_battery') }}
 									</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_3" value="3" required="required"/>
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_3" value="3" required="required" aria-required="true"/>
 									<label class="form-check-label" for="rokvarsler_3">
 										{{ __('changed_detector') }}
 									</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_4" value="1" required="required"/>
+									<input class="form-check-input" type="radio" name="values_attribute[3][value][]" id="rokvarsler_4" value="1" required="required" aria-required="true"/>
 									<label class="form-check-label" for="rokvarsler_4">
 										{{ __('part_of_alarm_system') }}
 									</label>
 								</div>
-							</div>
+							</fieldset>
 						</div>
 
-						<div class="form-group mt-2">
-							<label>OBS!!</label>
+						<fieldset class="form-group mt-2">
+							<legend>{{ __('important_note') }}</legend>
 							<div class="form-check">
-								<input class="form-check-input" type="checkbox" name="values_attribute[4][value]" id="id_behov_tilsyn" value="1"/>
+								<input class="form-check-input" type="checkbox" name="values_attribute[4][value]" id="id_behov_tilsyn" value="1" aria-describedby="tilsynHelp"/>
 								<label class="form-check-label" for="id_behov_tilsyn">
 									{{ __('need_extended_inspection') }}
 								</label>
+								<small id="tilsynHelp" class="form-text text-muted d-block">{{ __('check_if_extended_inspection_needed') }}</small>
 							</div>
-						</div>
+						</fieldset>
 
 						<div id="hidden_div" class="form-group mt-2">
 							<label for="merknad">{{ __('remark') }}</label>
@@ -146,48 +217,50 @@
 						</div>
 						{% if enable_fileupload == 1 %}
 							<div class="form-group mt-2">
-								<label>{{ __('upload_file') }}</label>
-								<div id="drop-area" class="">
-									<div style="border: 2px dashed #ccc; padding: 20px;">
-										<p>{{ __('upload_instructions') }}</p>
+								<label for="fileupload" id="upload-label">{{ __('upload_file') }}</label>
+								<div id="drop-area" class="" aria-labelledby="upload-label" aria-describedby="upload-instructions">
+									<div style="border: 2px dashed #ccc; padding: 20px;" role="region">
+										<p id="upload-instructions">{{ __('upload_instructions') }}</p>
 										<div class="fileupload-buttonbar">
 											<div class="fileupload-buttons">
 												<span class="fileinput-button btn btn-success">
-													<i class="fas fa-plus"></i>
+													<i class="fas fa-plus" aria-hidden="true"></i>
 													<span>{{ __('add_files') }}</span>
 													<input id="fileupload" type="file" name="files[]" multiple="" data-url=""></span>
-												<span class="fileupload-process"></span>
+												<span class="fileupload-process" aria-live="polite"></span>
 											</div>
 											<div class="fileupload-count">
 												{{ __('number_of_files') }}:
-												<span id="files-count"></span>
+												<span id="files-count" aria-live="polite">0</span>
 											</div>
 											<div class="fileupload-progress" style="display:none">
-												<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-												<div class="progress-extended"></div>
+												<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+												<div class="progress-extended" aria-live="polite"></div>
 											</div>
 										</div>
 										<div class="content_upload_download">
-											<div class="presentation files" style="display: inline-table;"></div>
+											<div class="presentation files" style="display: inline-table;" aria-live="polite" role="log"></div>
 										</div>
 									</div>
 								</div>
 							</div>
 						{% endif %}
 						<button id="submit" type="submit" class="btn btn-primary mt-2">
-							<i class="far fa-paper-plane"></i>
+							<i class="far fa-paper-plane" aria-hidden="true"></i>
 							{{ __('send') }}
 						</button>
+						<div id="form-submission-status" class="sr-only" aria-live="assertive"></div>
 					</div>
 				</fieldset>
 			</form>
 		{% endif %}
+		</main>
 	</div>
 	<script>
 		function refresh_form() {
-window.location.replace(`{{ str_base_url }}/inspection_1`);
-}
-var schema = 'inspection_1';
+			window.location.replace(`{{ str_base_url }}/inspection_1`);
+		}
+		var schema = 'inspection_1';
 	</script>
 
 	{% if saved != 1 %}
@@ -198,7 +271,30 @@ var schema = 'inspection_1';
 		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
+		<script src="{{ base_path }}/src/js/accessibility-helpers.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/inspection_1.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/location.js?n={{ cache_refresh_token }}"></script>
+		<script>
+			// Initialize accessibility features when DOM is ready
+			document.addEventListener('DOMContentLoaded', function() {
+				// Make file dropzone accessible
+				makeDropzoneAccessible('drop-area', 'fileupload');
+				
+				// Setup accessible form validation
+				setupAccessibleValidation('inspection_1');
+				
+				// Add keyboard support for the location search
+				document.getElementById('location_name').addEventListener('keydown', function(e) {
+					// When down arrow is pressed in the search box, move focus to first suggestion if available
+					if (e.key === 'ArrowDown') {
+						const firstSuggestion = document.querySelector('.selection a');
+						if (firstSuggestion) {
+							e.preventDefault();
+							firstSuggestion.focus();
+						}
+					}
+				});
+			});
+		</script>
 	{% endif %}
 {% endblock %}

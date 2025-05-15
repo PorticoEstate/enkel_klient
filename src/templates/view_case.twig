@@ -2,64 +2,66 @@
 {% extends 'head.twig' %}
 
 {% block body %}
+	<a href="#main-content" class="skip-link">{{ __('Skip to content') }}</a>
 	<div class="container mt-4">
 		<div class="d-flex justify-content-between align-items-center mb-4">
 			<h1>{{ __('case') }}
 				#{{ case.id }}</h1>
 			<a href="{{ base_path }}/my_cases" class="btn btn-outline-secondary">
-				<i class="fas fa-arrow-left me-2"></i>
+				<i class="fas fa-arrow-left me-2" aria-hidden="true"></i>
 				{{ __('back_to_cases') }}
 			</a>
 		</div>
 
+		<main id="main-content">
 		{% if success is not empty %}
-			<div class="alert alert-success alert-dismissible fade show" role="alert">
+			<div class="alert alert-success alert-dismissible fade show" role="alert" aria-live="polite">
 				{% if success == 'response_added' %}
-					<i class="fas fa-check-circle me-2"></i>
+					<i class="fas fa-check-circle me-2" aria-hidden="true"></i>
 					{{ __('comment_added') }}
 				{% else %}
-					<i class="fas fa-check-circle me-2"></i>
+					<i class="fas fa-check-circle me-2" aria-hidden="true"></i>
 					{{ __('action_completed') }}
 				{% endif %}
-				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Lukk"></button>
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('Close') }}"></button>
 			</div>
 		{% endif %}
 
 		{% if error is not empty %}
-			<div class="alert alert-danger alert-dismissible fade show" role="alert">
+			<div class="alert alert-danger alert-dismissible fade show" role="alert" aria-live="assertive">
 				{% if 'file_too_large_server' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>
+					<i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
 					{{ __('file_too_large_server') }}
 					{{ php_upload_max_filesize|default('25') }}MB.
 					{{ __('compress_or_split_file') }}
 				{% elseif 'empty_content' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>
+					<i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
 					{{ __('empty_comment') }}
 				{% elseif 'file_too_large' in error and 'invalid_file_type' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>
+					<i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
 					{{ __('file_too_large_invalid_type') }}
 				{% elseif 'file_too_large' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>
+					<i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
 					{{ __('file_too_large') }}
 				{% elseif 'invalid_file_type' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>
+					<i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
 					{{ __('invalid_file_type') }}
 				{% elseif 'api_error' in error %}
-					<i class="fas fa-exclamation-circle me-2"></i>
+					<i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
 					{{ __('api_error') }}
 				{% else %}
-					<i class="fas fa-exclamation-circle me-2"></i>
+					<i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
 					{{ error }}
 				{% endif %}
-				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Lukk"></button>
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('Close') }}"></button>
 			</div>
 		{% endif %}
 
 
-		<div class="card mb-4">
+		<section aria-labelledby="case-title" class="card mb-4">
 			<div class="card-header d-flex justify-content-between align-items-center">
-				<h5 class="mb-0">{{ case.subject }}</h5>
-				<span class="badge {{ case.status_class|default('bg-secondary') }}">{{ case.status_text|default(__('unknown_status')) }}</span>
+				<h2 id="case-title" class="h5 mb-0">{{ case.subject }}</h2>
+				<span class="badge {{ case.status_class|default('bg-secondary') }}" aria-label="{{ __('status') }}: {{ case.status_text|default(__('unknown_status')) }}">{{ case.status_text|default(__('unknown_status')) }}</span>
 			</div>
 			<div class="card-body">
 				<div class="row mb-3">
@@ -67,7 +69,7 @@
 						<p class="mb-1">
 							<strong>{{ __('registered_date') }}:</strong>
 							{% if case.registered_date is defined and case.registered_date %}
-								{{ case.registered_date|date('d.m.Y H:i') }}
+								<time datetime="{{ case.registered_date|date('Y-m-d\\TH:i:s') }}">{{ case.registered_date|date('d.m.Y H:i') }}</time>
 							{% else %}
 								-
 							{% endif %}
@@ -85,7 +87,7 @@
 						<p class="mb-1">
 							<strong>{{ __('last_updated') }}:</strong>
 							{% if case.status_change_date is defined and case.status_change_date %}
-								{{ case.status_change_date|date('d.m.Y H:i') }}
+								<time datetime="{{ case.status_change_date|date('Y-m-d\\TH:i:s') }}">{{ case.status_change_date|date('d.m.Y H:i') }}</time>
 							{% else %}
 								-
 							{% endif %}
@@ -107,29 +109,30 @@
 				</div>
 
 				<div class="mt-4">
-					<h6 class="mb-3">{{ __('description') }}</h6>
-					<div class="p-3 bg-light rounded">
-						{{ case.details|raw }}
+						<h3 id="case-description" class="h6 mb-3">{{ __('description') }}</h3>
+						<div class="p-3 bg-light rounded" aria-labelledby="case-description">
+							{{ case.details|raw }}
+						</div>
 					</div>
 				</div>
-			</div>
-		</div>
+			</section>
 
 		{% if attachments|length > 0 %}
-			<div class="card mb-4">
+			<section aria-labelledby="attachments-title" class="card mb-4">
 				<div class="card-header">
-					<h5 class="mb-0">{{ __('attachments') }}</h5>
+					<h2 id="attachments-title" class="h5 mb-0">{{ __('attachments') }}</h2>
 				</div>
 				<div class="card-body">
 					<div class="table-responsive">
-						<table class="table table-hover">
+						<table class="table table-hover" aria-labelledby="attachments-title">
+							<caption class="sr-only">{{ __('attachments') }} - {{ __('case') }} #{{ case.id }}</caption>
 							<thead>
 								<tr>
-									<th>{{ __('filename') }}</th>
-									<th>{{ __('type') }}</th>
-									<th>{{ __('size') }}</th>
-									<th>{{ __('date') }}</th>
-									<th>{{ __('action') }}</th>
+									<th scope="col">{{ __('filename') }}</th>
+									<th scope="col">{{ __('type') }}</th>
+									<th scope="col">{{ __('size') }}</th>
+									<th scope="col">{{ __('date') }}</th>
+									<th scope="col">{{ __('action') }}</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -141,14 +144,14 @@
 											KB</td>
 										<td>
 											{% if attachment.created_on is defined %}
-												{{ attachment.created_on|date('d.m.Y') }}
+												<time datetime="{{ attachment.created_on|date('Y-m-d') }}">{{ attachment.created_on|date('d.m.Y') }}</time>
 											{% else %}
 												-
 											{% endif %}
 										</td>
 										<td>
-											<a href="{{ base_path }}/my_cases/download/{{ case.id }}/{{ attachment.id }}" class="btn btn-sm btn-outline-primary">
-												<i class="fas fa-download me-1"></i>
+											<a href="{{ base_path }}/my_cases/download/{{ case.id }}/{{ attachment.id }}" class="btn btn-sm btn-outline-primary" aria-label="{{ __('download') }} {{ attachment.name }}">
+												<i class="fas fa-download me-1" aria-hidden="true"></i>
 												{{ __('download') }}
 											</a>
 										</td>
@@ -158,31 +161,29 @@
 						</table>
 					</div>
 				</div>
-			</div>
+				</section>
 		{% endif %}
 
 		{% if history|length > 0 %}
-			<div class="card mb-4">
+			<section aria-labelledby="history-title" class="card mb-4">
 				<div class="card-header">
-					<h5 class="mb-0">{{ __('case_history') }}</h5>
+					<h2 id="history-title" class="h5 mb-0">{{ __('case_history') }}</h2>
 				</div>
 				<div class="card-body">
-					<div class="timeline">
+					<div class="timeline" role="log" aria-label="{{ __('case_history') }}">
 						{% for item in history %}
 							<div class="timeline-item mb-4">
 								<div class="d-flex">
-									<div class="timeline-marker me-3">
+									<div class="timeline-marker me-3" aria-hidden="true">
 										<i class="fas fa-circle text-primary"></i>
 									</div>
 									<div class="timeline-content">
 										<div class="d-flex justify-content-between">
-											<h6 class="mb-1">{{ __('change') }}</h6>
+											<h3 class="h6 mb-1">{{ __('change') }}</h3>
 
 											<small class="text-muted">
 												{% if item.value_date is defined %}
-
-													{{ item.value_date }}
-
+													<span>{{ item.value_date }}</span>
 												{% endif %}
 											</small>
 										</div>
@@ -207,129 +208,244 @@
 						{% endfor %}
 					</div>
 				</div>
-			</div>
+				</section>
 		{% endif %}
-		<div class="card mb-4">
+		<section aria-labelledby="comment-form-title" class="card mb-4">
 			<div class="card-header">
-				<h5 class="mb-0">{{ __('add_comment') }}</h5>
+				<h2 id="comment-form-title" class="h5 mb-0">{{ __('add_comment') }}</h2>
 			</div>
 			<div class="card-body">
-				<form method="post" action="{{ base_path }}/my_cases/respond/{{ case.id }}" enctype="multipart/form-data">
-					<div class="mb-3">
-						<label for="responseContent" class="form-label">{{ __('your_comment') }}</label>
-						<textarea class="form-control" id="responseContent" name="content" rows="4" required>{{ preserved_content }}</textarea>
+				<form method="post" action="{{ base_path }}/my_cases/respond/{{ case.id }}" enctype="multipart/form-data" aria-labelledby="comment-form-title" novalidate>
+					<fieldset>
+						<legend class="sr-only">{{ __('add_comment') }}</legend>
+						<div class="mb-3">
+							<label for="responseContent" class="form-label required">{{ __('your_comment') }}</label>
+							<textarea class="form-control" id="responseContent" name="content" rows="4" required aria-required="true" aria-describedby="comment-help">{{ preserved_content }}</textarea>
+							
+							<div class="form-text" id="comment-help">{{ __('comment_visible_info') }}</div>
+						</div>
 
-						<div class="form-text">{{ __('comment_visible_info') }}</div>
-					</div>
+						<div class="mb-3">
+							<label for="responseAttachment" class="form-label">{{ __('attach_file_optional') }}</label>
+							<input class="form-control" type="file" id="responseAttachment" name="attachment" aria-describedby="file-help">
+							<div class="form-text" id="file-help">{{ __('supported_file_types') }}</div>
+						</div>
 
-					<div class="mb-3">
-						<label for="responseAttachment" class="form-label">{{ __('attach_file_optional') }}</label>
-						<input class="form-control" type="file" id="responseAttachment" name="attachment">
-						<div class="form-text">{{ __('supported_file_types') }}</div>
-					</div>
+						{% if csrf_token is defined %}
+							<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+						{% endif %}
 
-					{% if csrf_token is defined %}
-						<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-					{% endif %}
-
-					<div class="d-flex justify-content-end">
-						<button type="submit" class="btn btn-primary">
-							<i class="fas fa-paper-plane me-2"></i>
-							{{ __('send_comment') }}
-						</button>
-					</div>
+						<div class="d-flex justify-content-end">
+							<button type="submit" class="btn btn-primary">
+								<i class="fas fa-paper-plane me-2" aria-hidden="true"></i>
+								{{ __('send_comment') }}
+							</button>
+						</div>
+					</fieldset>
+					
+					{# Add a live region for form status announcements #}
+					<div id="form-status" class="sr-only" aria-live="polite" role="status"></div>
+					
 					{# Add this to view_case.twig just before the closing </form> tag #}
 
 					<script>
 						document.addEventListener('DOMContentLoaded', function () {
 const fileInput = document.getElementById('responseAttachment');
 const submitButton = document.querySelector('button[type="submit"]');
-const maxFileSizeBytes = 10 * 1024 * 1024;
-// 10MB in bytes
+const maxFileSizeBytes = 10 * 1024 * 1024; // 10MB in bytes
 
 // Create feedback element
 const feedbackDiv = document.createElement('div');
 feedbackDiv.className = 'invalid-feedback d-none';
+feedbackDiv.id = 'file-feedback';
 fileInput.parentNode.appendChild(feedbackDiv);
 
-fileInput.addEventListener('change', function () { // Reset state
-fileInput.classList.remove('is-invalid');
-feedbackDiv.classList.add('d-none');
-submitButton.disabled = false;
+// Create status element for screen readers
+const statusEl = document.getElementById('form-status');
+const announceToScreenReader = (message) => {
+    if (statusEl) {
+        statusEl.textContent = message;
+        // Clear after screen readers have had time to announce
+        setTimeout(() => {
+            statusEl.textContent = '';
+        }, 5000);
+    }
+};
 
-if (this.files && this.files[0]) {
-const fileSize = this.files[0].size;
+fileInput.addEventListener('change', function () {
+    // Reset state
+    fileInput.classList.remove('is-invalid');
+    feedbackDiv.classList.add('d-none');
+    submitButton.disabled = false;
+    submitButton.setAttribute('aria-disabled', 'false');
 
-// Check file size against our 10MB limit
-if (fileSize > maxFileSizeBytes) {
-fileInput.classList.add('is-invalid');
-feedbackDiv.textContent = `Filen er for stor. Maksimal filstørrelse er ${
-formatFileSize(maxFileSizeBytes)
-}. Din fil er ${
-formatFileSize(fileSize)
-}.`;
-feedbackDiv.classList.remove('d-none');
-submitButton.disabled = true;
+    if (this.files && this.files[0]) {
+        const fileSize = this.files[0].size;
+        const fileName = this.files[0].name;
 
-// Reset file input to clear selection
-this.value = '';
-return;
-}
+        // Check file size against our 10MB limit
+        if (fileSize > maxFileSizeBytes) {
+            fileInput.classList.add('is-invalid');
+            feedbackDiv.textContent = `Filen er for stor. Maksimal filstørrelse er ${
+            formatFileSize(maxFileSizeBytes)
+            }. Din fil er ${
+            formatFileSize(fileSize)
+            }.`;
+            feedbackDiv.classList.remove('d-none');
+            submitButton.disabled = true;
+            submitButton.setAttribute('aria-disabled', 'true');
 
-// Show file size information
-feedbackDiv.textContent = `Valgt fil: ${
-this.files[0].name
-} (${
-formatFileSize(fileSize)
-})`;
-feedbackDiv.classList.remove('d-none');
-feedbackDiv.classList.remove('invalid-feedback');
-feedbackDiv.classList.add('text-muted', 'small');
-}
+            // Announce to screen readers
+            announceToScreenReader(`File too large. Maximum file size is ${
+            formatFileSize(maxFileSizeBytes)
+            }. Your file is ${
+            formatFileSize(fileSize)
+            }.`);
+
+            // Reset file input to clear selection
+            this.value = '';
+            return;
+        }
+
+        // Show file size information
+        feedbackDiv.textContent = `Valgt fil: ${
+        this.files[0].name
+        } (${
+        formatFileSize(fileSize)
+        })`;
+        feedbackDiv.classList.remove('d-none');
+        feedbackDiv.classList.remove('invalid-feedback');
+        feedbackDiv.classList.add('text-muted', 'small');
+        
+        // Announce to screen readers
+        announceToScreenReader(`File selected: ${fileName}, size: ${formatFileSize(fileSize)}`);
+    }
 });
 
 // Format file size in KB, MB
 function formatFileSize(bytes) {
-if (bytes < 1024) {
-return bytes + ' bytes';
-}
-else if (bytes < 1024 * 1024) {
-return(bytes / 1024).toFixed(1) + ' KB';
-}
-else {
-return(bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
+    if (bytes < 1024) {
+        return bytes + ' bytes';
+    }
+    else if (bytes < 1024 * 1024) {
+        return(bytes / 1024).toFixed(1) + ' KB';
+    }
+    else {
+        return(bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
 }
 
 // Add form submission validation
 const form = fileInput.closest('form');
 form.addEventListener('submit', function (event) {
-if (fileInput.files && fileInput.files[0]) {
-const fileSize = fileInput.files[0].size;
+    // Check if textarea is empty
+    const responseContent = document.getElementById('responseContent');
+    if (!responseContent.value.trim()) {
+        event.preventDefault();
+        responseContent.classList.add('is-invalid');
+        announceToScreenReader('Comment field is required. Please enter a comment.');
+        responseContent.focus();
+        return false;
+    } else {
+        responseContent.classList.remove('is-invalid');
+    }
+    
+    // Check file size
+    if (fileInput.files && fileInput.files[0]) {
+        const fileSize = fileInput.files[0].size;
 
-if (fileSize > maxFileSizeBytes) {
-event.preventDefault();
-alert('Filen er for stor. Maksimal filstørrelse er 10MB.');
-return false;
-}
-}
+        if (fileSize > maxFileSizeBytes) {
+            event.preventDefault();
+            announceToScreenReader('File is too large. Maximum file size is 10MB.');
+            fileInput.focus();
+            return false;
+        }
+    }
+    
+    // Disable submit button and show loading state
+    submitButton.disabled = true;
+    submitButton.setAttribute('aria-disabled', 'true');
+    const loadingText = document.createElement('span');
+    loadingText.className = 'sr-only';
+    loadingText.textContent = ' Sending comment, please wait...';
+    submitButton.appendChild(loadingText);
+    announceToScreenReader('Submitting your comment, please wait...');
+});
+
+// Add keyboard accessibility to the form
+responseContent.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.ctrlKey) {
+        // Submit form with Ctrl+Enter
+        submitButton.click();
+    }
 });
 });
 					</script>
 
 				</form>
 			</div>
-		</div>
+			</section>
 
 		<div class="text-center mt-4 mb-5">
 			<a href="{{ base_path }}/my_cases" class="btn btn-primary">
-				<i class="fas fa-arrow-left me-2"></i>
+				<i class="fas fa-arrow-left me-2" aria-hidden="true"></i>
 				{{ __('back_to_cases') }}
+				<span class="sr-only">{{ __('back_to_cases') }}</span>
 			</a>
 		</div>
+		</main>
 	</div>
 
 	<style>
+		.skip-link {
+			position: absolute;
+			top: -40px;
+			left: 0;
+			background: #0d6efd;
+			color: white;
+			padding: 8px;
+			z-index: 100;
+			transition: top 0.2s ease;
+		}
+		
+		.skip-link:focus {
+			top: 0;
+			outline: 2px solid #4a90e2;
+		}
+		
+		/* Focus styling for interactive elements */
+		a:focus, button:focus, input:focus, select:focus, textarea:focus {
+			outline: 2px solid #4a90e2 !important;
+			outline-offset: 2px !important;
+			box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+		}
+		
+		/* Ensure notification badges have sufficient contrast */
+		.badge {
+			font-size: 0.85em;
+			font-weight: 600;
+			color: #fff;
+		}
+		
+		/* Style for required field indicators */
+		.required::after {
+			content: " *";
+			color: #dc3545;
+		}
+		
+		/* Access for screen readers only */
+		.sr-only {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+
 		.timeline {
 			position: relative;
 			padding-left: 1rem;
@@ -354,4 +470,7 @@ return false;
 			flex: 1;
 		}
 	</style>
+	
+	<script src="{{ base_path }}/src/js/accessibility-helpers.js?n={{ cache_refresh_token }}"></script>
+	<script src="{{ base_path }}/src/js/view_case.js?n={{ cache_refresh_token }}"></script>
 {% endblock %}

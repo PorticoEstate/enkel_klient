@@ -23,50 +23,135 @@ $(document).ready(function ()
 		}
 		catch (error)
 		{
-
+			// If no input field can be focused, no action needed
 		}
-
 	}
-	// Add asterisk to all required fields
+
+	// Add aria attributes and visual indicators to all required fields
 	markRequiredFields();
 
-	// Initialize file uploader
+	// Initialize file uploader if enabled
 	initializeFileUploader();
+
+	/**
+	 * Enhance keyboard accessibility for the form
+	 */
+	function enhanceKeyboardAccessibility()
+	{
+		// Add keyboard support for autocomplete results
+		$('.autoComplete_wrapper ul').on('keydown', function (e)
+		{
+			var key = e.which || e.keyCode;
+
+			// Enter or Space: select item
+			if (key === 13 || key === 32)
+			{
+				$(document.activeElement).click();
+				e.preventDefault();
+			}
+		});
+
+		// We rely on the natural tab order of elements for keyboard navigation
+		// No need to add tabindex attributes as it can disrupt natural flow
+
+		// For better keyboard accessibility, ensure toolbar buttons receive focus
+		$('.ql-toolbar button').attr('tabindex', '0');
+
+		// Add ARIA labels for each button group in the toolbar
+		$('.ql-toolbar .ql-formats').each(function (index)
+		{
+			$(this).attr('role', 'group');
+			$(this).attr('aria-label', 'Formatting options group ' + (index + 1));
+		});
+	}
 });
 
 function markRequiredFields()
 {
-	$('form :required').each(function ()
+	// Add required field indicator for visual users and set ARIA attributes for screen readers
+	$('form').find('input[required], textarea[required], select[required]').each(function ()
 	{
 		var id = $(this).attr('id');
-		$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
+		// Skip if no label exists
+		if (!$('label[for="' + id + '"]').length) return;
+
+		// Add required field indicator for visual users
+		if (!$('label[for="' + id + '"]').find('.required-field').length)
+		{
+			$('label[for="' + id + '"]').append(' <span class="required-field" aria-hidden="true">*</span>');
+		}
+
+		// Set ARIA attributes for screen readers
+		$(this).attr('aria-required', 'true');
 	});
+
+	// Add a required field explanation at the start of the form
+	if (!$('.required-fields-note').length)
+	{
+		$('form > fieldset').first().prepend(
+			'<p class="required-fields-note"><span class="required-field">*</span> indicates required fields</p>'
+		);
+	}
 }
 
 
 function initializeFileUploader()
 {
-	fileUploader = new FileUploader({
-		formId: 'helpdesk',
-		uploadUrl: `${strBaseURL}/helpdesk/upload`,
-		required: false,
-		onComplete: function (success)
-		{
-			if (success)
+	// Only initialize if the element exists
+	if ($("#fileupload").length > 0)
+	{
+		// Initialize FileUploader component with accessibility enhancements
+		fileUploader = new FileUploader({
+			formId: 'helpdesk',
+			uploadUrl: `${strBaseURL}/helpdesk/upload`,
+			required: false,
+			onComplete: function (success)
 			{
-				window.location.href = redirect_action;
-			} else
-			{
-				// Small delay to allow user to see error messages
-				window.setTimeout(function ()
+				if (success)
 				{
+					// Update status for screen readers before redirecting
+					updateScreenReaderStatus('Form submitted successfully. Redirecting to confirmation page.');
 					window.location.href = redirect_action;
-				}, 1000);
-			}
-		}
-	});
+				} else
+				{
+					// Show an accessible error message
+					var alertMessage = 'There was a problem with your file upload. We will redirect you to the main page in 5 seconds.';
 
-	fileUploader.initialize();
+					// Create accessible alert
+					createAccessibleAlert(alertMessage, 'error');
+
+					// Wait longer before redirecting to allow user to see errors
+					window.setTimeout(function ()
+					{
+						window.location.href = redirect_action;
+					}, 5000);
+				}
+			},
+			// Add file validation messages
+			onAdd: function (file)
+			{
+				// Update screen reader status
+				updateScreenReaderStatus('File added: ' + file.name);
+			},
+			onProgress: function (progress)
+			{
+				// Update ARIA attributes on progress bar
+				$('#progress').attr('aria-valuenow', progress);
+			}
+		});
+
+		fileUploader.initialize();
+
+		// Add screen reader status region
+		if (!$('#file-upload-status').length)
+		{
+			$('<div>', {
+				id: 'file-upload-status',
+				'class': 'sr-only',
+				'aria-live': 'polite'
+			}).appendTo('#drop-area');
+		}
+	}
 }
 
 $('form').on('submit', function (e)
@@ -109,6 +194,20 @@ $('form').on('submit', function (e)
 		return false;
 	}
 
+	// Disable submit button to prevent multiple submissions
+	$('button[type="submit"]').prop('disabled', true)
+		.attr('aria-disabled', 'true')
+		.append('<span class="sr-only">Submitting form, please wait...</span>');
+
+	// Add loading indicator for screen readers
+	$('<div>', {
+		id: 'submission-status',
+		'class': 'sr-only',
+		'aria-live': 'assertive'
+	})
+		.text('Form is being submitted, please wait...')
+		.appendTo('body');
+
 	// Form is valid, proceed with submission
 	submit_form();
 });
@@ -145,6 +244,9 @@ function showSubmissionSpinner()
 		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>'))
 		.insertAfter(form);
 	window.scrollBy(0, 100);
+
+	// Update screen reader
+	updateScreenReaderStatus('Form is being submitted, please wait...');
 }
 
 function removeSubmissionSpinner()
@@ -201,13 +303,38 @@ function ajax_submit_form()
 					$('#fileupload').prop('disabled', false);
 					removeSubmissionSpinner();
 
-					var error_message = '';
-					$.each(data.message, function (index, error)
+					// Create accessible error container
+					var errorContainer = $('.alert-danger');
+					if (errorContainer.length === 0)
 					{
-						error_message += error + "\n";
-					});
+						$('form').before('<div class="alert alert-danger alert-dismissible" role="alert" aria-live="assertive"></div>');
+						errorContainer = $('.alert-danger');
+					}
 
-					alert(error_message);
+					errorContainer.html('<h2 class="h6">There were errors with your submission:</h2><ul></ul>');
+					var errorList = errorContainer.find('ul');
+
+					if (Array.isArray(data.message))
+					{
+						data.message.forEach(function (msg)
+						{
+							errorList.append('<li>' + msg + '</li>');
+						});
+					} else
+					{
+						errorList.append('<li>An error occurred during submission. Please try again.</li>');
+					}
+
+					// Scroll to error message
+					$('html, body').animate({
+						scrollTop: errorContainer.offset().top - 100
+					}, 200);
+
+					// Set focus to the error container for screen readers
+					setTimeout(function ()
+					{
+						errorContainer.attr('tabindex', '-1').focus();
+					}, 300);
 				}
 			}
 		},
@@ -218,7 +345,114 @@ function ajax_submit_form()
 			$('#fileupload').prop('disabled', false);
 			removeSubmissionSpinner();
 
-			alert('Det oppstod en feil ved sending av skjemaet');
+			// Create accessible error message
+			var errorContainer = $('.alert-danger');
+			if (errorContainer.length === 0)
+			{
+				$('form').before('<div class="alert alert-danger alert-dismissible" role="alert" aria-live="assertive"><h2 class="h6">Error</h2></div>');
+				errorContainer = $('.alert-danger');
+			}
+
+			errorContainer.html('<h2 class="h6">Technical Error</h2><p>A technical error occurred during form submission. Please try again later.</p>');
+
+			// Scroll to error message
+			$('html, body').animate({
+				scrollTop: errorContainer.offset().top - 100
+			}, 200);
+
+			// Set focus to the error container for screen readers
+			setTimeout(function ()
+			{
+				errorContainer.attr('tabindex', '-1').focus();
+			}, 300);
 		}
 	});
+}
+
+/**
+ * Validate a specific form field and show appropriate error messages
+ * @param {jQuery} $field - The field to validate
+ * @returns {boolean} - True if valid, false if invalid
+ */
+function validateField($field)
+{
+	var isValid = $field[0].checkValidity();
+	var fieldId = $field.attr('id');
+	var errorId = fieldId + '-error';
+
+	if (!isValid)
+	{
+		$field.addClass('is-invalid');
+		$('#' + errorId).show();
+	} else
+	{
+		$field.removeClass('is-invalid');
+		$('#' + errorId).hide();
+	}
+
+	return isValid;
+}
+
+/**
+ * Validate all fields in the form
+ * @returns {boolean} - True if all fields are valid, false if any are invalid
+ */
+function validateAllFields()
+{
+	var allValid = true;
+	$('form input[required], form select[required], form textarea[required]').each(function ()
+	{
+		var fieldValid = validateField($(this));
+		if (!fieldValid)
+		{
+			allValid = false;
+		}
+	});
+
+	return allValid;
+}
+
+/**
+ * Update accessible status for screen reader announcements
+ * @param {string} message - The message to announce
+ */
+function updateScreenReaderStatus(message)
+{
+	// Create status element if it doesn't exist
+	if (!$('#file-upload-status').length)
+	{
+		$('<div>', {
+			id: 'file-upload-status',
+			'class': 'sr-only',
+			'aria-live': 'polite'
+		}).appendTo('body');
+	}
+
+	$('#file-upload-status').text(message);
+}
+
+/**
+ * Creates an accessible alert message
+ * @param {string} message - The message to display
+ * @param {string} type - The type of alert (info, success, warning, error)
+ */
+function createAccessibleAlert(message, type)
+{
+	// Remove existing alerts
+	$('.alert-accessible').remove();
+
+	// Create alert with proper ARIA role
+	var $alert = $('<div>', {
+		'class': 'alert alert-' + (type || 'info') + ' alert-accessible',
+		'role': 'alert',
+		'aria-live': 'assertive'
+	}).text(message);
+
+	// Add to page
+	$('form').before($alert);
+
+	// Scroll to alert
+	$('html, body').animate({
+		scrollTop: $alert.offset().top - 100
+	}, 200);
 }

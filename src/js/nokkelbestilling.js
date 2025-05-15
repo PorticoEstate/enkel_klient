@@ -2,6 +2,7 @@
  * Nøkkelbestilling form handler
  * 
  * Handles form validation, submission and file uploads for key ordering
+ * Enhanced for WCAG 2.0 compliance with improved accessibility
  */
 
 // Global variables
@@ -23,6 +24,9 @@ $(document).ready(function ()
 		filesRequired = !$(this).val();
 		updateFileUploadRequirements();
 	});
+
+	// Add accessibility enhancements
+	initAccessibility();
 });
 
 function markRequiredFields()
@@ -30,7 +34,19 @@ function markRequiredFields()
 	$('form :required').each(function ()
 	{
 		var id = $(this).attr('id');
-		$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
+		var $label = $('label[for="' + id + '"]');
+
+		// Add required class to label
+		$label.addClass('required');
+
+		// Add aria-required attribute
+		$(this).attr('aria-required', 'true');
+
+		// Ensure field has aria-invalid attribute initialized as false
+		if (!$(this).attr('aria-invalid'))
+		{
+			$(this).attr('aria-invalid', 'false');
+		}
 	});
 }
 
@@ -44,15 +60,43 @@ function initializeFileUploader()
 		{
 			if (success)
 			{
-				window.location.href = redirect_action;
+				// Update screen reader status before navigation
+				updateScreenReaderStatus('{{ __("form_submitted_successfully") }}');
+
+				// Allow time for screen reader announcement
+				window.setTimeout(function ()
+				{
+					window.location.href = redirect_action;
+				}, 500);
 			} else
 			{
+				// Update screen reader status with error
+				updateScreenReaderStatus('{{ __("upload_error") }}');
+
 				// Small delay to allow user to see error messages
 				window.setTimeout(function ()
 				{
 					window.location.href = redirect_action;
 				}, 1000);
 			}
+		},
+		// Add callback functions for accessibility announcements
+		onFileAdded: function (fileName)
+		{
+			updateScreenReaderStatus('{{ __("file_added") }}: ' + fileName);
+		},
+		onUploadProgress: function (progress)
+		{
+			// Update ARIA value on progress bar
+			$('#progress').attr('aria-valuenow', progress).attr('aria-valuetext', progress + '%');
+		},
+		onFileUploadSuccess: function (fileName)
+		{
+			updateScreenReaderStatus('{{ __("file_uploaded") }}: ' + fileName);
+		},
+		onFileUploadError: function (fileName, error)
+		{
+			updateScreenReaderStatus('{{ __("file_error") }}: ' + fileName + ' - ' + error);
 		}
 	});
 
@@ -64,10 +108,21 @@ function updateFileUploadRequirements()
 	// Update the file uploader's required state based on location_code
 	if (filesRequired && fileUploader.getPendingCount() === 0)
 	{
-		$('#fileupload').attr('required', 'required');
+		$('#fileupload').attr('required', 'required')
+			.attr('aria-required', 'true');
+
+		// Update label to indicate required
+		$('#fileupload-label').addClass('required');
+
+		// Announce to screen readers
+		updateScreenReaderStatus('{{ __("file_upload_required") }}');
 	} else
 	{
-		$('#fileupload').removeAttr('required');
+		$('#fileupload').removeAttr('required')
+			.attr('aria-required', 'false');
+
+		// Update label to remove required indication
+		$('#fileupload-label').removeClass('required');
 	}
 }
 
@@ -94,11 +149,28 @@ $('#nokkelbestilling').on('submit', function (e)
 
 	if (!formValid || !fileInputValid)
 	{
+		// Update form status for screen readers
+		updateScreenReaderStatus('{{ __("form_has_errors") }}');
+
 		// Find invalid fields (excluding file input)
 		var invalidFields = $(form).find(':invalid').not('#fileupload').filter(':visible');
 
 		if (invalidFields.length > 0)
 		{
+			// Mark fields as invalid for screen readers
+			invalidFields.each(function ()
+			{
+				$(this).attr('aria-invalid', 'true');
+
+				// Get field label
+				var id = $(this).attr('id');
+				var label = $('label[for="' + id + '"]').text().trim();
+
+				// Add error message to form status for screen readers
+				var currentStatus = $('#form-status').text();
+				$('#form-status').text(currentStatus + ' {{ __("field_has_error") }}: ' + label + '.');
+			});
+
 			// Focus on first visible invalid field
 			invalidFields[0].focus();
 			invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -121,14 +193,19 @@ $('#nokkelbestilling').on('submit', function (e)
 			}
 		}
 
-		// Show file upload error separately
+		// Show file upload error in an accessible way
 		if (!fileInputValid)
 		{
-			alert('Du må laste opp fullmakt eller vergefullmakt');
+			var errorMsg = 'Du må laste opp fullmakt eller vergefullmakt';
+			$('#file-upload-status').text(errorMsg);
+			alert(errorMsg);
 		}
 
 		return false;
 	}
+
+	// Update form status
+	updateScreenReaderStatus('{{ __("form_submitting") }}');
 
 	confirm_session('save');
 });
@@ -172,6 +249,12 @@ function showSubmissionSpinner()
 		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>'))
 		.insertAfter(form);
 	window.scrollBy(0, 100);
+
+	// Announce to screen readers that form is processing
+	updateScreenReaderStatus('{{ __("form_processing") }}');
+
+	// Disable form elements for accessibility
+	$('#nokkelbestilling input, #nokkelbestilling select, #nokkelbestilling textarea, #nokkelbestilling button').attr('aria-busy', 'true');
 }
 
 function removeSubmissionSpinner()
@@ -181,6 +264,9 @@ function removeSubmissionSpinner()
 	{
 		element.parentNode.removeChild(element);
 	}
+
+	// Re-enable form elements
+	$('#nokkelbestilling input, #nokkelbestilling select, #nokkelbestilling textarea, #nokkelbestilling button').attr('aria-busy', 'false');
 }
 
 ajax_submit_form = function (action)
@@ -197,6 +283,7 @@ ajax_submit_form = function (action)
 		} catch (e)
 		{
 			console.error('FormData error:', e);
+			updateScreenReaderStatus('{{ __("form_data_error") }}');
 		}
 	}
 
@@ -215,11 +302,19 @@ ajax_submit_form = function (action)
 				{
 					var id = data.id;
 
+					// Announce success to screen readers
+					updateScreenReaderStatus('{{ __("form_saved_successfully") }}');
+
 					if (fileUploader.getPendingCount() === 0)
 					{
-						window.location.href = redirect_action;
+						// Wait a moment to ensure screen readers announce the success message
+						setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 500);
 					} else
 					{
+						updateScreenReaderStatus('{{ __("uploading_files") }}');
 						fileUploader.sendAllFiles(id);
 					}
 				} else
@@ -234,6 +329,20 @@ ajax_submit_form = function (action)
 						error_message += error + "\n";
 					});
 
+					// Update screen reader status with errors
+					updateScreenReaderStatus('{{ __("form_submission_error") }}: ' + error_message);
+
+					// Create accessible error alert
+					var alertElement = $('<div role="alert" class="alert alert-danger"></div>');
+					$.each(data.message, function (index, error)
+					{
+						alertElement.append($('<p></p>').text(error));
+					});
+
+					// Insert at the top of the form
+					thisForm.prepend(alertElement);
+
+					// Also show alert for non-screen reader users
 					alert(error_message);
 				}
 			}
@@ -245,7 +354,158 @@ ajax_submit_form = function (action)
 			$('#fileupload').prop('disabled', false);
 			removeSubmissionSpinner();
 
-			alert('Det oppstod en feil ved sending av skjemaet');
+			const errorMsg = 'Det oppstod en feil ved sending av skjemaet';
+			updateScreenReaderStatus('{{ __("form_submission_error") }}: ' + errorMsg);
+
+			// Create accessible error alert
+			var alertElement = $('<div role="alert" class="alert alert-danger"></div>')
+				.append($('<p></p>').text(errorMsg));
+
+			// Insert at the top of the form
+			thisForm.prepend(alertElement);
+
+			// Also show alert for non-screen reader users
+			alert(errorMsg);
 		}
 	});
 };
+
+/**
+ * Initialize accessibility features
+ * Enhances the form with WCAG 2.0 compliant keyboard navigation and screen reader support
+ */
+function initAccessibility()
+{
+	// Enhanced error handling for all form fields
+	$('input, select, textarea').on('invalid', function ()
+	{
+		const id = $(this).attr('id');
+		const $label = $('label[for="' + id + '"]');
+		const fieldName = $label.text().trim();
+
+		// Set aria-invalid
+		$(this).attr('aria-invalid', 'true');
+
+		// Update screen reader status
+		updateScreenReaderStatus('{{ __("validation_error") }}: ' + fieldName);
+	});
+
+	// Reset aria-invalid on input
+	$('input, select, textarea').on('input change', function ()
+	{
+		if (this.validity.valid)
+		{
+			$(this).attr('aria-invalid', 'false');
+		}
+	});
+
+	// Make the location selection accessible
+	enhanceLocationAccessibility();
+
+	// Make file upload more accessible
+	enhanceFileUploadAccessibility();
+
+	// Add keyboard navigation for all interactive elements
+	enhanceKeyboardNavigation();
+}
+
+/**
+ * Enhance location search autocomplete accessibility
+ */
+function enhanceLocationAccessibility()
+{
+	// Handle location search autocomplete for screen readers
+	$('#location_name').on('focus', function ()
+	{
+		$(this).attr('aria-expanded', 'false');
+	});
+
+	// When results appear
+	$('.selection').on('DOMNodeInserted', function ()
+	{
+		if ($(this).children().length > 0)
+		{
+			$('#location_name').attr('aria-expanded', 'true');
+			updateScreenReaderStatus('{{ __("location_results_available") }}');
+		}
+	});
+
+	// When results are cleared
+	$('.selection').on('DOMNodeRemoved', function ()
+	{
+		if ($(this).children().length === 0)
+		{
+			$('#location_name').attr('aria-expanded', 'false');
+		}
+	});
+}
+
+/**
+ * Enhance file upload accessibility
+ */
+function enhanceFileUploadAccessibility()
+{
+	// Make the file upload area keyboard accessible without using tabindex
+	// Instead, make it focusable using role="button"
+	$('#drop-area').attr('role', 'button')
+		.on('keydown', function (e)
+		{
+			// Trigger file input dialog on Enter or Space
+			if (e.key === 'Enter' || e.key === ' ')
+			{
+				e.preventDefault();
+				$('#fileupload').click();
+			}
+		});
+
+	// Announce file count changes
+	const observer = new MutationObserver(function (mutations)
+	{
+		mutations.forEach(function (mutation)
+		{
+			if (mutation.target.id === 'files-count')
+			{
+				updateScreenReaderStatus('{{ __("file_count") }}: ' + mutation.target.textContent);
+			}
+		});
+	});
+
+	// Start observing
+	observer.observe(document.getElementById('files-count'), {
+		childList: true,
+		characterData: true,
+		subtree: true
+	});
+}
+
+/**
+ * Enhance keyboard navigation
+ */
+function enhanceKeyboardNavigation()
+{
+	// Add skip to form handling
+	$('.skip-link').on('click', function (e)
+	{
+		e.preventDefault();
+		const target = $($(this).attr('href'));
+
+		// Focus without setting tabindex
+		target.focus();
+	});
+
+	// We no longer set tabindex values programmatically
+	// Let the browser manage tab order naturally for better accessibility
+}
+
+/**
+ * Update screen reader status
+ * @param {string} message - The message to announce to screen readers
+ */
+function updateScreenReaderStatus(message)
+{
+	const statusEl = document.getElementById('form-status');
+	if (statusEl)
+	{
+		statusEl.textContent = message;
+	}
+}

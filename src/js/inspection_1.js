@@ -7,7 +7,10 @@
 // Form-specific utility functions
 function showDiv(divId, element)
 {
-	document.getElementById(divId).style.display = element.checked == true ? 'block' : 'none';
+	const div = document.getElementById(divId);
+	const isVisible = element.checked === true;
+	div.style.display = isVisible ? 'block' : 'none';
+	div.setAttribute('aria-hidden', !isVisible);
 }
 
 function handleChangeTilgang(src)
@@ -32,7 +35,20 @@ function handleChangeTilgang(src)
 		rokvarsler_2.removeAttribute('required');
 		rokvarsler_3.removeAttribute('required');
 		rokvarsler_4.removeAttribute('required');
-		document.getElementById('inner_details').style.display = 'none';
+
+		// Remove aria-required attribute
+		[type_br_slokking_1, type_br_slokking_2, type_br_slokking_3, type_br_slokking_4,
+			rokvarsler_1, rokvarsler_2, rokvarsler_3, rokvarsler_4].forEach(el =>
+			{
+				el.removeAttribute('aria-required');
+			});
+
+		const innerDetails = document.getElementById('inner_details');
+		innerDetails.style.display = 'none';
+		innerDetails.setAttribute('aria-hidden', 'true');
+
+		// Announce to screen readers
+		announceChange('Required fields removed as access is missing');
 	} else
 	{
 		type_br_slokking_1.setAttribute('required', '');
@@ -43,24 +59,61 @@ function handleChangeTilgang(src)
 		rokvarsler_2.setAttribute('required', '');
 		rokvarsler_3.setAttribute('required', '');
 		rokvarsler_4.setAttribute('required', '');
-		document.getElementById('inner_details').style.display = 'block';
+
+		// Add aria-required attribute
+		[type_br_slokking_1, type_br_slokking_2, type_br_slokking_3, type_br_slokking_4,
+			rokvarsler_1, rokvarsler_2, rokvarsler_3, rokvarsler_4].forEach(el =>
+			{
+				el.setAttribute('aria-required', 'true');
+			});
+
+		const innerDetails = document.getElementById('inner_details');
+		innerDetails.style.display = 'block';
+		innerDetails.setAttribute('aria-hidden', 'false');
+
+		// Announce to screen readers
+		announceChange('Required fields added as access is available');
 	}
+}
+
+// Helper function to announce changes to screen readers
+function announceChange(message)
+{
+	const liveRegion = document.getElementById('form-submission-status');
+	if (!liveRegion)
+	{
+		return;
+	}
+	liveRegion.textContent = message;
+
+	// Clear the announcement after screen readers have time to read it
+	setTimeout(() =>
+	{
+		liveRegion.textContent = '';
+	}, 3000);
 }
 
 function handleChangeSlukkeutstyr(src)
 {
 	//datestamp
 	const input = document.getElementById('datestamp');
+	const dateblock = document.getElementById('dateblock');
 
 	if (src.value == 2)
 	{
 		input.removeAttribute('required');
-		document.getElementById('dateblock').style.display = 'none';
+		input.removeAttribute('aria-required');
+		dateblock.style.display = 'none';
+		dateblock.setAttribute('aria-hidden', 'true');
+		announceChange('Date field is no longer required');
 	}
 	else
 	{
 		input.setAttribute('required', '');
-		document.getElementById('dateblock').style.display = 'block';
+		input.setAttribute('aria-required', 'true');
+		dateblock.style.display = 'block';
+		dateblock.setAttribute('aria-hidden', 'false');
+		announceChange('Date field is now required');
 	}
 }
 
@@ -70,12 +123,39 @@ var fileUploader = null;
 
 $(document).ready(function ()
 {
-	// Add asterisk to all labels of required fields
+	// Make form accessible when JavaScript is loaded
+	$('#details').attr('aria-hidden', 'true');
+
+	// Add asterisk to all labels of required fields and set required class
 	$('form :required').each(function ()
 	{
 		var id = $(this).attr('id');
-		$('label[for="' + id + '"]').append(' <span class="text-danger">*</span>');
+		$(this).attr('aria-required', 'true');
+		$('label[for="' + id + '"]').addClass('required');
 	});
+
+	// Make drop area keyboard accessible
+	const dropArea = document.getElementById('drop-area');
+	if (dropArea)
+	{
+		const dropRegion = dropArea.querySelector('div[tabindex="0"]');
+		if (dropRegion)
+		{
+			dropRegion.addEventListener('keydown', function (e)
+			{
+				// If Enter or Space is pressed, trigger click on the file input
+				if (e.key === 'Enter' || e.key === ' ')
+				{
+					e.preventDefault();
+					const fileInput = document.getElementById('fileupload');
+					if (fileInput)
+					{
+						fileInput.click();
+					}
+				}
+			});
+		}
+	}
 
 	// Initialize FileUploader component
 	fileUploader = new FileUploader({
@@ -86,13 +166,15 @@ $(document).ready(function ()
 			if (success)
 			{
 				console.log("All uploads completed successfully");
+				announceChange("All files uploaded successfully. Redirecting to main page.");
 				window.location.href = redirect_action;
 			}
 			else
 			{
 				console.error("There were errors during file upload");
 
-				// Show an alert to the user
+				// Show an alert to the user and update screen reader announcement
+				announceChange("Error during file upload. Redirecting to main page in 5 seconds.");
 				alert('Det oppstod en feil under filopplastingen. Vi omdirigerer deg til hovedsiden om 5 sekunder.');
 
 				// Wait longer before redirecting to allow user to see errors
@@ -114,6 +196,35 @@ $('#inspection_1').on('submit', function (e)
 	var form = this;
 	if (form.checkValidity() === false)
 	{
+		// Create or update error summary for screen readers
+		let errorSummary = document.getElementById('error-summary');
+		if (!errorSummary)
+		{
+			errorSummary = document.createElement('div');
+			errorSummary.id = 'error-summary';
+			errorSummary.className = 'alert alert-danger';
+			errorSummary.setAttribute('role', 'alert');
+			errorSummary.setAttribute('aria-live', 'assertive');
+			$(form).prepend(errorSummary);
+		}
+
+		// Find all invalid fields
+		var allInvalidFields = $(form).find(':invalid');
+
+		// Create error message list
+		var errorList = document.createElement('ul');
+		allInvalidFields.each(function ()
+		{
+			var label = $('label[for="' + this.id + '"]').text().trim();
+			var errorItem = document.createElement('li');
+			errorItem.textContent = label + ': ' + this.validationMessage;
+			errorList.appendChild(errorItem);
+		});
+
+		// Clear and update summary
+		errorSummary.innerHTML = '<h2>Please fix the following errors:</h2>';
+		errorSummary.appendChild(errorList);
+
 		// Find the first visible invalid field and focus it
 		var invalidFields = $(form).find(':invalid').filter(':visible');
 
@@ -168,6 +279,10 @@ this.confirm_session = function (action)
 		.append($('<strong>').text('Lagrer...'))
 		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>')).insertAfter(form);
 	window.scrollBy(0, 100);
+
+	// Announce submission to screen readers
+	document.getElementById('form-submission-status').textContent = 'Form is being submitted. Please wait...';
+
 
 	try
 	{
@@ -235,15 +350,37 @@ ajax_submit_form = function (action)
 					if (element)
 					{
 						element.parentNode.removeChild(element);
-					}
-
-					var error_message = '';
+					} var error_message = '';
 					$.each(data.message, function (index, error)
 					{
 						error_message += error + "\n";
 					});
 
+					// Create an accessible error message
+					let errorDiv = document.createElement('div');
+					errorDiv.className = 'alert alert-danger';
+					errorDiv.setAttribute('role', 'alert');
+					errorDiv.setAttribute('aria-live', 'assertive');
+
+					let errorHeading = document.createElement('h2');
+					errorHeading.textContent = 'Form submission error';
+					errorHeading.className = 'h5';
+
+					let errorPara = document.createElement('p');
+					errorPara.textContent = error_message;
+
+					errorDiv.appendChild(errorHeading);
+					errorDiv.appendChild(errorPara);
+
+					// Insert error message at top of form
+					const form = document.getElementById('inspection_1');
+					form.prepend(errorDiv);
+
+					// Also use alert for compatibility
 					alert(error_message);
+
+					// Update screen reader status
+					document.getElementById('form-submission-status').textContent = 'Form submission failed: ' + error_message;
 				}
 			}
 		},

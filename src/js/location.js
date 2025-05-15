@@ -126,7 +126,7 @@ const togglePageBlur = (action) =>
 	{
 		if (element)
 		{
-			element.style.opacity = action === "dim" ? 1 : 0.3;
+			element.style.opacity = action === "dim" ? 1 : 0.9;
 		}
 	});
 };

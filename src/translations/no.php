@@ -1,6 +1,7 @@
 <?php
 return [
     'common' => [
+        'open_service' => 'Åpne siden',
         'welcome' => 'Velkommen',
         'my_cases' => 'Mine saker',
         'address' => 'Adresse',

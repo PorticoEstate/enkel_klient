@@ -2,42 +2,102 @@
 {% extends 'head.twig' %}
 
 {% block body %}
+	<!-- Skip link for keyboard navigation -->
+	<a href="#main-content" class="skip-link">{{ __('Skip to content') }}</a>
 	<div class="container mt-5">
 		<div class="row justify-content-center">
 			<div class="col-md-8">
+				<main id="main-content">
 				<div class="card">
 					<div class="card-header bg-danger text-white">
-						<h4 class="mb-0">
-							<i class="fas fa-exclamation-triangle me-2"></i>
+						<h1 class="mb-0">
+							<i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
 							{{__('error')}}
 							{{ error_code }}
-						</h4>
+						</h1>
 					</div>
 					<div class="card-body">
 						<p class="mb-4">{{ error_message }}</p>
 
 						{% if error_trace is defined %}
-							<div class="mt-4 mb-4">
-								<h5>Error details:</h5>
-								<p><strong>File:</strong> {{ error_file }} (line {{ error_line }})</p>
-								<div class="bg-light p-3" style="overflow-x: auto;">
+							<section class="mt-4 mb-4" aria-labelledby="error-details">
+								<h2 id="error-details" class="h4">Error details:</h2>
+								<p><strong>File:</strong> <span>{{ error_file }}</span> (line <span>{{ error_line }}</span>)</p>
+								<div class="bg-light p-3" style="overflow-x: auto;" aria-label="Error stack trace">
 									<pre style="white-space: pre-wrap;">{{ error_trace }}</pre>
 								</div>
-							</div>
+							</section>
 						{% endif %}
 
 						<div class="d-flex justify-content-between align-items-center">
 							<a href="{{ base_path }}/" class="btn btn-primary">
-								<i class="fas fa-home me-2"></i>{{ __('go_to_homepage') }}
+								<i class="fas fa-home me-2" aria-hidden="true"></i>{{ __('go_to_homepage') }}
 							</a>
 
-							<button class="btn btn-outline-secondary" onclick="window.history.back();">
-								<i class="fas fa-arrow-left me-2"></i>{{ __('go_back') }}
+							<button class="btn btn-outline-secondary" id="back-button">
+								<i class="fas fa-arrow-left me-2" aria-hidden="true"></i>{{ __('go_back') }}
 							</button>
 						</div>
 					</div>
 				</div>
+				</main>
 			</div>
 		</div>
 	</div>
+	
+	<style>
+		/* Skip link for keyboard navigation */
+		.skip-link {
+			position: absolute;
+			top: -40px;
+			left: 0;
+			background: #0d6efd;
+			color: white;
+			padding: 8px;
+			z-index: 100;
+			transition: top 0.2s ease;
+		}
+		
+		.skip-link:focus {
+			top: 0;
+			outline: 2px solid #4a90e2;
+		}
+		
+		/* Focus styling for interactive elements */
+		a:focus, button:focus, input:focus, select:focus, textarea:focus {
+			outline: 2px solid #4a90e2 !important;
+			outline-offset: 2px !important;
+			box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+		}
+		
+		/* Screen reader only content */
+		.sr-only {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+	</style>
+	
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			// Make the back button accessible with proper event listener instead of inline onclick
+			document.getElementById('back-button').addEventListener('click', function() {
+				window.history.back();
+			});
+			
+			// Add keyboard handling for common actions
+			document.addEventListener('keydown', function(e) {
+				// Allow Escape key to go back
+				if (e.key === 'Escape') {
+					window.history.back();
+				}
+			});
+		});
+	</script>
 {% endblock %}

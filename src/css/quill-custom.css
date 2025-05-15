@@ -1,0 +1,33 @@
+/* Custom Quill editor styling to ensure proper height */
+.quill-editor-container {
+    min-height: 250px;
+}
+
+.quill-editor-container .ql-container {
+    min-height: 200px;
+    font-size: 1rem;
+}
+
+.quill-editor-container .ql-editor {
+    min-height: 200px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Ensure focus styles are visible */
+.quill-editor-container:focus-within {
+    outline: 2px solid #4a90e2 !important;
+    outline-offset: 2px;
+}
+
+/* Improve toolbar accessibility */
+.ql-toolbar.ql-snow {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+/* Ensure proper border radius */
+.ql-container.ql-snow {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}

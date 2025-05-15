@@ -39,6 +39,27 @@ function quilljs_textarea(elem = null, options = null)
 			editorDiv.innerHTML = elemValue;
 			editorDiv.className = 'quill-editor-container';
 
+			// Get rows attribute for height if available
+			const rows = el.getAttribute('rows');
+			if (rows)
+			{
+				// Set custom height based on rows (approx 21px per row plus padding)
+				const height = Math.max(200, parseInt(rows) * 21);
+				editorDiv.style.minHeight = `${height}px`;
+			}
+
+			// Get style attribute values if available
+			if (el.hasAttribute('style'))
+			{
+				// Extract any height-related styles
+				const style = el.getAttribute('style');
+				if (style.includes('height') || style.includes('min-height'))
+				{
+					// Apply those styles to the editor div
+					editorDiv.setAttribute('style', style);
+				}
+			}
+
 			// Add accessibility attributes
 			editorDiv.setAttribute('role', 'textbox');
 			editorDiv.setAttribute('aria-multiline', 'true');

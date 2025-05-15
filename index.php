@@ -10,7 +10,6 @@ use App\Service\ApiClient;
 use App\Service\Translator;
 use Dotenv\Dotenv;
 
-$_SERVER['HTTP_UID'] = '20056432559';
 // Set base paths for the application
 define('APP_ROOT', '/var/www/html');
 define('SRC_ROOT', APP_ROOT . '/src');

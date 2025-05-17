@@ -60,13 +60,6 @@ function markRequiredFields()
 		$(this).attr('aria-required', 'true');
 	});
 
-	// Add a required field explanation at the start of the form
-	if (!$('.required-fields-note').length)
-	{
-		$('form > fieldset').first().prepend(
-			'<p class="required-fields-note"><span class="required-field">*</span> indicates required fields</p>'
-		);
-	}
 }
 
 function initializeDatepicker()

@@ -3,6 +3,8 @@ return [
     'common' => [
         'open_service' => 'Åpne siden',
         'skip_to_content' => 'Hopp til innhold',
+        'indicates_required_fields' => 'Indikerer obligatoriske felt',
+        'required_fields_info' => 'Felt merket med stjerne er obligatoriske',
         'welcome' => 'Velkommen',
         'my_cases' => 'Mine saker',
         'address' => 'Adresse',

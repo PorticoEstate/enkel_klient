@@ -51,11 +51,7 @@
 			cursor: pointer;
 		}
 		
-		/* Specific to this template */
-		.required-field {
-			color: #9a0000;
-			font-weight: bold;
-		}
+
 	</style>
 
 	<a href="#main-content" class="skip-link">{{ __('skip_to_content') }}</a>
@@ -88,7 +84,13 @@
 					<input type="hidden" value="{{ rand }}" name="randcheck"/>
 					<fieldset>
 						<legend class="sr-only">Contact Information</legend>
-						{% if user_name %}
+						<div class="required-fields-explanation" role="region" aria-labelledby="required-fields-heading">
+						  <h2 id="required-fields-heading" class="h6 visually-hidden">{{ __('required_fields_info') }}</h2>
+						  <p>
+							<span class="required-field" aria-hidden="true">*</span>
+							{{ __('indicates_required_fields') }}
+						  </p>
+						</div>						{% if user_name %}
 							<p id="user-name-display">{{ __('name') }}:
 								{{ user_name }}</p>
 						{% endif %}

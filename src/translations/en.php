@@ -3,6 +3,8 @@ return [
     'common' => [
         'open_service' => 'Open service',
         'skip_to_content' => 'Skip to content',
+        'indicates_required_fields' => 'Indicates required fields',
+        'required_fields_info' => 'Fields marked with asterisks are required',
         'welcome' => 'Welcome',
         'my_cases' => 'My Cases',
         'address' => 'Address',

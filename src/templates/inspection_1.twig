@@ -31,13 +31,17 @@
 				</div>
 			{% endif %}
 			
-			<p class="text-muted small mb-3" id="required-fields-notice">{{ __('required_fields') }} <span aria-hidden="true">*</span></p>
-
 			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header">
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
 					<legend class="sr-only">{{ __('inspection_details') }}</legend>
-					<div class="form-group mt-2">
+					<div class="required-fields-explanation" role="region" aria-labelledby="required-fields-heading">
+					  <h2 id="required-fields-heading" class="h6 visually-hidden">{{ __('required_fields_info') }}</h2>
+					  <p>
+						<span class="required-field" aria-hidden="true">*</span>
+						{{ __('indicates_required_fields') }}
+					  </p>
+					</div>					<div class="form-group mt-2">
 						<label for="location_name" class="required">
 							<i class="fas fa-search" aria-hidden="true"></i>
 							{{ __('address') }}

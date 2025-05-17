@@ -140,3 +140,8 @@ legend {
     font-weight: 600;
     color: #fff;
 }
+
+.required-field {
+    color: #9a0000;
+    font-weight: bold;
+}

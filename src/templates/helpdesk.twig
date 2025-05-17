@@ -57,6 +57,13 @@
 						<p>{{ __('name') }}:
 							{{ user_name }}</p>
 					{% endif %}
+					<div class="required-fields-explanation" role="region" aria-labelledby="required-fields-heading">
+					  <h2 id="required-fields-heading" class="h6 visually-hidden">{{ __('required_fields_info') }}</h2>
+					  <p>
+						<span class="required-field" aria-hidden="true">*</span>
+						{{ __('indicates_required_fields') }}
+					  </p>
+					</div>
 
 					{% if location_code %}
 						<div class="form-group mt-2">

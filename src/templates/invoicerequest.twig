@@ -69,7 +69,7 @@
 			{% else %}
 				{% if error|length > 0 %}
 					<div class="alert alert-danger alert-dismissible" role="alert">
-						<h2 class="h6">There were errors with your submission:</h2>
+						<h2 class="h6">{{ __('form_errors_heading') }}</h2>
 						<ul>
 							{% for message in error %}
 								<li>{{ message }}</li>
@@ -83,7 +83,7 @@
 				<form method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate>
 					<input type="hidden" value="{{ rand }}" name="randcheck"/>
 					<fieldset>
-						<legend class="sr-only">Contact Information</legend>
+						<legend class="sr-only">{{ __('contact_information') }}</legend>
 						<div class="required-fields-explanation" role="region" aria-labelledby="required-fields-heading">
 						  <h2 id="required-fields-heading" class="h6 visually-hidden">{{ __('required_fields_info') }}</h2>
 						  <p>
@@ -101,7 +101,7 @@
 								<label for="location_name">
 									{{ __('address') }}
 								</label>
-								<span class="form-control" id="address-display" aria-label="Your address">{{ address }}</span>
+								<span class="form-control" id="address-display" aria-label="{{ __('your_address') }}">{{ address }}</span>
 								<input type="hidden" id="location_code" name="location_code" value="{{ location_code }}">
 								<input type="hidden" id="address" name="address" value="{{ address }}">
 								<input type="hidden" id="user_name" name="user_name" value="{{ user_name }}">
@@ -115,7 +115,7 @@
 								</label>
 								<input type="text" id="location_name" name="location_name" class="form-control" autocomplete="off" required="required" aria-required="true" aria-describedby="location-error"/>
 								<div class="selection"></div>
-								<div id="location-error" class="invalid-feedback">Please enter a valid address</div>
+								<div id="location-error" class="invalid-feedback">{{ __('invalid_address') }}</div>
 								<input type="hidden" id="location_code" name="location_code">
 							</div>
 						{% endif %}
@@ -127,7 +127,7 @@
 							</label>
 							<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">{{ __('phone_help') }}</small>
 							<input type="text" id="phone" name="phone" class="form-control" autocomplete="tel" required="required" aria-required="true" aria-describedby="contact_infoHelpPhone phone-error"/>
-							<div id="phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+							<div id="phone-error" class="invalid-feedback">{{ __('invalid_phone') }}</div>
 						</div>
 						
 						<div class="form-group mt-2">
@@ -137,13 +137,13 @@
 							</label>
 							<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">{{ __('email_help') }}</small>
 							<input type="email" id="email" name="email" class="form-control" autocomplete="email" required="required" aria-required="true" aria-describedby="contact_infoHelpEmail email-error" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" oninvalid="this.setCustomValidity('{{ __('invalid_email') }}')" oninput="this.setCustomValidity('')"/>
-							<div id="email-error" class="invalid-feedback">Please enter a valid email address</div>
+							<div id="email-error" class="invalid-feedback">{{ __('invalid_email') }}</div>
 						</div>
 					</fieldset>
 
 					<div id="details">
 						<fieldset>
-							<legend class="sr-only">Invoice Details</legend>
+							<legend class="sr-only">{{ __('invoice_details') }}</legend>
 							<!-- Invoice Month/Year Datepicker -->
 							<div class="form-group mt-2">
 								<label for="invoice_date">
@@ -159,7 +159,7 @@
 									<i class="fas fa-calendar" aria-hidden="true"></i>
 								  </button>
 								</div>
-								<div id="invoice-date-error" class="invalid-feedback">Please select an invoice date</div>
+								<div id="invoice-date-error" class="invalid-feedback">{{ __('invalid_date') }}</div>
 							</div>
 							
 							<div class="form-group mt-2">
@@ -169,7 +169,7 @@
 								</label>
 								<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('subject_help') }}</small>
 								<input type="text" class="form-control" id="subject" name="subject" value="{{ subject }}" aria-describedby="subjectHelp subject-error" required="required" aria-required="true">
-								<div id="subject-error" class="invalid-feedback">Please enter a subject</div>
+								<div id="subject-error" class="invalid-feedback">{{ __('invalid_subject') }}</div>
 							</div>
 
 							<div class="form-group mt-4">
@@ -181,7 +181,7 @@
 									{{ __('additional_info_help') }}
 								</small>
 								<textarea class="form-control" id="message" name="message" required="required" aria-required="true" aria-describedby="messageHelp message-error">{{ message }}</textarea>
-								<div id="message-error" class="invalid-feedback">Please provide additional information</div>
+								<div id="message-error" class="invalid-feedback">{{ __('invalid_message') }}</div>
 							</div>
 
 							{% if enable_fileupload == 1 %}

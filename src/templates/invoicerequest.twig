@@ -90,7 +90,8 @@
 							<span class="required-field" aria-hidden="true">*</span>
 							{{ __('indicates_required_fields') }}
 						  </p>
-						</div>						{% if user_name %}
+						</div>
+						{% if user_name %}
 							<p id="user-name-display">{{ __('name') }}:
 								{{ user_name }}</p>
 						{% endif %}
@@ -150,7 +151,14 @@
 									<span class="required-field" aria-hidden="true">*</span>
 								</label>
 								<small id="invoiceDateHelp" class="form-text text-muted d-block mb-2">{{ __('invoice_date_help') }}</small>
-								<input type="text" class="form-control" id="invoice_date" name="invoice_date" required="required" aria-required="true" aria-describedby="invoiceDateHelp invoice-date-error" readonly>
+								<div class="d-flex">
+								  <input type="text" class="form-control" id="invoice_date" name="invoice_date" required aria-required="true" 
+										 aria-describedby="invoiceDateHelp invoice-date-error" readonly>
+								  <button type="button" class="btn btn-outline-secondary" id="open-datepicker" 
+										  aria-label="{{ __('open_date_picker') }}">
+									<i class="fas fa-calendar" aria-hidden="true"></i>
+								  </button>
+								</div>
 								<div id="invoice-date-error" class="invalid-feedback">Please select an invoice date</div>
 							</div>
 							

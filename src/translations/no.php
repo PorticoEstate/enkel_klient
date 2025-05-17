@@ -162,6 +162,7 @@ return [
         'phone_help' => 'Telefonnummer du kan kontaktes på',
         'email_help' => 'E-post du kan kontaktes på',
         'message_help' => 'Ikke skriv inn sensitiv informasjon her.',
+        'open_date_picker' => 'Åpne datovelger',
     ],
     'inspection_1' => [
         'form_header' => 'Skjema for brannforebyggende tilsyn på kommunal eiendom',

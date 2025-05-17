@@ -124,28 +124,23 @@ function initializeDatepicker()
 		}
 	});
 
+	// Connect the existing button to open the datepicker
+	$("#open-datepicker").click(function ()
+	{
+		$("#invoice_date").datepicker("show");
+		// Add focus handling for improved keyboard navigation
+		setTimeout(function ()
+		{
+			$('.ui-datepicker-calendar .ui-state-active').focus();
+		}, 100);
+	});
+
 	// Don't allow typing directly in the field
 	$("#invoice_date").on('keydown paste', function (e)
 	{
 		e.preventDefault();
 	});
 
-	// Add button to open datepicker for better keyboard accessibility
-	if (!$("#date-picker-open-button").length)
-	{
-		$("<button>", {
-			id: "date-picker-open-button",
-			type: "button",
-			class: "btn btn-sm btn-outline-secondary ml-2",
-			text: "Select date",
-			"aria-label": "Open date picker dialog"
-		})
-			.insertAfter("#invoice_date")
-			.on("click", function ()
-			{
-				$("#invoice_date").datepicker("show");
-			});
-	}
 }
 
 function initializeFileUploader()

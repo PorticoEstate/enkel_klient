@@ -181,5 +181,7 @@ return [
         'phone_help' => 'Phone number where you can be reached',
         'email_help' => 'Email address where you can be reached',
         'message_help' => 'Do not enter sensitive information here.',
+        'open_date_picker' => 'Open date picker',
+        'select_date' => 'Select date',
     ],
 ];

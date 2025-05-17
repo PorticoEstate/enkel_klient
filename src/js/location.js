@@ -102,6 +102,14 @@ const autoCompleteJS = new autoComplete({
 				autoCompleteJS.input.value = selection.name;
 				document.getElementById("location_code").value = selection.id;
 				document.getElementById('details').style.display = 'block';
+
+				// Trigger validation on the location_name field
+				const $locationField = $('#location_name');
+				if ($locationField.length)
+				{
+					// Validate the field now that we have a location_code
+					validateField($locationField);
+				}
 			},
 			focus: () =>
 			{

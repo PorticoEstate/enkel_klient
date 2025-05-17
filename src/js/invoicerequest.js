@@ -252,7 +252,17 @@ function validateField($field)
 		console.log('JS validation - phone digit count:', digitCount);
 
 		isValid = digitCount >= 8;
-	} else
+	}
+	// Special validation for location_name - requires a value in location_code hidden field
+	else if (fieldId === 'location_name')
+	{
+		var locationName = $field.val();
+		var locationCode = $('#location_code').val();
+		console.log('JS validation - location name:', locationName, 'code:', locationCode);
+
+		isValid = locationName && locationName.trim() !== '' && locationCode && locationCode.trim() !== '';
+	}
+	else
 	{
 		// Default HTML5 validation for other fields
 		isValid = $field[0].checkValidity();

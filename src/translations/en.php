@@ -2,6 +2,7 @@
 return [
     'common' => [
         'open_service' => 'Open service',
+        'skip_to_content' => 'Skip to content',
         'welcome' => 'Welcome',
         'my_cases' => 'My Cases',
         'address' => 'Address',

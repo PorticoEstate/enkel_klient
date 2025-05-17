@@ -2,6 +2,7 @@
 return [
     'common' => [
         'open_service' => 'Åpne siden',
+        'skip_to_content' => 'Hopp til innhold',
         'welcome' => 'Velkommen',
         'my_cases' => 'Mine saker',
         'address' => 'Adresse',

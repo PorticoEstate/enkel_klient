@@ -228,8 +228,8 @@ function enhanceKeyboardAccessibility()
 	// We rely on the natural tab order of elements for keyboard navigation
 	// No need to add tabindex attributes as it can disrupt natural flow
 
-	// Add input validation on blur
-	$('input, textarea, select').on('blur', function ()
+	// Add input validation on blur and input
+	$('input, textarea, select').on('blur input', function ()
 	{
 		if ($(this).attr('required'))
 		{
@@ -246,11 +246,11 @@ function validateField($field)
 
 	if (!isValid)
 	{
-		$field.addClass('is-invalid');
+		$field.addClass('is-invalid').removeClass('is-valid');
 		$('#' + errorId).show();
 	} else
 	{
-		$field.removeClass('is-invalid');
+		$field.removeClass('is-invalid').addClass('is-valid');
 		$('#' + errorId).hide();
 	}
 

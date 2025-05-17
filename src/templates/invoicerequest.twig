@@ -237,10 +237,27 @@
 				const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 				if (!emailRegex.test(email)) {
 					e.target.classList.add('is-invalid');
+					e.target.classList.remove('is-valid');
 					document.getElementById('email-error').style.display = 'block';
 				} else {
 					e.target.classList.remove('is-invalid');
+					e.target.classList.add('is-valid');
 					document.getElementById('email-error').style.display = 'none';
+				}
+				});
+			
+			// Phone validation (instant feedback)
+			document.getElementById('phone').addEventListener('input', function (e) {
+				const phone = e.target.value;
+				const phoneRegex = /^[+]?[\d\s()-]{8,}$/; // Simple phone validation
+				if (!phoneRegex.test(phone)) {
+					e.target.classList.add('is-invalid');
+					e.target.classList.remove('is-valid');
+					document.getElementById('phone-error').style.display = 'block';
+				} else {
+					e.target.classList.remove('is-invalid');
+					e.target.classList.add('is-valid');
+					document.getElementById('phone-error').style.display = 'none';
 				}
 			});
 		} catch (error) {}

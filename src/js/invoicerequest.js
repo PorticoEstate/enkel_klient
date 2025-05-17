@@ -240,9 +240,23 @@ function enhanceKeyboardAccessibility()
 
 function validateField($field)
 {
-	var isValid = $field[0].checkValidity();
 	var fieldId = $field.attr('id');
 	var errorId = fieldId + '-error';
+	var isValid = true;
+
+	// Special validation for phone field - require at least 8 digits
+	if (fieldId === 'phone')
+	{
+		var phone = $field.val();
+		var digitCount = phone.replace(/\D/g, '').length;
+		console.log('JS validation - phone digit count:', digitCount);
+
+		isValid = digitCount >= 8;
+	} else
+	{
+		// Default HTML5 validation for other fields
+		isValid = $field[0].checkValidity();
+	}
 
 	if (!isValid)
 	{

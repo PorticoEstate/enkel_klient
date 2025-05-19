@@ -141,8 +141,8 @@ $('#nokkelbestilling').on('submit', function (e)
 	var fileInputRequired = $('#fileupload').attr('required');
 	$('#fileupload').removeAttr('required');
 
-	// Now check validity of other fields
-	var formValid = form.checkValidity();
+	// Use the common form validator to validate all fields
+	var formValid = validateAllFields($(form));
 
 	// Restore required attribute if it was set
 	if (fileInputRequired)
@@ -150,65 +150,27 @@ $('#nokkelbestilling').on('submit', function (e)
 		$('#fileupload').attr('required', 'required');
 	}
 
-	if (!formValid || !fileInputValid)
+	// Handle file upload validation separately since it's not a standard form field
+	if (!fileInputValid)
 	{
-		// Update form status for screen readers - use translation if available
-		const errorMessage = typeof translations !== 'undefined' && translations.form_validation_errors
-			? translations.form_validation_errors
-			: 'There are errors in the form. Please correct them and try again.';
+		var errorMsg = 'Du må laste opp fullmakt eller vergefullmakt';
+		$('#file-upload-status').text(errorMsg);
 
-		updateScreenReaderStatus(errorMessage);
-		createAccessibleAlert(errorMessage, 'danger');
-
-		// Find invalid fields (excluding file input)
-		var invalidFields = $(form).find(':invalid').not('#fileupload').filter(':visible');
-
-		if (invalidFields.length > 0)
+		// Add file upload error to error summary if it exists
+		var $errorSummary = $(form).find('.error-summary ul');
+		if ($errorSummary.length > 0)
 		{
-			// Mark fields as invalid for screen readers
-			invalidFields.each(function ()
-			{
-				$(this).attr('aria-invalid', 'true');
-
-				// Get field label
-				var id = $(this).attr('id');
-				var label = $('label[for="' + id + '"]').text().trim();
-
-				// Add error message to form status for screen readers
-				var currentStatus = $('#form-status').text();
-				$('#form-status').text(currentStatus + ' {{ __("field_has_error") }}: ' + label + '.');
-			});
-
-			// Focus on first visible invalid field
-			invalidFields[0].focus();
-			invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+			$errorSummary.append('<li>' + errorMsg + '</li>');
 		} else
 		{
-			// Check for hidden invalid fields
-			var hiddenInvalidFields = $(form).find(':invalid').not('#fileupload').filter(':not(:visible)');
-			if (hiddenInvalidFields.length > 0)
-			{
-				// Handle hidden fields as before
-				var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
-				if (container.length > 0)
-				{
-					container.show();
-					setTimeout(function ()
-					{
-						hiddenInvalidFields[0].focus();
-					}, 100);
-				}
-			}
+			// Create accessible alert if no error summary exists
+			createAccessibleAlert(errorMsg, 'danger');
 		}
+	}
 
-		// Show file upload error in an accessible way
-		if (!fileInputValid)
-		{
-			var errorMsg = 'Du må laste opp fullmakt eller vergefullmakt';
-			$('#file-upload-status').text(errorMsg);
-			alert(errorMsg);
-		}
-
+	// If either validation fails, stop submission
+	if (!formValid || !fileInputValid)
+	{
 		return false;
 	}
 

@@ -267,22 +267,7 @@ $('form').on('submit', function (e)
 
 	if (!formValid)
 	{
-		// Find first invalid field
-		var invalidFields = $(this).find('.is-invalid');
-
-		if (invalidFields.length > 0)
-		{
-			// Focus on first invalid field
-			invalidFields.first().focus();
-
-			// Announce error for screen readers - use translation if available
-			const errorMessage = typeof translations !== 'undefined' && translations.form_validation_errors
-				? translations.form_validation_errors
-				: 'There are errors in the form. Please correct them and try again.';
-			createAccessibleAlert(errorMessage, 'danger');
-
-			return false;
-		}
+		return false;
 	}
 
 	// Disable submit button to prevent multiple submissions

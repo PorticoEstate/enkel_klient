@@ -158,41 +158,23 @@ $('form').on('submit', function (e)
 
 	if (!formValid)
 	{
-		// Find first invalid field
-		var invalidFields = $(this).find('.is-invalid');
+		// The form-validator has already:
+		// 1. Marked invalid fields
+		// 2. Created error summary (if configured)
+		// 3. Set proper ARIA attributes
 
+		// You might only need these few lines for special cases:
+		var invalidFields = $(this).find('.is-invalid');
 		if (invalidFields.length > 0)
 		{
-			// Focus on first invalid field
+			// Focus and scroll to first invalid field
 			invalidFields.first().focus();
 			invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-			// Announce error for screen readers - use translation if available
-			const errorMessage = typeof translations !== 'undefined' && translations.form_validation_errors
-				? translations.form_validation_errors
-				: 'There are errors in the form. Please correct them and try again.';
-			createAccessibleAlert(errorMessage, 'danger');
-		} else
-		{
-			// Check for hidden invalid fields
-			var hiddenInvalidFields = $(this).find(':invalid').filter(':not(:visible)');
-			if (hiddenInvalidFields.length > 0)
-			{
-				// Handle hidden fields as before
-				var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
-				if (container.length > 0)
-				{
-					container.show();
-					setTimeout(function ()
-					{
-						hiddenInvalidFields[0].focus();
-					}, 100);
-				}
-			}
 		}
 
 		return false;
 	}
+
 
 	// Disable submit button to prevent multiple submissions
 	$('button[type="submit"]').prop('disabled', true)

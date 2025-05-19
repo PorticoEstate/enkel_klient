@@ -109,33 +109,18 @@ function announceChange(message)
 // Initialize accessibility features for the form
 function initializeAccessibility()
 {
-	// Add ARIA attributes to required fields
-	const requiredFields = document.querySelectorAll('[required]');
-	requiredFields.forEach(field =>
+	// This is already handled by form-validator.js in setupFormValidation
+	// We'll keep this function but simplify its implementation
+
+	// Add form submission status region if not present
+	if (!document.getElementById('form-submission-status'))
 	{
-		field.setAttribute('aria-required', 'true');
-
-		// Set initial aria-invalid state
-		if (!field.hasAttribute('aria-invalid'))
-		{
-			field.setAttribute('aria-invalid', 'false');
-		}
-
-		// Create error divs for fields if they don't exist
-		const fieldId = field.id;
-		if (fieldId)
-		{
-			const errorId = fieldId + '-error';
-			if (!document.getElementById(errorId))
-			{
-				const errorDiv = document.createElement('div');
-				errorDiv.id = errorId;
-				errorDiv.className = 'invalid-feedback';
-				errorDiv.setAttribute('aria-live', 'assertive');
-				field.parentNode.appendChild(errorDiv);
-			}
-		}
-	});
+		const statusRegion = document.createElement('div');
+		statusRegion.id = 'form-submission-status';
+		statusRegion.className = 'sr-only';
+		statusRegion.setAttribute('aria-live', 'assertive');
+		document.body.appendChild(statusRegion);
+	}
 }
 
 function handleChangeSlukkeutstyr(src)
@@ -172,12 +157,7 @@ $(document).ready(function ()
 	$('#details').attr('aria-hidden', 'true');
 
 	// Add asterisk to all labels of required fields and set required class
-	$('form :required').each(function ()
-	{
-		var id = $(this).attr('id');
-		$(this).attr('aria-required', 'true');
-		$('label[for="' + id + '"]').addClass('required');
-	});
+	// This is already handled by form-validator.js
 
 	// Make drop area keyboard accessible
 	const dropArea = document.getElementById('drop-area');
@@ -237,71 +217,9 @@ $('#inspection_1').on('submit', function (e)
 {
 	e.preventDefault();
 
-	// Check form validity
-	var form = this;
-	if (form.checkValidity() === false)
+	// Use the form-validator to validate the form
+	if (!validateForm(this))
 	{
-		// Create or update error summary for screen readers
-		let errorSummary = document.getElementById('error-summary');
-		if (!errorSummary)
-		{
-			errorSummary = document.createElement('div');
-			errorSummary.id = 'error-summary';
-			errorSummary.className = 'alert alert-danger';
-			errorSummary.setAttribute('role', 'alert');
-			errorSummary.setAttribute('aria-live', 'assertive');
-			$(form).prepend(errorSummary);
-		}
-
-		// Find all invalid fields
-		var allInvalidFields = $(form).find(':invalid');
-
-		// Create error message list
-		var errorList = document.createElement('ul');
-		allInvalidFields.each(function ()
-		{
-			var label = $('label[for="' + this.id + '"]').text().trim();
-			var errorItem = document.createElement('li');
-			errorItem.textContent = label + ': ' + this.validationMessage;
-			errorList.appendChild(errorItem);
-		});
-
-		// Clear and update summary - use translation if available
-		const errorHeading = typeof translations !== 'undefined' && translations.form_validation_errors
-			? translations.form_validation_errors
-			: 'Please fix the following errors:';
-		errorSummary.innerHTML = '<h2>' + errorHeading + '</h2>';
-		errorSummary.appendChild(errorList);
-
-		// Find the first visible invalid field and focus it
-		var invalidFields = $(form).find(':invalid').filter(':visible');
-
-		if (invalidFields.length > 0)
-		{
-			// Focus on first visible invalid field
-			invalidFields[0].focus();
-			// Scroll element into view if needed
-			invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-		}
-		else
-		{
-			// If no visible invalid fields, check if there are any hidden invalid fields
-			var hiddenInvalidFields = $(form).find(':invalid:not(:visible)');
-			if (hiddenInvalidFields.length > 0)
-			{
-				// Try to find and show the container of the hidden field
-				var container = $(hiddenInvalidFields[0]).closest('.collapse, .d-none, [style*="display: none"]');
-				if (container.length > 0)
-				{
-					container.show();
-					// After showing container, try to focus the field
-					setTimeout(function ()
-					{
-						hiddenInvalidFields[0].focus();
-					}, 100);
-				}
-			}
-		}
 		return false;
 	}
 
@@ -330,7 +248,6 @@ this.confirm_session = function (action)
 
 	// Announce submission to screen readers
 	document.getElementById('form-submission-status').textContent = 'Form is being submitted. Please wait...';
-
 
 	try
 	{
@@ -398,13 +315,15 @@ ajax_submit_form = function (action)
 					if (element)
 					{
 						element.parentNode.removeChild(element);
-					} var error_message = '';
+					}
+
+					var error_message = '';
 					$.each(data.message, function (index, error)
 					{
 						error_message += error + "\n";
 					});
 
-					// Create an accessible error message
+					// Create an accessible error message using form-validator pattern
 					let errorDiv = document.createElement('div');
 					errorDiv.className = 'alert alert-danger';
 					errorDiv.setAttribute('role', 'alert');

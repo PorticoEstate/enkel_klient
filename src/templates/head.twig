@@ -29,6 +29,12 @@
 	<script>
 		var strBaseURL = '{{ str_base_url }}';
 	</script>
+	
+	<!-- Load accessibility helpers first to ensure global functions are available -->
+	<script src="{{ base_path }}/src/js/accessibility-helpers.js?n={{ cache_refresh_token }}"></script>
+	
+	<!-- Form accessibility enhancements -->
+	<script src="{{ base_path }}/src/js/form-accessibility.js?n={{ cache_refresh_token }}"></script>
 
 	<script src="{{ base_path }}/src/js/base.js?n={{ cache_refresh_token }}"></script>
 

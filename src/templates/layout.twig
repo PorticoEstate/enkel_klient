@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="{{ current_lang|default('no') }}">
 
 	<head>
 		{% block title %}{% endblock %}
@@ -251,10 +251,13 @@
 		</style>
 	</head>
 	<body>
+		<!-- Skip to content link for keyboard users -->
+		<a href="#main-content" class="skip-link">{{ __('skip_to_content') }}</a>
+		
 		<!-- Language Switcher -->
-		<div style="position:fixed;top:10px;right:20px;z-index:2000;">
-			<a href="?lang=no" style="margin-right:8px;">Norsk</a>|
-			<a href="?lang=en" style="margin-left:8px;">English</a>
+		<div class="language-switcher" style="position:fixed;top:10px;right:20px;z-index:2000;" role="navigation" aria-label="{{ __('language_selection') }}">
+			<a href="?lang=no" style="margin-right:8px;" {% if current_lang == 'no' %}aria-current="true" class="active"{% endif %} lang="no" hreflang="no" onclick="announceLangChange('no')">Norsk</a> |
+			<a href="?lang=en" style="margin-left:8px;" {% if current_lang == 'en' %}aria-current="true" class="active"{% endif %} lang="en" hreflang="en" onclick="announceLangChange('en')">English</a>
 		</div>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
@@ -310,7 +313,7 @@
 				<!-- End of My Cases Section -->
 			</ul>
 		</nav>
-		<div class="content"> {% block body %}{% endblock %}
+		<div id="main-content" class="content" role="main"> {% block body %}{% endblock %}
 			</div>
 
 
@@ -327,13 +330,14 @@
 				</div>
 			</footer>
 			<!-- Cookie Consent Banner -->
-			<div class="cookie-consent" id="cookieConsent">
+			<div class="cookie-consent" id="cookieConsent" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-description">
 				<div class="cookie-text">
-					<p>{{ __('cookie_text') }}</p>
+					<h2 id="cookie-title" class="sr-only">{{ __('cookie_consent_title') }}</h2>
+					<p id="cookie-description">{{ __('cookie_text') }}</p>
 				</div>
 				<div class="cookie-buttons">
-					<button class="cookie-btn accept-btn" id="acceptCookies">{{ __('accept') }}</button>
-					<button class="cookie-btn decline-btn" id="declineCookies">{{ __('decline') }}</button>
+					<button class="cookie-btn accept-btn" id="acceptCookies" aria-label="{{ __('accept_cookies') }}">{{ __('accept') }}</button>
+					<button class="cookie-btn decline-btn" id="declineCookies" aria-label="{{ __('decline_cookies') }}">{{ __('decline') }}</button>
 				</div>
 			</div>
 
@@ -371,48 +375,102 @@ if (window.innerWidth<= 768) {
     });
 
 
-// Cookie consent functionality
+// Cookie consent functionality with improved accessibility
 document.addEventListener('DOMContentLoaded', function () {
-const cookieConsent = document.getElementById('cookieConsent');
-const acceptBtn = document.getElementById('acceptCookies');
-const declineBtn = document.getElementById('declineCookies');
+    const cookieConsent = document.getElementById('cookieConsent');
+    const acceptBtn = document.getElementById('acceptCookies');
+    const declineBtn = document.getElementById('declineCookies');
+    const currentLang = document.documentElement.lang || 'no';
 
-// Check if user has already made a choice
-const cookieChoice = localStorage.getItem('cookieConsent');
+    // Check if user has already made a choice
+    const cookieChoice = localStorage.getItem('cookieConsent');
 
-if (! cookieChoice) { // Show the banner after a short delay
-setTimeout(() => {
-cookieConsent.classList.add('active');
-}, 500);
-}
+    if (!cookieChoice) {
+        // Show the banner after a short delay
+        setTimeout(() => {
+            cookieConsent.classList.add('active');
+            
+            // Announce to screen readers
+            if (typeof announceToScreenReader === 'function') {
+                const cookieTitle = document.getElementById('cookie-title').textContent;
+                const cookieDescription = document.getElementById('cookie-description').textContent;
+                announceToScreenReader(`${cookieTitle}: ${cookieDescription}`, 'polite');
+            }
+            
+            // Set focus on the first button for keyboard users
+            acceptBtn.focus();
+        }, 500);
+    }
 
-// Handle accept button click
-acceptBtn.addEventListener('click', () => {
-localStorage.setItem('cookieConsent', 'accepted');
-cookieConsent.classList.remove('active');
+    // Handle accept button click
+    acceptBtn.addEventListener('click', () => {
+        localStorage.setItem('cookieConsent', 'accepted');
+        cookieConsent.classList.remove('active');
 
-// Here you could initialize your analytics or tracking scripts
-console.log('Cookies accepted');
-}) 
+        // Announce to screen readers
+        if (typeof announceToScreenReader === 'function') {
+            announceToScreenReader('Cookies accepted. Thank you for your choice.', 'polite');
+        }
+        
+        // Here you could initialize your analytics or tracking scripts
+        console.log('Cookies accepted');
+    });
 
-
-// Handle decline button click
-declineBtn.addEventListener('click', () => { // Remove the cookieConsent item instead of setting it to 'declined'
-localStorage.removeItem('cookieConsent');
-cookieConsent.classList.remove('active');
-// Here you could disable any non-essential cookies
-
-// Redirect to Bergen Kommune website
-window.location.href = 'https://www.bergen.kommune.no/innbyggerhjelpen/bolig-og-sosiale-tjenester/botilbud/kommunal-bolig/apningstider-og-telefonnumre-til-etat-for-boligforvaltning/';
-
-console.log('Cookies declined, redirecting...');
-});
-
-
-
+    // Handle decline button click
+    declineBtn.addEventListener('click', () => {
+        // Remove the cookieConsent item instead of setting it to 'declined'
+        localStorage.removeItem('cookieConsent');
+        cookieConsent.classList.remove('active');
+        
+        // Announce to screen readers
+        if (typeof announceToScreenReader === 'function') {
+            announceToScreenReader('Cookies declined. Redirecting to alternative site.', 'assertive');
+        }
+        
+        // Here you could disable any non-essential cookies
+        setTimeout(() => {
+            // Redirect to Bergen Kommune website
+            window.location.href = 'https://www.bergen.kommune.no/innbyggerhjelpen/bolig-og-sosiale-tjenester/botilbud/kommunal-bolig/apningstider-og-telefonnumre-til-etat-for-boligforvaltning/';
+        }, 1500); // Small delay to ensure screen reader announcement completes
+        
+        console.log('Cookies declined, redirecting...');
+    });            // Add keyboard trap handling for the cookie consent dialog
+    document.addEventListener('keydown', function(e) {
+        const cookieConsent = document.getElementById('cookieConsent');
+        
+        // If cookie consent is active and the user presses Escape
+        if (cookieConsent.classList.contains('active') && e.key === 'Escape') {
+            // Hide the banner but don't make a choice
+            cookieConsent.classList.remove('active');
+            
+            // Announce to screen readers
+            if (typeof announceToScreenReader === 'function') {
+                announceToScreenReader('Cookie consent banner dismissed. You can make your choice later.', 'polite');
+            }
+        }
+    });
+    
+    // Function to announce language change to screen readers
+    function announceLangChange(lang) {
+        // Store the language preference immediately
+        sessionStorage.setItem('langChanging', 'true');
+        
+        // Announce language change to screen readers with the correct language
+        if (typeof announceToScreenReader === 'function') {
+            if (lang === 'no') {
+                // Announce in Norwegian
+                announceToScreenReader('Bytter språk til norsk. Vennligst vent...', 'assertive', 5000, 'no');
+            } else {
+                // Announce in English
+                announceToScreenReader('Changing language to English. Please wait...', 'assertive', 5000, 'en');
+            }
+        }
+    }
 });
 			</script>
 
+			<!-- Add a global screen reader announcer element -->
+			<div id="screen-reader-announcer" class="sr-only" aria-live="polite" aria-relevant="additions" role="status"></div>
 
 		</body>
 	</html>

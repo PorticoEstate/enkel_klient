@@ -1,144 +1,133 @@
 /**
  * View Case page accessibility enhancements
- * For WCAG 2.0 compliance
+ * For WCAG 2.1 compliance
  */
 
 document.addEventListener('DOMContentLoaded', function ()
 {
-	// Initialize accessibility features
-	initializeAccessibility();
+	// Set up specific case page enhancements beyond the basic accessibility
+	setupCasePageAccessibility();
 
-	// Make sure all icons are properly hidden from screen readers
-	makeIconsAccessible();
-
-	// Enhance keyboard navigation
-	enhanceKeyboardNavigation();
-
-	// Make tables accessible
-	makeTablesAccessible();
+	// Make tables accessible - use the global function from accessibility-helpers.js
+	if (typeof makeTablesAccessible === 'function')
+	{
+		makeTablesAccessible();
+	}
 });
 
 /**
- * Initialize accessibility features
+ * Initialize case page specific accessibility features
  */
-function initializeAccessibility()
+function setupCasePageAccessibility()
 {
-	// Create screen reader announcer if it doesn't exist
-	if (!document.getElementById('screen-reader-announcer'))
-	{
-		const announcer = document.createElement('div');
-		announcer.id = 'screen-reader-announcer';
-		announcer.className = 'sr-only';
-		announcer.setAttribute('aria-live', 'polite');
-		announcer.setAttribute('aria-relevant', 'additions');
-		document.body.appendChild(announcer);
-	}
-
 	// Make alert dismissal buttons accessible
 	document.querySelectorAll('.alert .btn-close').forEach(button =>
 	{
 		button.addEventListener('click', function ()
 		{
-			announceToScreenReader('Alert dismissed');
-		});
-	});
-}
-
-/**
- * Make all Font Awesome icons properly hidden from screen readers
- */
-function makeIconsAccessible()
-{
-	document.querySelectorAll('.fas, .fa, .far, .fab').forEach(icon =>
-	{
-		if (!icon.hasAttribute('aria-hidden'))
-		{
-			icon.setAttribute('aria-hidden', 'true');
-		}
-	});
-}
-
-/**
- * Enhance keyboard navigation for interactive elements
- */
-function enhanceKeyboardNavigation()
-{
-	// Add keyboard support for card focus
-	document.querySelectorAll('.card').forEach(card =>
-	{
-		// We don't want to make cards focusable directly as they contain
-		// other focusable elements. Instead, enhance focus visibility
-		card.addEventListener('focusin', function ()
-		{
-			this.classList.add('focus-within');
-		});
-
-		card.addEventListener('focusout', function ()
-		{
-			this.classList.remove('focus-within');
-		});
-	});
-}
-
-/**
- * Make tables fully accessible
- */
-function makeTablesAccessible()
-{
-	// Add keyboard navigation for tables
-	document.querySelectorAll('table').forEach(table =>
-	{
-		// Add appropriate roles
-		table.setAttribute('role', 'table');
-
-		// Make sure table has a caption for screen readers if missing
-		if (!table.querySelector('caption'))
-		{
-			const tableId = table.getAttribute('aria-labelledby');
-			if (tableId)
+			// Use the global announceToScreenReader function from accessibility-helpers.js
+			if (typeof announceToScreenReader === 'function')
 			{
-				const labelElement = document.getElementById(tableId);
-				if (labelElement)
-				{
-					const captionText = labelElement.textContent;
-					const caption = document.createElement('caption');
-					caption.className = 'sr-only';
-					caption.textContent = captionText;
-					table.prepend(caption);
-				}
-			}
-		}
-
-		// Add scope attributes to headers if missing
-		table.querySelectorAll('th').forEach(th =>
-		{
-			if (!th.getAttribute('scope'))
-			{
-				th.setAttribute('scope', 'col');
+				announceToScreenReader('Alert dismissed');
 			}
 		});
 	});
+
+	// Add form status announcements
+	const commentForm = document.querySelector('form[action*="/my_cases/respond/"]');
+	if (commentForm)
+	{
+		// Create a form status element if it doesn't exist
+		if (!document.getElementById('form-status'))
+		{
+			const formStatus = document.createElement('div');
+			formStatus.id = 'form-status';
+			formStatus.className = 'sr-only';
+			formStatus.setAttribute('aria-live', 'polite');
+			formStatus.setAttribute('role', 'status');
+			commentForm.appendChild(formStatus);
+		}
+
+		// Initialize form validation
+		if (typeof setupAccessibleValidation === 'function' && commentForm.id)
+		{
+			setupAccessibleValidation(commentForm.id);
+		}
+	}
 }
 
 /**
- * Announce a message to screen readers
- * @param {string} message - The message to announce
- * @param {string} priority - The priority level (polite or assertive)
+ * Enhance the file upload experience with proper feedback for screen readers
  */
-function announceToScreenReader(message, priority = 'polite')
+function enhanceFileUploadAccessibility()
 {
-	const announcer = document.getElementById('screen-reader-announcer');
-	if (!announcer) return;
+	const fileInput = document.getElementById('responseAttachment');
+	if (!fileInput) return;
 
-	// Update priority if needed
-	announcer.setAttribute('aria-live', priority);
-
-	// Set the message
-	announcer.textContent = message;
-
-	// Clear after a delay
-	setTimeout(() =>
+	// Create a status element for the file upload if it doesn't exist
+	let fileStatusEl = document.getElementById('file-upload-status');
+	if (!fileStatusEl)
 	{
-		announcer.textContent = '';
-	}, 3000);
+		fileStatusEl = document.createElement('div');
+		fileStatusEl.id = 'file-upload-status';
+		fileStatusEl.className = 'sr-only';
+		fileStatusEl.setAttribute('aria-live', 'polite');
+		fileInput.parentNode.appendChild(fileStatusEl);
+	}
+
+	// Add event listener for file selection
+	fileInput.addEventListener('change', function ()
+	{
+		if (this.files && this.files.length > 0)
+		{
+			const file = this.files[0];
+			const fileSize = formatFileSize(file.size);
+			const message = `File selected: ${file.name}, ${fileSize}`;
+
+			if (typeof announceToScreenReader === 'function')
+			{
+				announceToScreenReader(message);
+			} else
+			{
+				fileStatusEl.textContent = message;
+			}
+		} else
+		{
+			const message = 'No file selected';
+			if (typeof announceToScreenReader === 'function')
+			{
+				announceToScreenReader(message);
+			} else
+			{
+				fileStatusEl.textContent = message;
+			}
+		}
+	});
 }
+
+/**
+ * Format file size in a readable format (KB, MB)
+ * @param {number} bytes - Size in bytes
+ * @returns {string} Formatted size string
+ */
+function formatFileSize(bytes)
+{
+	if (bytes < 1024)
+	{
+		return bytes + ' bytes';
+	}
+	else if (bytes < 1024 * 1024)
+	{
+		return (bytes / 1024).toFixed(1) + ' KB';
+	}
+	else
+	{
+		return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+	}
+}
+
+// Call the setup function when document is ready
+document.addEventListener('DOMContentLoaded', function ()
+{
+	enhanceFileUploadAccessibility();
+});

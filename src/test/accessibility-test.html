@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang|default('no') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessibility Test Page</title>
+    <link href="../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" type="text/css" rel="StyleSheet">
+    <link href="../vendor/components/font-awesome/css/all.min.css" type="text/css" rel="StyleSheet">
+    <link href="../src/css/common.css" type="text/css" rel="StyleSheet">
+    
+    <!-- Load accessibility helpers first -->
+    <script src="../src/js/accessibility-helpers.js"></script>
+    <script src="../src/js/form-accessibility.js"></script>
+    
+    <style>
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Hopp til hovedinnhold</a>
+    
+    <div class="container pt-5">
+        <header>
+            <h1>Test av universell utforming</h1>
+            <p>Denne siden tester de nye tilgjengelighetsforbedringene i henhold til WCAG 2.1</p>
+        </header>
+        
+        <main id="main" class="my-5">
+            <section class="test-section">
+                <h2>Test av skjermleseroppdateringer</h2>
+                
+                <button class="btn btn-primary" id="testAnnounce">Test skjermleser-melding</button>
+                <button class="btn btn-warning" id="testAnnounceAssertive">Test viktig melding</button>
+                
+                <div class="mt-3">
+                    <label for="lastMessage">Siste melding:</label>
+                    <div id="lastMessage" class="p-2 bg-light"></div>
+                </div>
+            </section>
+            
+            <section class="test-section">
+                <h2>Test av skjemahåndtering</h2>
+                
+                <form id="testForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="testName" class="form-label required">Navn</label>
+                        <input type="text" class="form-control" id="testName" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="testEmail" class="form-label required">E-post</label>
+                        <input type="email" class="form-control" id="testEmail" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="testFile" class="form-label">Last opp fil (valgfritt)</label>
+                        <input type="file" class="form-control" id="testFile">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Send inn</button>
+                </form>
+            </section>
+            
+            <section class="test-section">
+                <h2>Test av tabeller</h2>
+                
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Navn</th>
+                            <th>Alder</th>
+                            <th>By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Hans Hansen</td>
+                            <td>35</td>
+                            <td>Bergen</td>
+                        </tr>
+                        <tr>
+                            <td>Kari Nordmann</td>
+                            <td>29</td>
+                            <td>Oslo</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <section class="test-section">
+                <h2>Test av tastaturnavigasjon</h2>
+                
+                <p>Prøv å navigere med tab-tasten for å teste fokussynlighet.</p>
+                
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="#" class="btn btn-outline-primary">Lenke 1</a>
+                    <a href="#" class="btn btn-outline-primary">Lenke 2</a>
+                    <a href="#" class="btn btn-outline-primary">Lenke 3</a>
+                    <button class="btn btn-outline-secondary">Knapp 1</button>
+                    <button class="btn btn-outline-secondary">Knapp 2</button>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Kort med fokusbare elementer</h5>
+                        <p class="card-text">Test av fokussynlighet for kort som inneholder fokusbare elementer.</p>
+                        <a href="#" class="btn btn-primary">Gå videre</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="mt-5 pt-3 border-top">
+            <p>Dette er en testside for WCAG 2.1 forbedringer.</p>
+        </footer>
+    </div>
+    
+    <!-- Simulated cookie consent banner -->
+    <div class="cookie-consent active" id="cookieConsentTest" role="dialog" aria-labelledby="cookie-title-test" aria-describedby="cookie-desc-test">
+        <div class="cookie-text">
+            <h2 id="cookie-title-test" class="sr-only">Samtykke til informasjonskapsler</h2>
+            <p id="cookie-desc-test">Dette er en test av cookie-banner med forbedret universell utforming.</p>
+        </div>
+        <div class="cookie-buttons">
+            <button class="cookie-btn accept-btn" id="acceptCookiesTest">Godta</button>
+            <button class="cookie-btn decline-btn" id="declineCookiesTest">Avvis</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Test announcer buttons
+            document.getElementById('testAnnounce').addEventListener('click', function() {
+                if (typeof announceToScreenReader === 'function') {
+                    announceToScreenReader('Dette er en test av skjermleseroppdatering.');
+                    document.getElementById('lastMessage').textContent = 'Dette er en test av skjermleseroppdatering.';
+                }
+            });
+            
+            document.getElementById('testAnnounceAssertive').addEventListener('click', function() {
+                if (typeof announceToScreenReader === 'function') {
+                    announceToScreenReader('Dette er en viktig melding!', 'assertive');
+                    document.getElementById('lastMessage').textContent = 'Dette er en viktig melding!';
+                }
+            });
+            
+            // Test form
+            document.getElementById('testForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (this.checkValidity()) {
+                    if (typeof announceToScreenReader === 'function') {
+                        announceToScreenReader('Skjema sendt inn. Takk!', 'polite');
+                    }
+                    document.getElementById('lastMessage').textContent = 'Skjema sendt inn. Takk!';
+                }
+            });
+            
+            // Test cookie consent
+            const cookieConsentTest = document.getElementById('cookieConsentTest');
+            
+            document.getElementById('acceptCookiesTest').addEventListener('click', function() {
+                cookieConsentTest.classList.remove('active');
+                if (typeof announceToScreenReader === 'function') {
+                    announceToScreenReader('Informasjonskapsler godtatt.', 'polite');
+                }
+            });
+            
+            document.getElementById('declineCookiesTest').addEventListener('click', function() {
+                cookieConsentTest.classList.remove('active');
+                if (typeof announceToScreenReader === 'function') {
+                    announceToScreenReader('Informasjonskapsler avvist.', 'polite');
+                }
+            });
+            
+            // Automatically hide the test cookie banner after 10 seconds
+            setTimeout(() => {
+                if (cookieConsentTest.classList.contains('active')) {
+                    cookieConsentTest.classList.remove('active');
+                }
+            }, 10000);
+        });
+    </script>
+</body>
+</html>

@@ -312,10 +312,19 @@ var toolbarOptions = [
 
 /**
  * Announce text to screen readers using ARIA live region
+ * Uses the global announceToScreenReader function if available, otherwise falls back to local implementation
  * @param {string} text - The text to announce
  */
 function announceToScreenReader(text)
 {
+	// Check if global accessibility helper function exists
+	if (typeof window.announceToScreenReader === 'function')
+	{
+		window.announceToScreenReader(text, 'polite');
+		return;
+	}
+
+	// Fallback to local implementation
 	const statusEl = document.getElementById('quill-a11y-status');
 	if (statusEl)
 	{

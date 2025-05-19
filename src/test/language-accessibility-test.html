@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Accessibility Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #0d6efd;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .test-btn {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #0b5ed7;
+        }
+        
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            min-height: 20px;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .language-switcher {
+            padding: 5px 10px;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .language-switcher a {
+            text-decoration: none;
+            color: #333;
+            font-weight: normal;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin: 0 5px;
+        }
+
+        .language-switcher a.active {
+            font-weight: bold;
+            background-color: #e9ecef;
+            color: #0d6efd;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="pageTitle">Language Accessibility Test Page</h1>
+    
+    <div class="language-switcher" role="navigation" aria-label="Språkvalg">
+        <a href="#" id="no-lang" class="active" lang="no" hreflang="no" onclick="changeLanguage('no')" aria-current="true">Norsk</a> |
+        <a href="#" id="en-lang" lang="en" hreflang="en" onclick="changeLanguage('en')">English</a>
+    </div>
+    
+    <div class="test-section">
+        <h2 id="testHeading">Test 1: Screen Reader Announcements</h2>
+        <p id="testDescription">Test whether changes in language are properly announced to screen readers.</p>
+        <button id="announceBtn" class="test-btn">Test Announcement</button>
+        <div class="result" id="announceResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: HTML Lang Attribute</h2>
+        <p>Check if the HTML lang attribute is updated correctly when the language changes.</p>
+        <button id="checkLangBtn" class="test-btn">Check Current Lang</button>
+        <div class="result" id="langResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2 id="testContentHeading">Test 3: Content Language</h2>
+        <p id="testContent">Dette er en test-tekst på norsk. Den vil bli endret til engelsk når språket endres.</p>
+        <button id="changeContentBtn" class="test-btn">Change Content Language</button>
+    </div>
+    
+    <div id="screen-reader-announcer" class="sr-only" aria-live="polite" aria-relevant="additions" role="status"></div>
+    
+    <script>
+        // Create SCREEN_READER object similar to accessibility-helpers.js
+        const SCREEN_READER = {
+            ANNOUNCER_ID: 'screen-reader-announcer',
+            PRIORITY: {
+                POLITE: 'polite',
+                ASSERTIVE: 'assertive'
+            },
+            TIMEOUT: 5000,
+            LANGUAGES: {
+                NO: 'no',
+                EN: 'en'
+            }
+        };
+        
+        // Current language
+        let currentLang = 'no';
+        
+        // Content in different languages
+        const content = {
+            no: {
+                pageTitle: "Test av språktilgjengelighet",
+                testHeading: "Test 1: Skjermleserannonseringer",
+                testDescription: "Test om endringer i språk blir riktig annonsert til skjermlesere.",
+                testContentHeading: "Test 3: Innholdsspråk",
+                testContent: "Dette er en test-tekst på norsk. Den vil bli endret til engelsk når språket endres.",
+                announceBtn: "Test annonsering",
+                checkLangBtn: "Sjekk gjeldende språk",
+                changeContentBtn: "Endre innholdsspråk"
+            },
+            en: {
+                pageTitle: "Language Accessibility Test Page",
+                testHeading: "Test 1: Screen Reader Announcements",
+                testDescription: "Test whether changes in language are properly announced to screen readers.",
+                testContentHeading: "Test 3: Content Language",
+                testContent: "This is test text in English. It will be changed to Norwegian when the language is changed.",
+                announceBtn: "Test Announcement",
+                checkLangBtn: "Check Current Lang",
+                changeContentBtn: "Change Content Language"
+            }
+        };
+        
+        // Function to announce to screen readers
+        function announceToScreenReader(message, priority = SCREEN_READER.PRIORITY.POLITE, timeout = SCREEN_READER.TIMEOUT, lang = null) {
+            if (!message || typeof message !== 'string') return;
+            
+            // Get the announcer element
+            const liveRegion = document.getElementById(SCREEN_READER.ANNOUNCER_ID);
+            
+            // Set the appropriate priority level
+            if (priority === SCREEN_READER.PRIORITY.ASSERTIVE || priority === SCREEN_READER.PRIORITY.POLITE) {
+                liveRegion.setAttribute('aria-live', priority);
+            }
+            
+            // Set the language if provided, otherwise use document language
+            if (lang) {
+                liveRegion.setAttribute('lang', lang);
+            } else {
+                // Use the document language or default to Norwegian
+                const docLang = document.documentElement.lang || SCREEN_READER.LANGUAGES.NO;
+                liveRegion.setAttribute('lang', docLang);
+            }
+            
+            // Set the message content
+            liveRegion.textContent = message;
+            
+            // Show what was announced for testing purposes
+            const resultElement = document.getElementById('announceResult');
+            resultElement.innerHTML = `<strong>Announced:</strong> ${message}<br><strong>Lang:</strong> ${liveRegion.getAttribute('lang')}<br><strong>Priority:</strong> ${liveRegion.getAttribute('aria-live')}`;
+            
+            // Clear the announcement after screen readers have time to read it
+            setTimeout(() => {
+                liveRegion.textContent = '';
+            }, timeout);
+        }
+        
+        // Function to change language
+        function changeLanguage(lang) {
+            const oldLang = currentLang;
+            currentLang = lang;
+            
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+            
+            // Update UI for language switcher
+            document.getElementById('no-lang').classList.toggle('active', lang === 'no');
+            document.getElementById('no-lang').setAttribute('aria-current', lang === 'no' ? 'true' : 'false');
+            
+            document.getElementById('en-lang').classList.toggle('active', lang === 'en');
+            document.getElementById('en-lang').setAttribute('aria-current', lang === 'en' ? 'true' : 'false');
+            
+            // Announce language change
+            if (lang === 'no') {
+                announceToScreenReader('Bytter språk til norsk. Vennligst vent...', SCREEN_READER.PRIORITY.ASSERTIVE, SCREEN_READER.TIMEOUT, 'no');
+            } else {
+                announceToScreenReader('Changing language to English. Please wait...', SCREEN_READER.PRIORITY.ASSERTIVE, SCREEN_READER.TIMEOUT, 'en');
+            }
+            
+            // Update content after a delay (simulating page reload)
+            setTimeout(() => {
+                updateContent();
+                
+                // Announce completion
+                if (lang === 'no') {
+                    announceToScreenReader('Språket er endret til norsk. Du ser nå siden på norsk.', SCREEN_READER.PRIORITY.ASSERTIVE, SCREEN_READER.TIMEOUT, 'no');
+                } else {
+                    announceToScreenReader('Language changed to English. You are now viewing the page in English.', SCREEN_READER.PRIORITY.ASSERTIVE, SCREEN_READER.TIMEOUT, 'en');
+                }
+            }, 1000);
+        }
+        
+        // Function to update content based on language
+        function updateContent() {
+            document.getElementById('pageTitle').textContent = content[currentLang].pageTitle;
+            document.getElementById('testHeading').textContent = content[currentLang].testHeading;
+            document.getElementById('testDescription').textContent = content[currentLang].testDescription;
+            document.getElementById('testContentHeading').textContent = content[currentLang].testContentHeading;
+            document.getElementById('testContent').textContent = content[currentLang].testContent;
+            document.getElementById('announceBtn').textContent = content[currentLang].announceBtn;
+            document.getElementById('checkLangBtn').textContent = content[currentLang].checkLangBtn;
+            document.getElementById('changeContentBtn').textContent = content[currentLang].changeContentBtn;
+        }
+        
+        // Event listeners
+        document.getElementById('announceBtn').addEventListener('click', function() {
+            if (currentLang === 'no') {
+                announceToScreenReader('Dette er en test av skjermleser-annonsering på norsk.', SCREEN_READER.PRIORITY.POLITE, SCREEN_READER.TIMEOUT, 'no');
+            } else {
+                announceToScreenReader('This is a test of screen reader announcements in English.', SCREEN_READER.PRIORITY.POLITE, SCREEN_READER.TIMEOUT, 'en');
+            }
+        });
+        
+        document.getElementById('checkLangBtn').addEventListener('click', function() {
+            const langResult = document.getElementById('langResult');
+            const htmlLang = document.documentElement.lang;
+            langResult.innerHTML = `<strong>Current HTML lang attribute:</strong> ${htmlLang}<br><strong>Current internal lang:</strong> ${currentLang}`;
+        });
+        
+        document.getElementById('changeContentBtn').addEventListener('click', function() {
+            // Toggle language
+            changeLanguage(currentLang === 'no' ? 'en' : 'no');
+        });
+    </script>
+</body>
+</html>

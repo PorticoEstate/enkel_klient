@@ -246,12 +246,12 @@
 					{# Add a live region for form status announcements #}
 					<div id="form-status" class="sr-only" aria-live="polite" role="status"></div>
 					
-					{# Add this to view_case.twig just before the closing </form> tag #}
-
 					<script>
 						document.addEventListener('DOMContentLoaded', function () {
 const fileInput = document.getElementById('responseAttachment');
 const submitButton = document.querySelector('button[type="submit"]');
+const form = fileInput.closest('form');
+const responseContent = document.getElementById('responseContent');
 const maxFileSizeBytes = 10 * 1024 * 1024; // 10MB in bytes
 
 // Create feedback element
@@ -260,17 +260,36 @@ feedbackDiv.className = 'invalid-feedback d-none';
 feedbackDiv.id = 'file-feedback';
 fileInput.parentNode.appendChild(feedbackDiv);
 
-// Create status element for screen readers
-const statusEl = document.getElementById('form-status');
-const announceToScreenReader = (message) => {
-    if (statusEl) {
-        statusEl.textContent = message;
-        // Clear after screen readers have had time to announce
-        setTimeout(() => {
-            statusEl.textContent = '';
-        }, 5000);
+// Use the global announceToScreenReader function if available
+const announceMessage = (message, priority = 'polite') => {
+    if (typeof announceToScreenReader === 'function') {
+        // Use the global function from accessibility-helpers.js
+        announceToScreenReader(message, priority);
+    } else {
+        // Fallback implementation
+        const statusEl = document.getElementById('form-status');
+        if (statusEl) {
+            statusEl.textContent = message;
+            // Clear after screen readers have had time to announce
+            setTimeout(() => {
+                statusEl.textContent = '';
+            }, 5000);
+        }
     }
 };
+
+// Format file size in KB, MB
+function formatFileSize(bytes) {
+    if (bytes < 1024) {
+        return bytes + ' bytes';
+    }
+    else if (bytes < 1024 * 1024) {
+        return(bytes / 1024).toFixed(1) + ' KB';
+    }
+    else {
+        return(bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+}
 
 fileInput.addEventListener('change', function () {
     // Reset state
@@ -292,15 +311,16 @@ fileInput.addEventListener('change', function () {
             formatFileSize(fileSize)
             }.`;
             feedbackDiv.classList.remove('d-none');
+            feedbackDiv.classList.add('invalid-feedback');
             submitButton.disabled = true;
             submitButton.setAttribute('aria-disabled', 'true');
 
             // Announce to screen readers
-            announceToScreenReader(`File too large. Maximum file size is ${
+            announceMessage(`File too large. Maximum file size is ${
             formatFileSize(maxFileSizeBytes)
             }. Your file is ${
             formatFileSize(fileSize)
-            }.`);
+            }.`, 'assertive');
 
             // Reset file input to clear selection
             this.value = '';
@@ -308,42 +328,23 @@ fileInput.addEventListener('change', function () {
         }
 
         // Show file size information
-        feedbackDiv.textContent = `Valgt fil: ${
-        this.files[0].name
-        } (${
-        formatFileSize(fileSize)
-        })`;
+        feedbackDiv.textContent = `Valgt fil: ${fileName} (${formatFileSize(fileSize)})`;
         feedbackDiv.classList.remove('d-none');
         feedbackDiv.classList.remove('invalid-feedback');
         feedbackDiv.classList.add('text-muted', 'small');
         
         // Announce to screen readers
-        announceToScreenReader(`File selected: ${fileName}, size: ${formatFileSize(fileSize)}`);
+        announceMessage(`File selected: ${fileName}, size: ${formatFileSize(fileSize)}`);
     }
 });
 
-// Format file size in KB, MB
-function formatFileSize(bytes) {
-    if (bytes < 1024) {
-        return bytes + ' bytes';
-    }
-    else if (bytes < 1024 * 1024) {
-        return(bytes / 1024).toFixed(1) + ' KB';
-    }
-    else {
-        return(bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-}
-
 // Add form submission validation
-const form = fileInput.closest('form');
 form.addEventListener('submit', function (event) {
     // Check if textarea is empty
-    const responseContent = document.getElementById('responseContent');
     if (!responseContent.value.trim()) {
         event.preventDefault();
         responseContent.classList.add('is-invalid');
-        announceToScreenReader('Comment field is required. Please enter a comment.');
+        announceMessage('Comment field is required. Please enter a comment.', 'assertive');
         responseContent.focus();
         return false;
     } else {
@@ -356,7 +357,7 @@ form.addEventListener('submit', function (event) {
 
         if (fileSize > maxFileSizeBytes) {
             event.preventDefault();
-            announceToScreenReader('File is too large. Maximum file size is 10MB.');
+            announceMessage('File is too large. Maximum file size is 10MB.', 'assertive');
             fileInput.focus();
             return false;
         }
@@ -365,17 +366,29 @@ form.addEventListener('submit', function (event) {
     // Disable submit button and show loading state
     submitButton.disabled = true;
     submitButton.setAttribute('aria-disabled', 'true');
-    const loadingText = document.createElement('span');
-    loadingText.className = 'sr-only';
-    loadingText.textContent = ' Sending comment, please wait...';
-    submitButton.appendChild(loadingText);
-    announceToScreenReader('Submitting your comment, please wait...');
+    
+    // Add a loading indicator for visual users
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                             <span>${submitButton.textContent}</span>`;
+    
+    // Announce for screen readers
+    announceMessage('Submitting your comment, please wait...', 'assertive');
 });
 
 // Add keyboard accessibility to the form
 responseContent.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && e.ctrlKey) {
         // Submit form with Ctrl+Enter
+        const ctrlEnterTip = document.getElementById('ctrl-enter-tip');
+        if (!ctrlEnterTip) {
+            // Display a visible tip for Ctrl+Enter if not already shown
+            const tip = document.createElement('small');
+            tip.id = 'ctrl-enter-tip';
+            tip.className = 'text-muted d-block mt-1';
+            tip.innerHTML = '<i class="fas fa-keyboard me-1" aria-hidden="true"></i> Ctrl+Enter for å sende';
+            responseContent.parentNode.appendChild(tip);
+        }
         submitButton.click();
     }
 });

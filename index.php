@@ -197,6 +197,7 @@ $app->add(function (Request $request, $handler)
 $twig = $container->get(Twig::class);
 $translator = $container->get(Translator::class);
 $twig->getEnvironment()->addGlobal('current_section', null);
+$twig->getEnvironment()->addGlobal('current_lang', $lang); // Add the current language to the Twig environment
 $twig->getEnvironment()->addFunction(new \Twig\TwigFunction('__', function ($key, $section = null) use ($translator, $twig)
 {
 	if ($section === null)

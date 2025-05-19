@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use Slim\Views\Twig;
@@ -15,7 +16,8 @@ class Inspection1Controller extends BaseFormController
     public function __construct(Twig $twig, ApiClient $api)
     {
         parent::__construct($twig, $api);
-        if ($this->checkAcl()) {
+        if (!$this->checkAcl())
+        {
             // Render error template for access denied
             http_response_code(403);
             // Fetch translation directly from Translator
@@ -95,12 +97,14 @@ class Inspection1Controller extends BaseFormController
         $error = [];
         $saved = false;
 
-        if ($request->getMethod() === 'POST') {
+        if ($request->getMethod() === 'POST')
+        {
             $post = $request->getParsedBody();
             $session_info = $this->apiClient->get_session_info();
-            
+
             // Verify CSRF token
-            if ($post['randcheck'] != $_SESSION['rand']) {
+            if ($post['randcheck'] != $_SESSION['rand'])
+            {
                 $error[] = 'Invalid security token';
                 return $this->handleFormResponse($request, $response, false, $error, null);
             }
@@ -122,7 +126,8 @@ class Inspection1Controller extends BaseFormController
 
             // Who is responsible for posting data
             $headers = getallheaders();
-            if (!empty($headers['uid'])) {
+            if (!empty($headers['uid']))
+            {
                 $values_attribute[6] = ['value' => $headers['uid'], 'disabled' => 0];
             }
 
@@ -137,15 +142,21 @@ class Inspection1Controller extends BaseFormController
             $url .= http_build_query($get_data);
             $ret = json_decode($this->apiClient->exchange_data($url, $post_data), true);
 
-            if (isset($ret['status']) && $ret['status'] == 'saved') {
+            if (isset($ret['status']) && $ret['status'] == 'saved')
+            {
                 $saved = true;
-            } else {
+            }
+            else
+            {
                 $error = $this->processErrors($ret);
             }
         }
 
-        if (isset($request->getQueryParams()['phpgw_return_as']) && 
-            $request->getQueryParams()['phpgw_return_as'] == 'json') {
+        if (
+            isset($request->getQueryParams()['phpgw_return_as']) &&
+            $request->getQueryParams()['phpgw_return_as'] == 'json'
+        )
+        {
             return $this->handleFormResponse($request, $response, $saved, $error, $ret['id'] ?? null);
         }
 
@@ -157,34 +168,38 @@ class Inspection1Controller extends BaseFormController
         $saved = false;
         $error = [];
         $id = null;
-        
+
         // Check for session data
-        if (!$saved) {
+        if (!$saved)
+        {
             $saved = ApiClient::session_get('inspection_1', 'saved');
             ApiClient::session_clear('inspection_1', 'saved');
         }
 
-        if (empty($error)) {
+        if (empty($error))
+        {
             $error = (array)ApiClient::session_get('inspection_1', 'error');
             ApiClient::session_clear('inspection_1', 'error');
         }
-        
-        if (!$id) {
+
+        if (!$id)
+        {
             $id = ApiClient::session_get('inspection_1', 'id');
             ApiClient::session_clear('inspection_1', 'id');
         }
 
         $get_data = [];
-        
+
         // Get config from Twig globals
         $config = $this->twig->getEnvironment()->getGlobals()['config'];
         $enable_fileupload = $config['inspection_1']['enable_fileupload'] ?? 0;
-        
+
         // Generate and set CSRF token
         $rand = rand();
         $_SESSION['rand'] = $rand;
 
-        try {
+        try
+        {
             // Render with Twig
             return $this->twig->render($response, 'inspection_1.twig', [
                 'action_url' => self::get_route_url('inspection_1', $get_data),
@@ -195,7 +210,9 @@ class Inspection1Controller extends BaseFormController
                 'rand' => $rand,
                 'currentRoute' => 'inspection_1'
             ]);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e)
+        {
             // Fall back to rendering minimal content
             $response->getBody()->write('<h1>Error loading template: ' . $e->getMessage() . '</h1>');
             return $response;
@@ -231,7 +248,8 @@ class Inspection1Controller extends BaseFormController
 
     private function processErrors(array $ret): array
     {
-        if (!empty($ret['receipt']['error'])) {
+        if (!empty($ret['receipt']['error']))
+        {
             return array_map(fn($error) => $error['msg'], $ret['receipt']['error']);
         }
         return ['Noe gikk galt med innsendingen'];

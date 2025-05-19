@@ -21,6 +21,368 @@ const SCREEN_READER = {
 };
 
 /**
+ * Global constants for ARIA roles and states
+ */
+const ARIA = {
+	ROLE: {
+		ALERT: 'alert',
+		ALERTDIALOG: 'alertdialog',
+		BUTTON: 'button',
+		CHECKBOX: 'checkbox',
+		DIALOG: 'dialog',
+		GRID: 'grid',
+		LINK: 'link',
+		LISTBOX: 'listbox',
+		MENU: 'menu',
+		MENUITEM: 'menuitem',
+		MENUITEMCHECKBOX: 'menuitemcheckbox',
+		MENUITEMRADIO: 'menuitemradio',
+		OPTION: 'option',
+		PROGRESSBAR: 'progressbar',
+		RADIO: 'radio',
+		REGION: 'region',
+		SEARCHBOX: 'searchbox',
+		SEPARATOR: 'separator',
+		SLIDER: 'slider',
+		SPINBUTTON: 'spinbutton',
+		STATUS: 'status',
+		SWITCH: 'switch',
+		TAB: 'tab',
+		TABLIST: 'tablist',
+		TABPANEL: 'tabpanel',
+		TEXTBOX: 'textbox',
+		TIMER: 'timer',
+		TOOLTIP: 'tooltip',
+		TREE: 'tree',
+		TREEGRID: 'treegrid',
+		TREEITEM: 'treeitem'
+	},
+	STATE: {
+		BUSY: 'aria-busy',
+		CHECKED: 'aria-checked',
+		CURRENT: 'aria-current',
+		DISABLED: 'aria-disabled',
+		EXPANDED: 'aria-expanded',
+		HIDDEN: 'aria-hidden',
+		INVALID: 'aria-invalid',
+		LABEL: 'aria-label',
+		LABELLEDBY: 'aria-labelledby',
+		LEVEL: 'aria-level',
+		LIVE: 'aria-live',
+		MODAL: 'aria-modal',
+		MULTILINE: 'aria-multiline',
+		MULTISELECTABLE: 'aria-multiselectable',
+		ORIENTATION: 'aria-orientation',
+		PLACEHOLDER: 'aria-placeholder',
+		POSINSET: 'aria-posinset',
+		PRESSED: 'aria-pressed',
+		READONLY: 'aria-readonly',
+		REQUIRED: 'aria-required',
+		SELECTED: 'aria-selected',
+		SETSIZE: 'aria-setsize',
+		SORT: 'aria-sort',
+		VALUEMAX: 'aria-valuemax',
+		VALUEMIN: 'aria-valuemin',
+		VALUENOW: 'aria-valuenow',
+		VALUETEXT: 'aria-valuetext'
+	}
+};
+
+/**
+ * Sets multiple ARIA attributes on an element at once
+ * @param {HTMLElement} element - The element to set attributes on
+ * @param {Object} attributes - Object with attribute names as keys and values as values
+ */
+function setAriaAttributes(element, attributes)
+{
+	if (element && attributes && typeof attributes === 'object')
+	{
+		Object.keys(attributes).forEach(attr =>
+		{
+			if (attributes[attr] !== null && attributes[attr] !== undefined)
+			{
+				element.setAttribute(attr, attributes[attr]);
+			}
+		});
+	}
+}
+
+/**
+ * Sets the ARIA role attribute on an element
+ * @param {HTMLElement} element - The element to set the role on
+ * @param {string} role - The ARIA role value from ARIA.ROLE constants
+ */
+function setAriaRole(element, role)
+{
+	if (element && role)
+	{
+		element.setAttribute('role', role);
+	}
+}
+
+/**
+ * Makes tables more accessible by adding ARIA attributes and roles
+ * Implements WCAG 2.1 requirements for data tables
+ */
+function makeTablesAccessible()
+{
+	// Find all data tables in the document
+	document.querySelectorAll('table').forEach(table =>
+	{
+		// Skip if already processed
+		if (table.dataset.a11yEnhanced) return;
+
+		// Mark as enhanced
+		table.dataset.a11yEnhanced = 'true';
+
+		// Set appropriate role (default to 'table' if not presentation)
+		if (!table.hasAttribute('role'))
+		{
+			setAriaRole(table, 'table');
+		}
+
+		// Add caption if missing but there is a preceding heading
+		if (!table.querySelector('caption'))
+		{
+			const prevHeading = table.previousElementSibling;
+			if (prevHeading && /^H[1-6]$/.test(prevHeading.tagName))
+			{
+				const caption = document.createElement('caption');
+				caption.textContent = prevHeading.textContent;
+				if (table.firstChild)
+				{
+					table.insertBefore(caption, table.firstChild);
+				} else
+				{
+					table.appendChild(caption);
+				}
+			}
+		}
+
+		// Process table headers
+		const headers = table.querySelectorAll('th');
+		headers.forEach(header =>
+		{
+			// Set scope attribute for headers if not already set
+			if (!header.hasAttribute('scope'))
+			{
+				// Determine if header is row or column header
+				const headerParent = header.parentElement;
+				if (headerParent.tagName === 'TR')
+				{
+					const headerIndex = Array.from(headerParent.children).indexOf(header);
+					const isFirstRow = headerParent === table.querySelector('tr');
+
+					if (isFirstRow)
+					{
+						header.setAttribute('scope', 'col');
+					} else if (headerIndex === 0)
+					{
+						header.setAttribute('scope', 'row');
+					}
+				}
+			}
+		});
+
+		// Handle complex tables with rowspan/colspan
+		const complexHeaders = table.querySelectorAll('th[rowspan], th[colspan]');
+		if (complexHeaders.length > 0)
+		{
+			// Add id to each header if it doesn't have one
+			complexHeaders.forEach((header, index) =>
+			{
+				if (!header.id)
+				{
+					header.id = `table-header-${index}-${Date.now()}`;
+				}
+			});
+
+			// Add headers attribute to cells that are spanned by the complex headers
+			table.querySelectorAll('td').forEach(cell =>
+			{
+				// This would require complex calculation based on rowspan/colspan
+				// For simplicity, we'll just ensure cells have required attributes
+				if (!cell.hasAttribute('headers') && cell.hasAttribute('aria-labelledby'))
+				{
+					cell.setAttribute('headers', cell.getAttribute('aria-labelledby'));
+				}
+			});
+		}
+	});
+}
+
+/**
+ * Sets up all interactive regions like accordions, tabs, etc. in the document
+ * Applies WCAG 2.1 compliant interaction patterns
+ */
+function setupInteractiveRegions()
+{
+	// Find and enhance accordion components
+	document.querySelectorAll('.accordion, [data-accordion], [role="tablist"].accordion').forEach(accordion =>
+	{
+		if (accordion.dataset.a11yInteractive) return;
+
+		makeInteractiveRegionAccessible(accordion, {
+			type: 'accordion',
+			itemSelector: '.accordion-item, [data-accordion-item]',
+			headerSelector: '.accordion-header, [data-accordion-header]',
+			contentSelector: '.accordion-content, [data-accordion-content]',
+			multiselectable: accordion.getAttribute('data-multiselectable') !== 'false'
+		});
+	});
+
+	// Find and enhance tab components
+	document.querySelectorAll('[role="tablist"], .tabs, [data-tabs]').forEach(tablist =>
+	{
+		if (tablist.dataset.a11yInteractive) return;
+
+		// Determine the tab panel container
+		let tabPanelContainer;
+		const tabPanelContainerId = tablist.getAttribute('aria-controls');
+
+		if (tabPanelContainerId)
+		{
+			tabPanelContainer = document.getElementById(tabPanelContainerId);
+		} else
+		{
+			// Try to find the panel container by convention (sibling or next element)
+			tabPanelContainer = tablist.nextElementSibling;
+			if (tabPanelContainer && !tabPanelContainer.querySelector('[role="tabpanel"]'))
+			{
+				tabPanelContainer = document.querySelector('.tab-content, .tabpanel-container');
+			}
+		}
+
+		if (tabPanelContainer)
+		{
+			makeInteractiveRegionAccessible(tablist, {
+				type: 'tabs',
+				itemSelector: '[role="tab"], .tab, [data-tab]',
+				contentSelector: '[role="tabpanel"], .tab-pane, [data-tab-content]',
+				contentContainer: tabPanelContainer
+			});
+		}
+	});
+
+	// Find and enhance other interactive components as needed
+	// (Dropdowns, modals, etc. could be added here)
+}
+
+/**
+ * Makes common UI elements accessible according to WCAG guidelines
+ * Enhances buttons, links, form controls, and other interactive elements
+ */
+function makeCommonElementsAccessible()
+{
+	// Process buttons that are not actually button elements
+	document.querySelectorAll('div[role="button"], span[role="button"]').forEach(element =>
+	{
+		if (element.dataset.a11yEnhanced) return;
+
+		// Ensure it's keyboard accessible
+		if (!element.hasAttribute('tabindex'))
+		{
+			element.setAttribute('tabindex', '0');
+		}
+
+		// Add keyboard event listeners if missing
+		if (!element.hasAttribute('onclick'))
+		{
+			element.addEventListener('keydown', (e) =>
+			{
+				if (e.key === 'Enter' || e.key === ' ')
+				{
+					e.preventDefault();
+					element.click();
+				}
+			});
+		}
+
+		// Mark as enhanced
+		element.dataset.a11yEnhanced = 'true';
+	});
+
+	// Enhance links with missing attributes
+	document.querySelectorAll('a').forEach(link =>
+	{
+		if (link.dataset.a11yEnhanced) return;
+
+		// Add appropriate role if missing
+		if (!link.hasAttribute('role'))
+		{
+			setAriaRole(link, 'link');
+		}
+
+		// If it opens in a new window, make this clear to screen readers
+		if (link.getAttribute('target') === '_blank' && !link.getAttribute('aria-describedby'))
+		{
+			// Create the description element if it doesn't exist
+			let newWindowDesc = document.getElementById('new-window-description');
+			if (!newWindowDesc)
+			{
+				newWindowDesc = document.createElement('span');
+				newWindowDesc.id = 'new-window-description';
+				newWindowDesc.className = 'sr-only';
+				newWindowDesc.textContent = '(opens in a new window)';
+				document.body.appendChild(newWindowDesc);
+			}
+
+			link.setAttribute('aria-describedby', 'new-window-description');
+		}
+
+		// Mark as enhanced
+		link.dataset.a11yEnhanced = 'true';
+	});
+
+	// Add appropriate ARIA attributes to icons that should be hidden from screen readers
+	document.querySelectorAll('i.fas, i.far, i.fab, i.icon, span.icon').forEach(icon =>
+	{
+		if (icon.dataset.a11yEnhanced) return;
+
+		// If icon is alone, it might be meaningful
+		const hasTextSibling = [...icon.parentNode.childNodes].some(
+			node => node !== icon &&
+				(node.nodeType === Node.TEXT_NODE && node.textContent.trim() ||
+					node.nodeType === Node.ELEMENT_NODE)
+		);
+
+		// If icon is decorative (has text siblings or is in a button/link with text)
+		if (hasTextSibling ||
+			(icon.parentNode.tagName === 'BUTTON' && icon.parentNode.textContent.trim()) ||
+			(icon.parentNode.tagName === 'A' && icon.parentNode.textContent.trim()))
+		{
+
+			// Hide decorative icon from screen readers
+			icon.setAttribute('aria-hidden', 'true');
+
+			// Remove from tab order if it has tabindex
+			if (icon.hasAttribute('tabindex'))
+			{
+				icon.removeAttribute('tabindex');
+			}
+		}
+
+		// Mark as enhanced
+		icon.dataset.a11yEnhanced = 'true';
+	});
+
+	// Enhance other common components like tooltips, badges, etc.
+	document.querySelectorAll('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').forEach(tooltip =>
+	{
+		if (tooltip.dataset.a11yEnhanced) return;
+
+		const title = tooltip.getAttribute('title') || tooltip.getAttribute('data-bs-title') || tooltip.getAttribute('data-original-title');
+		if (title)
+		{
+			tooltip.setAttribute('aria-label', title);
+		}
+
+		// Mark as enhanced
+		tooltip.dataset.a11yEnhanced = 'true';
+	});
+}
+
+/**
  * Initialize accessibility features for the page
  * Should be called when the DOM content is loaded
  */
@@ -63,6 +425,25 @@ function initAccessibility()
 			setupAccessibleValidation(form.id);
 		}
 	});
+
+	// Make all tables accessible
+	makeTablesAccessible();
+
+	// Make all form inputs accessible
+	document.querySelectorAll('form').forEach(form =>
+	{
+		if (!form.dataset.a11yEnhanced)
+		{
+			makeInputsAccessible(form);
+			form.dataset.a11yEnhanced = 'true';
+		}
+	});
+
+	// Make common UI elements accessible
+	makeCommonElementsAccessible();
+
+	// Set up interactive regions (accordions, tabs, etc.)
+	setupInteractiveRegions();
 }
 
 /**
@@ -284,182 +665,6 @@ function makeDropzoneAccessible(dropzoneId, fileInputId)
 }
 
 /**
- * Set up accessible form validation with clear error messages for screen readers
- * 
- * @param {string} formId - ID of the form element
- * @returns {void}
- */
-function setupAccessibleValidation(formId)
-{
-	const form = document.getElementById(formId);
-	if (!form) return;
-
-	// Create container for validation messages if it doesn't exist
-	let validationContainer = document.getElementById(`${formId}-validation`);
-	if (!validationContainer)
-	{
-		validationContainer = document.createElement('div');
-		validationContainer.id = `${formId}-validation`;
-		validationContainer.setAttribute('aria-live', 'assertive');
-		validationContainer.classList.add('sr-only');
-		form.appendChild(validationContainer);
-	}
-
-	// Add invalid event listeners to form elements
-	const formElements = form.querySelectorAll('input, select, textarea');
-	formElements.forEach(element =>
-	{
-		element.addEventListener('invalid', function (event)
-		{
-			// Get field label
-			const id = this.id;
-			const labelElement = document.querySelector(`label[for="${id}"]`);
-			const labelText = labelElement ? labelElement.textContent.trim() : id;
-
-			// Announce the error
-			const errorMessage = `${labelText}: ${this.validationMessage}`;
-			validationContainer.textContent = errorMessage;
-
-			// Set styling on the invalid field
-			this.classList.add('is-invalid');
-
-			// Announce to screen reader
-			announceToScreenReader(errorMessage, SCREEN_READER.PRIORITY.ASSERTIVE);
-		});
-
-		// Clear error state on input
-		element.addEventListener('input', function ()
-		{
-			this.classList.remove('is-invalid');
-		});
-	});
-
-	// Handle form submission
-	form.addEventListener('submit', function ()
-	{
-		if (this.checkValidity())
-		{
-			announceFormStatus('Form is being submitted, please wait...', formId);
-		}
-	});
-}
-
-/**
- * Make tables fully accessible for screen readers and keyboard navigation
- * 
- * @param {string} tableId - ID of the table (optional)
- * @returns {void}
- */
-function makeTablesAccessible(tableId = null)
-{
-	const tables = tableId
-		? [document.getElementById(tableId)].filter(Boolean)
-		: document.querySelectorAll('table');
-
-	tables.forEach(table =>
-	{
-		// Skip if already processed
-		if (table.dataset.a11yEnhanced) return;
-
-		// Add appropriate roles
-		table.setAttribute('role', 'table');
-
-		// Make sure table has a caption for screen readers if missing
-		if (!table.querySelector('caption'))
-		{
-			const tableId = table.getAttribute('aria-labelledby');
-			if (tableId)
-			{
-				const labelElement = document.getElementById(tableId);
-				if (labelElement)
-				{
-					const captionText = labelElement.textContent;
-					const caption = document.createElement('caption');
-					caption.className = 'sr-only';
-					caption.textContent = captionText;
-					table.prepend(caption);
-				}
-			}
-		}
-
-		// Add scope attributes to headers if missing
-		table.querySelectorAll('th').forEach(th =>
-		{
-			if (!th.getAttribute('scope'))
-			{
-				// Determine if this is a column or row header
-				const isInFirstRow = th.parentElement === th.parentElement.parentElement.querySelector('tr');
-				th.setAttribute('scope', isInFirstRow ? 'col' : 'row');
-			}
-		});
-
-		// Mark as enhanced
-		table.dataset.a11yEnhanced = 'true';
-	});
-}
-
-/**
- * Checks if the user just changed the language and announces it
- * This is for improving the experience for screen reader users when language changes
- */
-function checkLanguageChange()
-{
-	if (sessionStorage.getItem('langChanging') === 'true')
-	{
-		// Clear the flag
-		sessionStorage.removeItem('langChanging');
-
-		// Get the current language
-		const currentLang = document.documentElement.lang;
-
-		// Announce the language change confirmation
-		setTimeout(() =>
-		{
-			if (currentLang === 'en')
-			{
-				// Announce in English with English language tag
-				announceToScreenReader(
-					'Language changed to English. You are now viewing the page in English.',
-					SCREEN_READER.PRIORITY.ASSERTIVE,
-					SCREEN_READER.TIMEOUT,
-					'en'
-				);
-			} else
-			{
-				// Announce in Norwegian with Norwegian language tag
-				announceToScreenReader(
-					'Språket er endret til norsk. Du ser nå siden på norsk.',
-					SCREEN_READER.PRIORITY.ASSERTIVE,
-					SCREEN_READER.TIMEOUT,
-					'no'
-				);
-			}
-		}, 1000);
-	}
-}
-
-/**
- * Enhances elements with language-specific attributes for better screen reader support
- * Automatically adds lang attributes to elements based on their content language
- * 
- * @param {string} selector - CSS selector to find elements that should have language attributes
- * @param {string} language - The language code to apply (e.g., 'en', 'no')
- * @returns {void}
- */
-function enhanceLanguageElements(selector, language)
-{
-	if (!selector || !language) return;
-
-	document.querySelectorAll(selector).forEach(element =>
-	{
-		if (!element.hasAttribute('lang'))
-		{
-			element.setAttribute('lang', language);
-		}
-	});
-}
-
-/**
  * Sets up language attribute observer to automatically detect and handle 
  * changes to the HTML lang attribute for improved accessibility
  * 
@@ -529,20 +734,167 @@ function addLanguageKeyboardShortcuts()
 	});
 }
 
+/**
+ * Enhances elements with language-specific attributes for better screen reader support
+ * Automatically adds lang attributes to elements based on their content language
+ * 
+ * @param {string} selector - CSS selector to find elements that should have language attributes
+ * @param {string} language - The language code to apply (e.g., 'en', 'no')
+ * @returns {void}
+ */
+function enhanceLanguageElements(selector, language)
+{
+	if (!selector || !language) return;
+
+	document.querySelectorAll(selector).forEach(element =>
+	{
+		if (!element.hasAttribute('lang'))
+		{
+			element.setAttribute('lang', language);
+		}
+	});
+}
+
+/**
+ * Checks if the user just changed the language and announces it
+ * This is for improving the experience for screen reader users when language changes
+ */
+function checkLanguageChange()
+{
+	if (sessionStorage.getItem('langChanging') === 'true')
+	{
+		// Clear the flag
+		sessionStorage.removeItem('langChanging');
+
+		// Get the current language
+		const currentLang = document.documentElement.lang;
+
+		// Announce the language change confirmation
+		setTimeout(() =>
+		{
+			if (currentLang === 'en')
+			{
+				// Announce in English with English language tag
+				announceToScreenReader(
+					'Language changed to English. You are now viewing the page in English.',
+					SCREEN_READER.PRIORITY.ASSERTIVE,
+					SCREEN_READER.TIMEOUT,
+					'en'
+				);
+			} else
+			{
+				// Announce in Norwegian with Norwegian language tag
+				announceToScreenReader(
+					'Språket er endret til norsk. Du ser nå siden på norsk.',
+					SCREEN_READER.PRIORITY.ASSERTIVE,
+					SCREEN_READER.TIMEOUT,
+					'no'
+				);
+			}
+		}, 1000);
+	}
+}
+
+/**
+ * Makes an element accessible according to its role and purpose
+ * @param {HTMLElement} element - The element to make accessible
+ * @param {string} role - The ARIA role to set
+ * @param {Object} attributes - Additional ARIA attributes to set
+ */
+function makeElementAccessible(element, role, attributes = {})
+{
+	if (!element) return;
+
+	if (role)
+	{
+		setAriaRole(element, role);
+	}
+
+	if (attributes && typeof attributes === 'object')
+	{
+		setAriaAttributes(element, attributes);
+	}
+
+	// Ensure the element is keyboard navigable if interactive
+	const interactiveRoles = ['button', 'link', 'checkbox', 'radio', 'tab', 'menuitem', 'slider', 'switch'];
+	if (role && interactiveRoles.includes(role))
+	{
+		if (element.tagName !== 'BUTTON' && element.tagName !== 'A' && element.tagName !== 'INPUT')
+		{
+			if (!element.getAttribute('tabindex'))
+			{
+				element.setAttribute('tabindex', '0');
+			}
+		}
+	}
+
+	// Mark as enhanced
+	element.dataset.a11yEnhanced = 'true';
+}
+
+/**
+ * Announces language change to screen readers in the appropriate language
+ * Provides immediate feedback to screen reader users and stores language change in session
+ * @param {string} lang - The language code (e.g., 'en', 'no') that is being switched to
+ */
+function announceLangChange(lang)
+{
+	// Store the language preference immediately
+	if (typeof sessionStorage !== 'undefined')
+	{
+		sessionStorage.setItem('langChanging', 'true');
+	}
+
+	// Announce language change to screen readers with the correct language
+	if (lang === 'no')
+	{
+		// Announce in Norwegian
+		announceToScreenReader('Bytter språk til norsk. Vennligst vent...', SCREEN_READER.PRIORITY.ASSERTIVE, SCREEN_READER.TIMEOUT, 'no');
+	} else
+	{
+		// Announce in English
+		announceToScreenReader('Changing language to English. Please wait...', SCREEN_READER.PRIORITY.ASSERTIVE, SCREEN_READER.TIMEOUT, 'en');
+	}
+}
+
 // Export functions if module exports is defined
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
 {
 	module.exports = {
-		initAccessibility,
+		// Screen reader and announcement functions
+		SCREEN_READER,
+		ARIA,
+		createScreenReaderAnnouncer,
 		announceToScreenReader,
 		announceFormStatus,
-		makeDropzoneAccessible,
-		setupAccessibleValidation,
-		makeTablesAccessible,
+		announceLangChange,
+
+		// Core accessibility functions
+		initAccessibility,
+		checkLanguageChange,
+
+		// Element-specific accessibility functions
 		makeIconsAccessible,
 		enhanceFocusVisibility,
-		checkLanguageChange,
-		SCREEN_READER,
+		makeDropzoneAccessible,
+		makeTablesAccessible,
+		makeInputsAccessible,
+		makeCommonElementsAccessible,
+
+		// Form accessibility functions
+		setupAccessibleValidation,
+
+		// Dialog and interactive region functions
+		setupAccessibleDialog,
+		makeInteractiveRegionAccessible,
+		setupInteractiveRegions,
+
+		// ARIA attribute management
+		setAriaAttributes,
+		setAriaRole,
+		makeElementAccessible,
+
+		// Language-related functions
 		enhanceLanguageElements,
 		setupLanguageChangeObserver,
 		addLanguageKeyboardShortcuts

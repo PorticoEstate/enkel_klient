@@ -449,23 +449,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-    
-    // Function to announce language change to screen readers
-    function announceLangChange(lang) {
-        // Store the language preference immediately
-        sessionStorage.setItem('langChanging', 'true');
-        
-        // Announce language change to screen readers with the correct language
-        if (typeof announceToScreenReader === 'function') {
-            if (lang === 'no') {
-                // Announce in Norwegian
-                announceToScreenReader('Bytter språk til norsk. Vennligst vent...', 'assertive', 5000, 'no');
-            } else {
-                // Announce in English
-                announceToScreenReader('Changing language to English. Please wait...', 'assertive', 5000, 'en');
-            }
-        }
-    }
+    // Language change functionality is now provided by accessibility-helpers.js
 });
 			</script>
 

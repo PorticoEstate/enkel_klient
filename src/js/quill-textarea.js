@@ -317,10 +317,26 @@ var toolbarOptions = [
  */
 function announceToScreenReader(text)
 {
-	// Check if global accessibility helper function exists
-	if (typeof window.announceToScreenReader === 'function')
+	// Prevent recursive calls by checking if we're inside the global announceToScreenReader already
+	if (window._announcerRecursionGuard)
 	{
-		window.announceToScreenReader(text, 'polite');
+		return;
+	}
+
+	// Check if global accessibility helper function exists
+	if (typeof window.announceToScreenReader === 'function' &&
+		window.announceToScreenReader !== announceToScreenReader)
+	{
+		// Set recursion guard
+		window._announcerRecursionGuard = true;
+		try
+		{
+			window.announceToScreenReader(text, 'polite');
+		} finally
+		{
+			// Always clear the guard
+			window._announcerRecursionGuard = false;
+		}
 		return;
 	}
 

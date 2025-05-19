@@ -34,6 +34,8 @@ This document outlines the implementation of dynamic language handling in the we
 - Added a "Skip to Content" link that becomes visible on keyboard focus
 - Allows keyboard users to bypass the language switcher and navigation to access main content
 - Improves general accessibility for all keyboard users
+- Implemented in the base layout.twig file and inherited by all templates
+- Targets a single `main-content` ID that exists only in the layout.twig template
 
 ### 5. Integration with Accessibility Helpers
 
@@ -49,7 +51,7 @@ This document outlines the implementation of dynamic language handling in the we
 
 ### 7. Testing
 
-- Created a dedicated test page for language accessibility testing
+- Created dedicated test pages for language accessibility testing
 - Tests verify:
   - Proper HTML lang attribute changes
   - Correct screen reader announcements
@@ -84,6 +86,18 @@ This implementation satisfies the following WCAG 2.1 criteria:
 ### 6. Keyboard (Success Criterion 2.1.1, Level A)
 - All functionality is operable through a keyboard interface via the language links
 - The "Skip to Content" link helps keyboard users bypass repetitive navigation
+
+## Implementation Notes
+
+1. **Skip to Content Link Implementation**: 
+   - The skip link is implemented in the layout.twig file only
+   - All template files extend head.twig, which extends layout.twig, inheriting the single skip link
+   - This avoids duplicate skip links and ensures the proper page structure
+
+2. **Main Content Landmark**:
+   - The main content area with ID "main-content" is defined once in the layout.twig file
+   - Child templates inject their content into this container via the Twig {% block body %}{% endblock %} mechanism
+   - This ensures there's only one main landmark per page, following ARIA best practices
 
 ## Future Improvements
 

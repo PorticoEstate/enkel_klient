@@ -187,20 +187,7 @@ window.location.replace(`{{ str_base_url }}/helpdesk`);
 }
 var schema = 'helpdesk';
 
-// Email validation (instant feedback)
-try {
-    document.getElementById('email').addEventListener('input', function (e) {
-        const email = e.target.value;
-        const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-        if (!emailRegex.test(email)) {
-            e.target.classList.add('is-invalid');
-            document.getElementById('email-error').style.display = 'block';
-        } else {
-            e.target.classList.remove('is-invalid');
-            document.getElementById('email-error').style.display = 'none';
-        }
-    });
-} catch (error) {}
+
 
 	</script>
 

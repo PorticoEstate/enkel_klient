@@ -613,3 +613,22 @@ if (($allowed & $requiredRight) === 0) {
 - Store the role in the session or JWT token.
 
 ---
+
+## 18. Form Validation
+
+The application includes a reusable form validation framework that standardizes validation across all forms. 
+
+### 18.1 Key Features
+
+- Consistent validation behavior across all forms
+- Real-time client-side validation
+- Accessibility support for screen readers
+- Specialized validation for common field types (phone, email, location)
+
+### 18.2 Implementation
+
+- The core validation logic is in `src/js/form-validator.js`
+- Each form includes this shared validator
+- See the detailed [Form Validation Documentation](docs/form-validation.md)
+
+---

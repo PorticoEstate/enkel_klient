@@ -27,6 +27,9 @@ $(document).ready(function ()
 
 	// Add accessibility enhancements
 	initAccessibility();
+
+	// Setup form validation using common validator
+	setupFormValidation($('form'));
 });
 
 function markRequiredFields()

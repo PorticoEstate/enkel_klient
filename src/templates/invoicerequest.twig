@@ -92,7 +92,7 @@
 					<p>{{ __('form_info')| raw }}</p>
 				{% endif %}
 
-				<form method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate onsubmit="return validateForm();">
+				<form method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate onsubmit="return validateForm(this);">
 					<input type="hidden" value="{{ rand }}" name="randcheck"/>
 					<fieldset>
 						<legend class="sr-only">{{ __('contact_information') }}</legend>
@@ -299,41 +299,19 @@
 				console.error('Location code observer error:', error);
 			}
 			
-			// Add form validation function that will be called on submit
-			window.validateForm = function() {
-				let isValid = true;
-				
-				// Validate phone field has at least 8 digits
-				const phone = document.getElementById('phone').value;
-				const phoneDigitCount = phone.replace(/\D/g, '').length;
-				console.log('On submit - phone validation:', phoneDigitCount);
-				
-				if (phoneDigitCount < 8) {
-					// Invalid phone - Apply styling directly
-					const phoneElement = document.getElementById('phone');
-					phoneElement.classList.add('is-invalid');
-					phoneElement.classList.remove('is-valid');
-					document.getElementById('phone-error').style.display = 'block';
-					isValid = false;
-				}
-				
-				// Validate location_name field - requires a value in location_code hidden field
-				if (document.getElementById('location_name')) {
-					const locationName = document.getElementById('location_name').value;
-					const locationCode = document.getElementById('location_code').value;
-					console.log('On submit - location validation:', locationName, 'code:', locationCode);
-					
-					if (!locationCode || locationCode.trim() === '') {
-						// Invalid location - Apply styling directly
-						const locationElement = document.getElementById('location_name');
-						locationElement.classList.add('is-invalid');
-						locationElement.classList.remove('is-valid');
-						document.getElementById('location-error').style.display = 'block';
-						isValid = false;
-					}
-				}
-				
-				return isValid;
+			// Use the common form validation function from form-validator.js
+			// We no longer need this override since we pass the form context directly in onsubmit
+			// but we'll keep it for backwards compatibility
+			if (!window.originalValidateForm && window.validateForm) {
+				window.originalValidateForm = window.validateForm;
+			}
+			window.validateForm = function(formElement) {
+				// If formElement is provided, use it; otherwise find the form
+				const form = formElement || document.querySelector('form');
+				// Use the standard validateForm function from form-validator.js
+				return window.originalValidateForm ? 
+				       window.originalValidateForm(form) : 
+				       validateAllFields(form);
 			};
 		} catch (error) {
 			console.error('Form validation script error:', error);
@@ -355,6 +333,7 @@
 			<script src="{{ base_path }}/src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
 		{% endif %}
 		
+		<script src="{{ base_path }}/src/js/form-validator.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/invoicerequest.js?n={{ cache_refresh_token }}"></script>
 	{% endif %}
 {% endblock %}

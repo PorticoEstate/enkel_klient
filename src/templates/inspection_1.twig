@@ -40,7 +40,7 @@
 				</div>
 			{% endif %}
 			
-			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header">
+			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header" onsubmit="return validateForm(this);">
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
 					<legend class="sr-only">{{ __('inspection_details') }}</legend>
@@ -204,6 +204,7 @@
 		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/accessibility-helpers.js?n={{ cache_refresh_token }}"></script>
+		<script src="{{ base_path }}/src/js/form-validator.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/inspection_1.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/location.js?n={{ cache_refresh_token }}"></script>
 		<script>

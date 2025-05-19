@@ -4,6 +4,19 @@
  * Handles form validation, submission and file uploads for inspection form
  */
 
+// Document ready function for initialization
+document.addEventListener('DOMContentLoaded', function ()
+{
+	// Set up common form validation
+	if (typeof setupFormValidation === 'function')
+	{
+		setupFormValidation(document.getElementById('inspection_1'));
+	}
+
+	// Initialize any other form-specific functionality
+	initializeAccessibility();
+});
+
 // Form-specific utility functions
 function showDiv(divId, element)
 {
@@ -91,6 +104,38 @@ function announceChange(message)
 	{
 		liveRegion.textContent = '';
 	}, 3000);
+}
+
+// Initialize accessibility features for the form
+function initializeAccessibility()
+{
+	// Add ARIA attributes to required fields
+	const requiredFields = document.querySelectorAll('[required]');
+	requiredFields.forEach(field =>
+	{
+		field.setAttribute('aria-required', 'true');
+
+		// Set initial aria-invalid state
+		if (!field.hasAttribute('aria-invalid'))
+		{
+			field.setAttribute('aria-invalid', 'false');
+		}
+
+		// Create error divs for fields if they don't exist
+		const fieldId = field.id;
+		if (fieldId)
+		{
+			const errorId = fieldId + '-error';
+			if (!document.getElementById(errorId))
+			{
+				const errorDiv = document.createElement('div');
+				errorDiv.id = errorId;
+				errorDiv.className = 'invalid-feedback';
+				errorDiv.setAttribute('aria-live', 'assertive');
+				field.parentNode.appendChild(errorDiv);
+			}
+		}
+	});
 }
 
 function handleChangeSlukkeutstyr(src)

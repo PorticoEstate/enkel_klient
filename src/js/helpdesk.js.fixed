@@ -1,0 +1,116 @@
+/**
+ * Helpdesk form handler
+ * 
+ * Handles form validation, rich text editing, submission and file uploads for helpdesk tickets
+ * 
+ * Updated May 2025 - Fixed infinite recursion in validation functions
+ */
+
+// Global variables
+var redirect_action = `${strBaseURL}/helpdesk`;
+var fileUploader = null;
+
+$(document).ready(function ()
+{
+	// set focus on first input field
+	try {
+		document.getElementById("location_name").focus();
+	}
+	catch (error) {
+		try {
+			document.getElementById("phone").focus();
+		}
+		catch (error) {
+			// If no input field can be focused, no action needed
+		}
+	}
+
+	// Add aria attributes and visual indicators to all required fields
+	markRequiredFields();
+
+	// Initialize file uploader if enabled
+	initializeFileUploader();
+
+	// Use shared form validation
+	setupFormValidation($('form'));
+
+	// Initialize Quill editor if the target exists
+	initializeQuillEditor();
+
+	// Enhance keyboard accessibility
+	enhanceKeyboardAccessibility();
+});
+
+/**
+ * Validate a single field in the form
+ * @param {jQuery} $field - The field to validate
+ * @returns {boolean} - True if valid, false if invalid
+ * 
+ * @deprecated Use the common validateField function from form-validator.js instead
+ */
+function validateField($field)
+{
+	// Prevent infinite recursion when the global validateField is used
+	// Store a reference to our original call context
+	if (!window._inHelpdeskValidateField) {
+		// Set flag to indicate we're inside helpdesk's validateField
+		window._inHelpdeskValidateField = true;
+		
+		try {
+			// Only call global validateField if it exists and is not this function
+			if (window.validateField && window.validateField !== validateField) {
+				return window.validateField($field);
+			} else {
+				return $field[0].checkValidity();
+			}
+		} finally {
+			// Always clear the flag when done
+			window._inHelpdeskValidateField = false;
+		}
+	} else {
+		// We're already inside a validateField call, use native validation
+		return $field[0].checkValidity();
+	}
+}
+
+/**
+ * Validate all fields in the form
+ * @returns {boolean} - True if all fields are valid, false if any are invalid
+ * 
+ * @deprecated Use the common validateAllFields function from form-validator.js instead
+ */
+function validateAllFields()
+{
+	// Prevent infinite recursion when the global validateAllFields is used
+	// Store a reference to our original call context
+	if (!window._inHelpdeskValidateAllFields) {
+		// Set flag to indicate we're inside helpdesk's validateAllFields
+		window._inHelpdeskValidateAllFields = true;
+		
+		try {
+			// Only call global validateAllFields if it exists and is not this function
+			if (window.validateAllFields && window.validateAllFields !== validateAllFields) {
+				return window.validateAllFields($('form'));
+			} else {
+				// Fallback validation logic
+				return true;
+			}
+		} finally {
+			// Always clear the flag when done
+			window._inHelpdeskValidateAllFields = false;
+		}
+	} else {
+		// We're already inside a validateAllFields call, use fallback
+		return true;
+	}
+}
+
+/**
+ * Update accessible status for screen reader announcements
+ * @param {string} message - The message to announce
+ */
+function updateScreenReaderStatus(message)
+{
+	// Use an aria-live region for screen reader announcements
+	$('#accessibility-status').text(message);
+}

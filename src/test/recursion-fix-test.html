@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recursion Fix Test</title>
+    <link href="../../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" type="text/css" rel="stylesheet">
+
+    <script src="../../vendor/components/jquery/jquery.min.js"></script>
+    
+    <script>
+        // Enable debugging for validation
+        window.FORM_VALIDATOR_CONFIG = {
+            debug: true,
+            version: '1.2.0',
+            logPrefix: '[FormValidator]'
+        };
+        
+        // Translations for testing
+        var translations = {
+            form_validation_errors: 'Vennligst rett følgende feil:',
+            invalid_email: 'Vennligst skriv inn en gyldig e-postadresse',
+            field_required: 'Dette feltet er påkrevet'
+        };
+    </script>
+    
+    <!-- Load both validation libraries to test integration -->
+    <script src="../js/accessibility-helpers.js"></script>
+    <script src="../js/form-accessibility.js"></script>
+    <script src="../js/form-validator.js"></script>
+    <script src="../js/form-debug.js"></script>
+    
+    <style>
+        body {
+            padding: 2rem;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .required-field {
+            color: #dc3545;
+            margin-left: 3px;
+        }
+        h1 {
+            margin-bottom: 1.5rem;
+        }
+        .test-description {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-left: 5px solid #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recursion Fix Test</h1>
+        
+        <div class="test-description">
+            <p>This page tests the fix for the recursion issue that was occurring between form-accessibility.js and form-validator.js.</p>
+            <p>The test automatically runs when the page loads. Check the console for test results.</p>
+        </div>
+        
+        <form id="test-form" class="mb-5" method="post" action="#" onsubmit="return validateForm(this);">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name <span class="required-field">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                <div id="name-error" class="invalid-feedback">Please enter your name</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email <span class="required-field">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <div id="email-error" class="invalid-feedback">Please enter a valid email</div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        
+        <div class="card">
+            <div class="card-header">Test Results</div>
+            <div class="card-body">
+                <pre id="test-results">Running tests...</pre>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        $(document).ready(function() {
+            // Test function to check for recursion
+            function runRecursionTest() {
+                const results = [];
+                let testsPassed = true;
+                
+                try {
+                    results.push("✅ Page loaded successfully with both libraries");
+                    
+                    // Test 1: Check that both libraries are loaded
+                    if (typeof validateForm === 'function' && typeof enhanceFormValidation === 'function') {
+                        results.push("✅ Both validation libraries detected");
+                    } else {
+                        results.push("❌ One or both validation libraries not detected");
+                        testsPassed = false;
+                    }
+                    
+                    // Test 2: Try validating an invalid form
+                    const $form = $('#test-form');
+                    const validationResult = validateForm(document.getElementById('test-form'));
+                    
+                    results.push("✅ Form validation executed without recursion");
+                    results.push(`📋 Validation result: ${validationResult ? 'Form valid' : 'Form invalid (expected)'}`);
+                    
+                    // Test 3: Check that validating flag is cleared
+                    if ($form.data('validating') === false || $form.data('validating') === undefined) {
+                        results.push("✅ Validation flag properly cleared after validation");
+                    } else {
+                        results.push("❌ Validation flag not cleared - potential issue");
+                        testsPassed = false;
+                    }
+                    
+                    // Overall result
+                    results.push("");
+                    results.push(testsPassed ? "🎉 All recursion prevention tests passed!" : "⚠️ Some tests failed");
+                    
+                } catch (error) {
+                    results.push(`❌ Test failed with error: ${error.message}`);
+                    console.error('Test error:', error);
+                }
+                
+                // Display results
+                document.getElementById('test-results').textContent = results.join('\n');
+            }
+            
+            // Enable debugging
+            if (typeof toggleFormDebug === 'function') {
+                toggleFormDebug(true, { console: true });
+            }
+            
+            // Run the test
+            setTimeout(runRecursionTest, 500);
+        });
+    </script>
+</body>
+</html>

@@ -21,6 +21,9 @@ abstract class BaseFormController
     // Common form rendering
     protected function renderForm(Response $response, string $template, array $data = []): Response
     {
+        // Add common form validation framework to all forms
+        $data['include_form_validator'] = true;
+        
         return $this->twig->render($response, $template, $data);
     }
 

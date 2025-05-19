@@ -48,7 +48,7 @@
 			{% else %}
 				<p>{{ __('form_info')|raw }}</p>
 			{% endif %}
-			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header">
+			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header" onsubmit="return validateForm(this);">
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				{% if user_name %}
 					<p>{{ __('name') }}:
@@ -225,24 +225,7 @@ try {
 document.getElementById("phone").focus();
 } catch (error) {}{% endif %}
 
-// Email validation
-try {
-document.getElementById('email').addEventListener('input', function (e) {
-const email = e.target.value;
-const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-
-if (! emailRegex.test(email)) {
-e.target.classList.add('is-invalid');
-e.target.setAttribute('aria-invalid', 'true');
-document.getElementById('email-error').textContent = '{{ __("invalid_email") }}';
-}
-else {
-e.target.classList.remove('is-invalid');
-e.target.setAttribute('aria-invalid', 'false');
-document.getElementById('email-error').textContent = '';
-}
-});
-} catch (error) {}
+// Email validation will be handled by the common form validator
 
 // Update status for screen readers
 function updateScreenReaderStatus(message) {
@@ -261,6 +244,7 @@ function updateScreenReaderStatus(message) {
 		<script src="{{ base_path }}/src/js/autocomplete/autoComplete.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/location.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
+		<script src="{{ base_path }}/src/js/form-validator.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/nokkelbestilling.js?n={{ cache_refresh_token }}"></script>
 	{% endif %}
 {% endblock %}

@@ -4,7 +4,24 @@
  * 
  * This script works with accessibility-helpers.js to provide a
  * consistent experience for screen reader users across all forms
+ * 
+ * Updated May 2025 - Fixed recursion issues with form-validator.js
  */
+
+// Debug logging configuration
+const FORM_A11Y_CONFIG = {
+	debug: false,  // Set to true to enable debug logging
+	logPrefix: '[FormA11y]'
+};
+
+// Debug logger function
+function formA11yLog(...args)
+{
+	if (FORM_A11Y_CONFIG && FORM_A11Y_CONFIG.debug)
+	{
+		console.log(FORM_A11Y_CONFIG.logPrefix, ...args);
+	}
+}
 
 document.addEventListener('DOMContentLoaded', function ()
 {
@@ -34,8 +51,18 @@ function initializeAllForms()
 		// Create status element for this form
 		createFormStatusElement(form);
 
-		// Add form validation events
-		enhanceFormValidation(form);
+		// Add form validation events - only if not using form-validator.js
+		const usesFormValidator = form.hasAttribute('onsubmit') &&
+			form.getAttribute('onsubmit').includes('validateForm');
+
+		if (!usesFormValidator)
+		{
+			formA11yLog('Enhancing form without validateForm attribute:', form.id || 'unnamed form');
+			enhanceFormValidation(form);
+		} else
+		{
+			formA11yLog('Skipping validation for form already using form-validator.js:', form.id || 'unnamed form');
+		}
 
 		// Add submit announcement
 		enhanceFormSubmission(form);
@@ -135,6 +162,15 @@ function enhanceFormValidation(form)
 	// Enhance form validation on submit
 	form.addEventListener('invalid', function (e)
 	{
+		// Only handle events that originated from the form itself, not from the fields
+		if (e.target !== form)
+		{
+			formA11yLog('Ignoring invalid event from field:', e.target.id || 'unnamed field');
+			return;
+		}
+
+		formA11yLog('Handling form-level invalid event:', form.id || 'unnamed form');
+
 		// Prevent default validation
 		e.preventDefault();
 
@@ -143,12 +179,17 @@ function enhanceFormValidation(form)
 
 		if (invalidField)
 		{
+			formA11yLog('Found invalid field:', invalidField.id || 'unnamed field');
+
 			// Focus the first invalid field
 			invalidField.focus();
 
-			// Trigger its invalid event
-			const event = new Event('invalid', { bubbles: true, cancelable: true });
-			invalidField.dispatchEvent(event);
+			// We don't need to trigger another event here - that was causing the recursion
+			// Instead, we'll just make sure the field's validation state is visible
+			if (invalidField.classList)
+			{
+				invalidField.classList.add('is-invalid');
+			}
 		}
 	}, true);
 }

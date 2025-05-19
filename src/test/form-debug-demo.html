@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Validation Debug Demo</title>
+    <link href="../css/common.css" rel="stylesheet">
+    <link href="../../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Load dependencies -->
+    <script src="../../vendor/components/jquery/jquery.min.js"></script>
+    <script src="../js/accessibility-helpers.js"></script>
+    <script src="../js/form-accessibility.js"></script>
+    <script src="../js/form-validator.js"></script>
+    <script src="../js/form-debug.js"></script>
+    
+    <!-- Load demo script -->
+    <script src="form-debug-demo.js"></script>
+    
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .invalid-feedback {
+            display: none;
+            color: #dc3545;
+        }
+        input.is-invalid + .invalid-feedback {
+            display: block;
+        }
+        input.is-valid {
+            border-color: #198754;
+        }
+        input.is-invalid {
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Form Validation Debug Demo</h1>
+        
+        <div class="debug-panel">
+            <h2>Debug Controls</h2>
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="debugSwitch">
+                <label class="form-check-label" for="debugSwitch">Enable Debug Logging</label>
+            </div>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="checkDebugStatus()">Check Debug Status</button>
+                <span id="debugStatus" class="ms-2 badge bg-secondary">Disabled</span>
+            </div>
+            <div class="mt-2 small text-muted">
+                Open browser console (F12) to see debug logs when enabled
+            </div>
+        </div>
+        
+        <h2>Test Form</h2>
+        <p>This form demonstrates validation debugging. Open your browser console to see the logs.</p>
+        
+        <form id="debug-demo-form" onsubmit="return validateForm(this);">
+            <div class="form-group">
+                <label for="name">Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                <div id="name-error" class="invalid-feedback">Please enter your name</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <div id="email-error" class="invalid-feedback">Please enter a valid email address</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="phone" name="phone" required>
+                <div id="phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="postal_code">Postal Code <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                <div id="postal_code-error" class="invalid-feedback">Please enter a valid postal code</div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-secondary ms-2" id="validateButton">Validate Now</button>
+        </form>
+        
+        <div class="mt-4">
+            <h3>Validation Events</h3>
+            <div class="bg-light p-3" id="validationLog" style="max-height: 200px; overflow-y: auto;">
+                <div class="text-muted">No validation events yet</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // UI for debugging
+        $(document).ready(function() {
+            // Debug toggle
+            $('#debugSwitch').on('change', function() {
+                toggleFormDebug(this.checked, { console: true });
+                updateDebugStatus();
+                logEvent(this.checked ? 'Debug mode enabled' : 'Debug mode disabled');
+            });
+            
+            // Validate button
+            $('#validateButton').on('click', function() {
+                const isValid = validateForm(document.getElementById('debug-demo-form'));
+                logEvent(`Manual validation triggered: ${isValid ? 'Valid' : 'Invalid'}`);
+            });
+            
+            // Field validation on input
+            $('#debug-demo-form input').on('input', function() {
+                if (getFormDebugStatus().enabled) {
+                    validateField(this);
+                    logEvent(`Field '${this.id}' validated on input`);
+                }
+            });
+            
+            // Initial setup
+            updateDebugStatus();
+        });
+        
+        // Update debug status UI
+        function updateDebugStatus() {
+            const status = getFormDebugStatus();
+            const statusEl = document.getElementById('debugStatus');
+            
+            if (status.enabled) {
+                statusEl.textContent = 'Enabled';
+                statusEl.className = 'ms-2 badge bg-success';
+            } else {
+                statusEl.textContent = 'Disabled';
+                statusEl.className = 'ms-2 badge bg-secondary';
+            }
+        }
+        
+        // Check and display debug status
+        function checkDebugStatus() {
+            const status = getFormDebugStatus();
+            
+            alert(`Debug Status:
+- Enabled: ${status.enabled ? 'Yes' : 'No'}
+- Validator: ${status.validator ? 'Enabled' : 'Disabled'}
+- Accessibility: ${status.a11y ? 'Enabled' : 'Disabled'}`);
+            
+            logEvent('Debug status checked: ' + JSON.stringify(status));
+            return status;
+        }
+        
+        // Log validation events to UI
+        function logEvent(message) {
+            const log = document.getElementById('validationLog');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            
+            entry.innerHTML = `<strong>${time}</strong>: ${message}`;
+            
+            if (log.firstChild) {
+                log.insertBefore(entry, log.firstChild);
+            } else {
+                log.appendChild(entry);
+            }
+            
+            // Clear "no events" message if present
+            const noEvents = log.querySelector('.text-muted');
+            if (noEvents) {
+                log.removeChild(noEvents);
+            }
+            
+            // Limit entries
+            if (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>

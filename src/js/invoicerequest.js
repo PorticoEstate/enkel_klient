@@ -228,72 +228,8 @@ function enhanceKeyboardAccessibility()
 	// We rely on the natural tab order of elements for keyboard navigation
 	// No need to add tabindex attributes as it can disrupt natural flow
 
-	// Add input validation on blur and input
-	$('input, textarea, select').on('blur input', function ()
-	{
-		if ($(this).attr('required'))
-		{
-			validateField($(this));
-		}
-	});
-}
-
-function validateField($field)
-{
-	var fieldId = $field.attr('id');
-	var errorId = fieldId + '-error';
-	var isValid = true;
-
-	// Special validation for phone field - require at least 8 digits
-	if (fieldId === 'phone')
-	{
-		var phone = $field.val();
-		var digitCount = phone.replace(/\D/g, '').length;
-		console.log('JS validation - phone digit count:', digitCount);
-
-		isValid = digitCount >= 8;
-	}
-	// Special validation for location_name - requires a value in location_code hidden field
-	else if (fieldId === 'location_name')
-	{
-		var locationName = $field.val();
-		var locationCode = $('#location_code').val();
-		console.log('JS validation - location name:', locationName, 'code:', locationCode);
-
-		isValid = locationName && locationName.trim() !== '' && locationCode && locationCode.trim() !== '';
-	}
-	else
-	{
-		// Default HTML5 validation for other fields
-		isValid = $field[0].checkValidity();
-	}
-
-	if (!isValid)
-	{
-		$field.addClass('is-invalid').removeClass('is-valid');
-		$('#' + errorId).show();
-	} else
-	{
-		$field.removeClass('is-invalid').addClass('is-valid');
-		$('#' + errorId).hide();
-	}
-
-	return isValid;
-}
-
-function validateAllFields()
-{
-	var allValid = true;
-	$('form input[required], form select[required], form textarea[required]').each(function ()
-	{
-		var fieldValid = validateField($(this));
-		if (!fieldValid)
-		{
-			allValid = false;
-		}
-	});
-
-	return allValid;
+	// Use shared form validation
+	setupFormValidation($('form'));
 }
 
 function updateScreenReaderStatus(message)
@@ -327,7 +263,7 @@ $('form').on('submit', function (e)
 	e.preventDefault();
 
 	// Check form validity using our custom validation
-	var formValid = validateAllFields();
+	var formValid = validateAllFields($(this));
 
 	if (!formValid)
 	{

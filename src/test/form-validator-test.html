@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Validator Test</title>
+    <link href="../css/common.css" rel="stylesheet">
+    <link href="../../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="../../vendor/components/jquery/jquery.min.js"></script>
+    <script src="../js/accessibility-helpers.js"></script>
+    <script src="../js/form-accessibility.js"></script>
+    <script src="../js/form-validator.js"></script>
+    <script src="../js/form-debug.js"></script>
+    
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .required-field {
+            color: #dc3545;
+            margin-left: 3px;
+        }
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Form Validation Test</h1>
+        
+        <div class="debug-panel">
+            <h3>Debug Controls</h3>
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="debugSwitch">
+                <label class="form-check-label" for="debugSwitch">Enable Debug Logging</label>
+            </div>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="checkDebugStatus()">Check Debug Status</button>
+                <span id="debugStatus" class="ms-2 badge bg-secondary">Disabled</span>
+            </div>
+            <div class="mt-2 small text-muted">
+                Open browser console (F12) to see debug logs when enabled
+            </div>
+        </div>
+        
+        <form id="test-form" method="post" action="#" onsubmit="return validateForm(this);">
+            <div class="required-fields-explanation mb-3">
+                <p>
+                    <span class="required-field" aria-hidden="true">*</span>
+                    Indicates required fields
+                </p>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="name">Full Name <span class="required-field">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <div id="name-error" class="invalid-feedback">Please enter your full name</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="email">Email Address <span class="required-field">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                        <div id="email-error" class="invalid-feedback">Please enter a valid email address</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="phone">Phone Number <span class="required-field">*</span></label>
+                        <input type="text" class="form-control" id="phone" name="phone" required>
+                        <div id="phone-error" class="invalid-feedback">Please enter a valid phone number (minimum 8 digits)</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="postal_code">Postal Code <span class="required-field">*</span></label>
+                        <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                        <div id="postal_code-error" class="invalid-feedback">Please enter a valid postal code (4 digits)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="birthdate">Date of Birth</label>
+                        <input type="date" class="form-control" id="birthdate" name="birthdate">
+                        <div id="birthdate-error" class="invalid-feedback">Please enter a valid date</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="personal_id">Personal ID Number <span class="required-field">*</span></label>
+                        <input type="text" class="form-control" id="personal_id" name="personal_id" required 
+                               data-error-message="Please enter a valid Norwegian personal ID number (11 digits)">
+                        <div id="personal_id-error" class="invalid-feedback"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="comments">Comments</label>
+                <textarea class="form-control" id="comments" name="comments" rows="3"></textarea>
+                <div id="comments-error" class="invalid-feedback">Please enter valid comments</div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit Form</button>
+        </form>
+    </div>
+    
+    <script>
+        // Test-specific scripts
+        $(document).ready(function() {
+            // Set custom translations for testing
+            translations = {
+                form_validation_errors: 'Please fix the following errors:',
+                invalid_email: 'Please enter a valid email address',
+                invalid_phone: 'Please enter a valid phone number (minimum 8 digits)',
+                invalid_postal: 'Please enter a valid postal code (4 digits)',
+                invalid_date: 'Please enter a valid date',
+                field_required: 'This field is required'
+            };
+            
+            // Add input validation on blur
+            $('#test-form input, #test-form textarea').on('blur', function() {
+                validateField($(this));
+            });
+            
+            // Set up debug toggle
+            $('#debugSwitch').on('change', function() {
+                toggleFormDebug(this.checked, { console: true });
+                updateDebugStatus();
+            });
+            
+            // Initial debug status
+            updateDebugStatus();
+        });
+        
+        // Update the debug status indicator
+        function updateDebugStatus() {
+            const status = getFormDebugStatus();
+            const statusEl = document.getElementById('debugStatus');
+            
+            if (status.enabled) {
+                statusEl.textContent = 'Enabled';
+                statusEl.className = 'ms-2 badge bg-success';
+            } else {
+                statusEl.textContent = 'Disabled';
+                statusEl.className = 'ms-2 badge bg-secondary';
+            }
+        }
+        
+        // Check and display debug status
+        function checkDebugStatus() {
+            const status = getFormDebugStatus();
+            console.log('Current Debug Status:', status);
+            
+            alert(`Debug Status:
+- Enabled: ${status.enabled ? 'Yes' : 'No'}
+- Validator: ${status.validator ? 'Enabled' : 'Disabled'}
+- Accessibility: ${status.a11y ? 'Enabled' : 'Disabled'}`);
+            
+            return status;
+        }
+    </script>
+</body>
+</html>

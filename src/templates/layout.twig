@@ -255,9 +255,9 @@
 		<a href="#main-content" class="skip-link">{{ __('skip_to_content') }}</a>
 		
 		<!-- Language Switcher -->
-		<div class="language-switcher" style="position:fixed;top:10px;right:20px;z-index:2000;" role="navigation" aria-label="{{ __('language_selection') }}">
-			<a href="?lang=no" style="margin-right:8px;" {% if current_lang == 'no' %}aria-current="true" class="active"{% endif %} lang="no" hreflang="no" onclick="announceLangChange('no')">Norsk</a> |
-			<a href="?lang=en" style="margin-left:8px;" {% if current_lang == 'en' %}aria-current="true" class="active"{% endif %} lang="en" hreflang="en" onclick="announceLangChange('en')">English</a>
+		<div class="language-switcher" role="navigation" aria-label="{{ __('language_selection') }}">
+			<a href="?lang=no" {% if current_lang == 'no' %}aria-current="true" class="active"{% endif %} lang="no" hreflang="no" onclick="announceLangChange('no')">Norsk</a> |
+			<a href="?lang=en" {% if current_lang == 'en' %}aria-current="true" class="active"{% endif %} lang="en" hreflang="en" onclick="announceLangChange('en')">English</a>
 		</div>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>

@@ -5,6 +5,10 @@
 /* ===== Accessibility Styles ===== */
 /* Language switcher styles */
 .language-switcher {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    z-index: 2000;
     padding: 5px 10px;
     border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.9);
@@ -17,6 +21,7 @@
     font-weight: normal;
     padding: 2px 5px;
     border-radius: 3px;
+    margin: 0 4px;
 }
 
 .language-switcher a.active {
@@ -239,4 +244,33 @@ legend {
 .required-field {
     color: #9a0000;
     font-weight: bold;
+}
+
+/* Form container padding to prevent header overlap with language switcher */
+.container main {
+    padding-top: 40px; /* Provides space for the language switcher */
+}
+
+/* Ensure main headings don't overlap with language switcher */
+main h1:first-child, 
+main h2:first-child {
+    margin-top: 10px;
+    padding-top: 5px;
+}
+
+/* Responsive adjustments for language switcher */
+@media(max-width: 768px) {
+    .language-switcher {
+        position: relative;
+        top: 0;
+        right: 0;
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .container main {
+        padding-top: 10px; /* Less padding needed on mobile as switcher is not absolute positioned */
+    }
 }

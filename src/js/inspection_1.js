@@ -221,8 +221,11 @@ $('#inspection_1').on('submit', function (e)
 			errorList.appendChild(errorItem);
 		});
 
-		// Clear and update summary
-		errorSummary.innerHTML = '<h2>Please fix the following errors:</h2>';
+		// Clear and update summary - use translation if available
+		const errorHeading = typeof translations !== 'undefined' && translations.form_validation_errors
+			? translations.form_validation_errors
+			: 'Please fix the following errors:';
+		errorSummary.innerHTML = '<h2>' + errorHeading + '</h2>';
 		errorSummary.appendChild(errorList);
 
 		// Find the first visible invalid field and focus it

@@ -5,6 +5,16 @@
 	<!-- Main Quill library -->
 	<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 	<script src="{{ base_path }}/src/js/quill-textarea.js?n={{ cache_refresh_token }}"></script>
+	
+	<!-- JS translations -->
+	<script>
+		// Create translations object for JavaScript
+		var translations = {
+			form_validation_errors: "{{ __('form_validation_errors', 'form') }}",
+			uploading_files: "{{ __('uploading_files', 'form') }}",
+			form_submitted: "{{ __('form_submitted', 'form') }}"
+		};
+	</script>
 
 	<!-- Theme included stylesheets -->
 	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">

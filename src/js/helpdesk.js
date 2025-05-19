@@ -165,6 +165,12 @@ $('form').on('submit', function (e)
 			// Focus on first visible invalid field
 			invalidFields[0].focus();
 			invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+			// Announce error for screen readers - use translation if available
+			const errorMessage = typeof translations !== 'undefined' && translations.form_validation_errors
+				? translations.form_validation_errors
+				: 'There are errors in the form. Please correct them and try again.';
+			createAccessibleAlert(errorMessage, 'danger');
 		} else
 		{
 			// Check for hidden invalid fields

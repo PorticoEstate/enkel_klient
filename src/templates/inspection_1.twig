@@ -1,6 +1,18 @@
 {% extends 'head.twig' %}
 
 {% block body %}
+	<script src="{{ base_path }}/vendor/components/jquery/jquery.min.js?n={{ cache_refresh_token }}"></script>
+	
+	<!-- JS translations -->
+	<script>
+		// Create translations object for JavaScript
+		var translations = {
+			form_validation_errors: "{{ __('form_validation_errors', 'form') }}",
+			uploading_files: "{{ __('uploading_files', 'form') }}",
+			form_submitted: "{{ __('form_submitted', 'form') }}"
+		};
+	</script>
+
 	<link href="{{ base_path }}/src/css/jquery-ui.min.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">

@@ -149,8 +149,13 @@ $('#nokkelbestilling').on('submit', function (e)
 
 	if (!formValid || !fileInputValid)
 	{
-		// Update form status for screen readers
-		updateScreenReaderStatus('{{ __("form_has_errors") }}');
+		// Update form status for screen readers - use translation if available
+		const errorMessage = typeof translations !== 'undefined' && translations.form_validation_errors
+			? translations.form_validation_errors
+			: 'There are errors in the form. Please correct them and try again.';
+
+		updateScreenReaderStatus(errorMessage);
+		createAccessibleAlert(errorMessage, 'danger');
 
 		// Find invalid fields (excluding file input)
 		var invalidFields = $(form).find(':invalid').not('#fileupload').filter(':visible');
@@ -508,4 +513,30 @@ function updateScreenReaderStatus(message)
 	{
 		statusEl.textContent = message;
 	}
+}
+
+/**
+ * Creates an accessible alert message
+ * @param {string} message - The message to display
+ * @param {string} type - The type of alert (info, success, warning, danger)
+ */
+function createAccessibleAlert(message, type)
+{
+	// Remove existing alerts
+	$('.alert-accessible').remove();
+
+	// Create alert with proper ARIA role
+	var $alert = $('<div>', {
+		'class': 'alert alert-' + (type || 'info') + ' alert-accessible',
+		'role': 'alert',
+		'aria-live': 'assertive'
+	}).text(message);
+
+	// Add to page
+	$('form').before($alert);
+
+	// Scroll to alert
+	$('html, body').animate({
+		scrollTop: $alert.offset().top - 100
+	}, 200);
 }

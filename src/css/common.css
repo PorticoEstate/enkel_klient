@@ -372,6 +372,17 @@ body {
 
 /* Mobile view */
 @media(max-width: 768px) {
+    body {
+        font-size: 110%;
+      }
+      
+    /* Økt treffområde for interaktive elementer */
+    button, a, input[type="button"], input[type="submit"] {
+    padding: 12px;
+    min-height: 44px;
+    min-width: 44px;
+    }
+     
     .sidebar {
         margin-left: -250px;
         padding-top: 60px;

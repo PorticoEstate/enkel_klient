@@ -339,8 +339,11 @@ $('form').on('submit', function (e)
 			// Focus on first invalid field
 			invalidFields.first().focus();
 
-			// Announce error for screen readers
-			createAccessibleAlert('There are errors in the form. Please correct them and try again.', 'danger');
+			// Announce error for screen readers - use translation if available
+			const errorMessage = typeof translations !== 'undefined' && translations.form_validation_errors
+				? translations.form_validation_errors
+				: 'There are errors in the form. Please correct them and try again.';
+			createAccessibleAlert(errorMessage, 'danger');
 
 			return false;
 		}

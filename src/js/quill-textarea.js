@@ -136,16 +136,22 @@ function quilljs_textarea(elem = null, options = null)
 			// Enable keyboard navigation
 			if (!options.keyboard)
 			{
+				// Replace the existing keyboard options section with this implementation:
 				options.keyboard = {
-					bindings: {
-						tab: {
-							key: 9,
-							handler: function ()
-							{
-								return true; // Allow default browser behavior
-							}
+				  bindings: {
+					tab: {
+					  key: 9,
+					  handler: function(range, context) {
+						// If shift isn't pressed and we're not in a code block
+						if (!context.event.shiftKey && !context.format.code-block) {
+						  // Don't handle tab within the editor - let it move to the next element
+						  return true;
 						}
+						// For shift+tab or tabs in code blocks, let Quill handle it normally
+						return false;
+					  }
 					}
+				  }
 				};
 			}
 
@@ -583,17 +589,25 @@ $(document).ready(function ()
 	}
 
 	// Handle tab key navigation properly within the editor
-	$(document).on('keydown', '.ql-editor', function (e)
-	{
-		// If Tab key is pressed without shift
-		if (e.key === 'Tab' && !e.shiftKey)
-		{
-			if (!e.target.closest('.ql-toolbar')) 
-			{
-				// Let default tab behavior happen (move to next focusable element)
-				return true;
-			}
+	// Replace the existing keydown handler with this improved version:
+	$(document).on('keydown', '.ql-editor', function(e) {
+	  // If Tab key is pressed without shift
+	  if (e.key === 'Tab' && !e.shiftKey) {
+		// This is the critical part - stop the editor from handling it
+		e.preventDefault();
+		
+		// Find the next focusable element and focus it
+		const focusable = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+		const form = $(this).closest('form');
+		const focusableElements = form.find(focusable).filter(':visible');
+		
+		const currentIndex = focusableElements.index($(this).closest('.quill-editor-container'));
+		if (currentIndex > -1 && currentIndex < focusableElements.length - 1) {
+		  focusableElements.eq(currentIndex + 1).focus();
 		}
+		
+		return false;
+	  }
 	});
 
 	// Add form validation support

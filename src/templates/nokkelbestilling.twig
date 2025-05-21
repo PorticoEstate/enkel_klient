@@ -85,7 +85,9 @@
 							<i class="fas fa-search" aria-hidden="true"></i>
 							{{ __('address') }}
 						</label>
-						<input type="text" id="location_name" name="location_name" class="form-control" autocomplete="off" required="required" aria-required="true" aria-describedby="location-selection-instructions" aria-controls="location-selection-results" aria-expanded="false" aria-invalid="false" />
+						<input type="text" id="location_name" name="location_name" class="form-control" autocomplete="street-address" 
+									required="required" aria-required="true" aria-describedby="location-error" 
+									aria-haspopup="listbox" aria-expanded="false"/>
 						<div id="location-selection-instructions" class="sr-only">{{ __('type_to_search_locations') }}</div>
 						<div id="location-selection-results" class="selection" role="listbox" aria-labelledby="location_name"></div>
 						<input type="hidden" id="location_code" name="location_code">
@@ -197,7 +199,7 @@ window.location.replace(`{{ base_path }}/nokkelbestilling`);
 
 var schema = 'nokkelbestilling';
 
-// set field id="subject" to text id="location_name" when location_code is set by autocomplete
+
 var summarytext = '{{ __('key_order_summary') }}';
 $('#subject').val(summarytext);{% if not location_code %}
 // Listen for both change and input events

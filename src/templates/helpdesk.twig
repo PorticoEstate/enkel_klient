@@ -90,7 +90,9 @@
 								{{ __('address') }}
 								<span class="required-field" aria-hidden="true">*</span>
 							</label>
-							<input type="text" id="location_name" name="location_name" class="form-control" autocomplete="off" required="required" aria-required="true" aria-describedby="location-error"/>
+							<input type="text" id="location_name" name="location_name" class="form-control" autocomplete="street-address" 
+									required="required" aria-required="true" aria-describedby="location-error" 
+									aria-haspopup="listbox" aria-expanded="false"/>
 							<div class="selection"></div>
 							<div id="location-error" class="invalid-feedback">Please enter a valid address</div>
 							<input type="hidden" id="location_code" name="location_code">

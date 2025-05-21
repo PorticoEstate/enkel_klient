@@ -49,6 +49,7 @@ return [
         'text_spacing_controls' => 'Text Spacing Controls',
         'increase_text_spacing' => 'Increase Text Spacing',
         'reset_text_spacing' => 'Reset Text Spacing',
+        'press_esc_to_close' => 'Press Escape key to close dropdown',
         'subject' => 'Subject',
         'subject_help' => 'Enter a brief subject for your invoice request',
         'summary' => 'Summary',

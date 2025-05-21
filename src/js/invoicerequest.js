@@ -71,6 +71,32 @@ function initializeDatepicker()
 		changeYear: true,
 		showButtonPanel: true,
 		yearRange: "-5:+5", // Allow 5 years in past and 5 years in future
+		
+		// WCAG 1.4.13: Ensure content can be dismissed, hovered over, and persistent
+		beforeShow: function(input, inst) {
+			// Add aria attributes for WCAG 1.4.13 compliance
+			setTimeout(function() {
+				// Add instruction for dismissal
+				if (!$('#datepicker-instructions').length) {
+					$('<div>', {
+						id: 'datepicker-instructions',
+						'class': 'sr-only',
+						'aria-live': 'polite'
+					})
+					.text('Press Escape to close the date picker without making a selection.')
+					.appendTo('#ui-datepicker-div');
+				}
+				
+				// Make datepicker dismissible with Escape key
+				$(document).on('keydown.datepicker', function(e) {
+					if (e.key === "Escape") {
+						$("#invoice_date").datepicker('hide');
+						$("#invoice_date").focus();
+						e.preventDefault();
+					}
+				});
+			}, 100);
+		},
 
 		// Format the datepicker to show month and year only
 		onClose: function (dateText, inst)
@@ -88,6 +114,9 @@ function initializeDatepicker()
 			})
 				.text('Selected date: ' + $(this).val())
 				.appendTo('body');
+				
+			// Remove the event handler when datepicker is closed
+			$(document).off('keydown.datepicker');
 
 			// Validate field
 			validateField($(this));
@@ -212,16 +241,39 @@ function initializeFileUploader()
 
 function enhanceKeyboardAccessibility()
 {
-	// Add keyboard support for autocomplete results
-	$('.autoComplete_wrapper ul').on('keydown', function (e)
-	{
+	// Add keyboard support for autocomplete results with WCAG 1.4.13 compliance
+	$(document).on('keydown', '.autoComplete_wrapper ul, .autoComplete_result', function (e) {
 		var key = e.which || e.keyCode;
 
 		// Enter or Space: select item
-		if (key === 13 || key === 32)
-		{
+		if (key === 13 || key === 32) {
 			$(document.activeElement).click();
 			e.preventDefault();
+		}
+		
+		// Escape key: dismiss dropdown
+		if (key === 27) {
+			// Close the autocomplete dropdown
+			$('.autoComplete_wrapper').removeClass('active');
+			// Return focus to input
+			$('#location_name').focus();
+			e.preventDefault();
+		}
+	});
+	
+	// WCAG 1.4.13: Ensure autocomplete dropdown remains visible when hovering
+	// and is dismissible without moving focus
+	$('.autoComplete_wrapper').on('mouseenter', function() {
+		$(this).addClass('hover-active');
+	}).on('mouseleave', function() {
+		$(this).removeClass('hover-active');
+	});
+	
+	// Add keyboard accessibility for datepicker button
+	$('#open-datepicker').on('keydown', function(e) {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			$('#invoice_date').datepicker('show');
 		}
 	});
 

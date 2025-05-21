@@ -49,6 +49,7 @@ return [
         'text_spacing_controls' => 'Tekstavstandskontroller',
         'increase_text_spacing' => 'Øk tekstavstand',
         'reset_text_spacing' => 'Nullstill tekstavstand',
+        'press_esc_to_close' => 'Trykk på Escape-tasten for å lukke',
         'subject' => 'Emne',
         'subject_help' => 'Angi et kort emne for fakturaforespørselen',
         'summary' => 'Sammendrag',

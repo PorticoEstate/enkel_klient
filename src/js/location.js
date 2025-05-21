@@ -66,6 +66,10 @@ const autoCompleteJS = new autoComplete({
 	resultsList: {
 		element: (list, data) =>
 		{
+			// Add ARIA attributes for accessibility
+			list.setAttribute('role', 'listbox');
+			list.setAttribute('aria-label', 'Address suggestions');
+			
 			const info = document.createElement("p");
 			if (data.results.length > 0)
 			{
@@ -75,6 +79,12 @@ const autoCompleteJS = new autoComplete({
 				info.innerHTML = `Fant <strong>${data.matches.length}</strong> resultater for <strong>"${data.query}"</strong>`;
 			}
 			list.prepend(info);
+			
+			// Update ARIA attributes on input
+			const input = document.querySelector('#location_name');
+			if (input) {
+				input.setAttribute('aria-expanded', 'true');
+			}
 		},
 		noResults: true,
 		maxResults: 150,
@@ -83,6 +93,11 @@ const autoCompleteJS = new autoComplete({
 	resultItem: {
 		element: (item, data) =>
 		{
+			// Add ARIA attributes for accessibility
+			item.setAttribute('role', 'option');
+			item.setAttribute('id', `autocomplete-result-${data.index}`);
+			item.setAttribute('tabindex', '-1');
+			
 			item.style = "display: flex; justify-content: space-between;";
 			item.innerHTML = `
 				<span style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
@@ -103,6 +118,9 @@ const autoCompleteJS = new autoComplete({
 				document.getElementById("location_code").value = selection.id;
 				document.getElementById('details').style.display = 'block';
 
+				// Reset ARIA attributes when selection is made
+				autoCompleteJS.input.setAttribute('aria-expanded', 'false');
+
 				// Trigger validation on the location_name field
 				const $locationField = $('#location_name');
 				if ($locationField.length)
@@ -117,6 +135,10 @@ const autoCompleteJS = new autoComplete({
 				{
 					autoCompleteJS.start();
 				}
+			},
+			close: () => {
+				// Reset ARIA attributes when dropdown is closed
+				autoCompleteJS.input.setAttribute('aria-expanded', 'false');
 			}
 		}
 	}
@@ -146,4 +168,18 @@ const togglePageBlur = (action) =>
 	{
 		togglePageBlur(eventType === "blur" ? "dim" : "light");
 	});
+});
+
+// Add keyboard support for dismissing dropdown with ESC
+autoCompleteJS.input.addEventListener('keydown', (e) => {
+	// Handle Escape key
+	if (e.key === 'Escape') {
+		// Close the dropdown
+		const wrapper = document.querySelector('.autoComplete_wrapper');
+		if (wrapper && wrapper.classList.contains('active')) {
+			wrapper.classList.remove('active');
+			autoCompleteJS.input.setAttribute('aria-expanded', 'false');
+			e.preventDefault();
+		}
+	}
 });

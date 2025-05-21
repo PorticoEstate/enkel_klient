@@ -65,6 +65,31 @@
 		.form-control.is-valid {
 			border-left: 5px solid #198754; /* Bootstrap's success green color */
 		}
+		
+	
+		/* Make datepicker accessible and persistent when focused */
+		.ui-datepicker:focus-within,
+		.ui-datepicker:hover {
+			visibility: visible !important;
+			display: block !important;
+			opacity: 1 !important;
+		}
+		
+		/* Visual indicator for keyboard accessible elements */
+		.datepicker-keyboard-hint {
+			font-size: 0.8rem;
+			color: #6c757d;
+			margin-top: 0.25rem;
+		}
+		
+		/* Add focus styles to interactive elements in popups */
+		.ui-datepicker a:focus,
+		.ui-datepicker button:focus,
+		.ui-datepicker select:focus,
+		.autoComplete_result:focus {
+			outline: 2px solid #0d6efd;
+			outline-offset: 2px;
+		}
 
 	</style>
 
@@ -125,7 +150,9 @@
 									{{ __('address') }}
 									<span class="required-field" aria-hidden="true">*</span>
 								</label>
-								<input type="text" id="location_name" name="location_name" class="form-control" autocomplete="off" required="required" aria-required="true" aria-describedby="location-error"/>
+								<input type="text" id="location_name" name="location_name" class="form-control" autocomplete="street-address" 
+									required="required" aria-required="true" aria-describedby="location-error" 
+									aria-haspopup="listbox" aria-expanded="false"/>
 								<div class="selection"></div>
 								<div id="location-error" class="invalid-feedback">{{ __('invalid_address') }}</div>
 								<input type="hidden" id="location_code" name="location_code">
@@ -165,11 +192,14 @@
 								<small id="invoiceDateHelp" class="form-text text-muted d-block mb-2">{{ __('invoice_date_help') }}</small>
 								<div class="d-flex">
 								  <input type="text" class="form-control" id="invoice_date" name="invoice_date" required aria-required="true" 
-										 aria-describedby="invoiceDateHelp invoice-date-error" readonly>
+										 aria-describedby="invoiceDateHelp datepicker-keyboard-hint invoice-date-error" readonly>
 								  <button type="button" class="btn btn-outline-secondary" id="open-datepicker" 
 										  aria-label="{{ __('open_date_picker') }}">
 									<i class="fas fa-calendar" aria-hidden="true"></i>
 								  </button>
+								</div>
+								<div id="datepicker-keyboard-hint" class="datepicker-keyboard-hint">
+									{{ __('press_esc_to_close') }}
 								</div>
 								<div id="invoice-date-error" class="invalid-feedback">{{ __('invalid_date') }}</div>
 							</div>

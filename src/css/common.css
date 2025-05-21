@@ -422,6 +422,47 @@ body {
     background-size: 100%;
 }
 
+/* WCAG 1.4.13: Content on Hover or Focus */
+/* Ensure hover content remains visible */
+.autoComplete_wrapper.active,
+.autoComplete_wrapper.hover-active,
+.ui-datepicker {
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* Add proper styling for dismissible content */
+.autoComplete_wrapper ul {
+    position: absolute;
+    z-index: 1000;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    width: 100%;
+    padding: 0.5rem 0;
+}
+
+/* Style individual autocomplete results */
+.autoComplete_wrapper ul li {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    list-style: none;
+    text-align: left;
+    font-size: 1rem;
+    color: #212529;
+    background-color: #ffffff;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.autoComplete_wrapper ul li:hover,
+.autoComplete_wrapper ul li[aria-selected="true"] {
+    background-color: #f8f9fa;
+    color: #0d6efd;
+}
+	
 /* Mobile view */
 @media(max-width: 768px) {
     body {

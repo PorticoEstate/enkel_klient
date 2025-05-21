@@ -103,10 +103,29 @@ function initializeDatepicker()
 						'<div id="ui-datepicker-instructions" class="sr-only">Use arrow keys to navigate the calendar, space or enter to select a date.</div>'
 					);
 				}
+				
 				// Add proper roles and labels
 				$('#ui-datepicker-div').attr('role', 'dialog').attr('aria-label', 'Choose invoice date');
-				$('.ui-datepicker-prev').attr('role', 'button').attr('aria-label', 'Previous month');
-				$('.ui-datepicker-next').attr('role', 'button').attr('aria-label', 'Next month');
+				
+				// Make navigation controls keyboard accessible
+				$('.ui-datepicker-prev').attr({
+					'role': 'button',
+					'aria-label': 'Previous month',
+					'tabindex': '0'
+				});
+				
+				$('.ui-datepicker-next').attr({
+					'role': 'button',
+					'aria-label': 'Next month',
+					'tabindex': '0'
+				});
+				
+				// Make month and year dropdowns accessible
+				$('.ui-datepicker-month, .ui-datepicker-year').attr('tabindex', '0');
+				
+				// Make sure OK button is keyboard accessible
+				$('.ui-datepicker-close, .ui-datepicker-current').attr('tabindex', '0');
+				
 				// Make datepicker dismissible with Escape key
 				$(document).on('keydown.datepicker', function(e) {
 					if (e.key === "Escape") {
@@ -115,6 +134,20 @@ function initializeDatepicker()
 						e.preventDefault();
 					}
 				});
+				
+				// Add keyboard support for previous/next buttons
+				$('.ui-datepicker-prev, .ui-datepicker-next').on('keydown', function(e) {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault();
+						$(this).click();
+					}
+				});
+				
+				// Set initial focus to the month dropdown for better keyboard navigation
+				setTimeout(function() {
+					$('.ui-datepicker-month').focus();
+				}, 50);
+				
 			}, 100);
 		},
 
@@ -137,6 +170,9 @@ function initializeDatepicker()
 				
 			// Remove the event handler when datepicker is closed
 			$(document).off('keydown.datepicker');
+			
+			// Remove custom event handlers
+			$('.ui-datepicker-prev, .ui-datepicker-next').off('keydown');
 
 			// Validate field
 			validateField($(this));
@@ -161,21 +197,39 @@ function initializeDatepicker()
 		},
 	});
 
-	// Connect the existing button to open the datepicker
-	$("#open-datepicker").click(function ()
-	{
-		$("#invoice_date").datepicker("show");
-		// Add focus handling for improved keyboard navigation
-		setTimeout(function ()
-		{
-			$('.ui-datepicker-calendar .ui-state-active').focus();
-		}, 100);
-	});
-
 	// Don't allow typing directly in the field
 	$("#invoice_date").on('keydown paste', function (e)
 	{
+		// Allow TAB key to navigate away from the field
+		if (e.key === "Tab") {
+			return true;
+		}
+		
+		// Allow spacebar to open the datepicker
+		if (e.key === " ") {
+			e.preventDefault();
+			$(this).datepicker('show');
+			return;
+		}
+		
+		// Prevent other keys from typing in the field
 		e.preventDefault();
+	});
+
+	// Make the invoice_date field itself keyboard accessible
+	$("#invoice_date").on('keydown', function(e) {
+		// Enter or Down arrow opens the datepicker
+		if (e.key === "Enter" || e.key === "ArrowDown") {
+			e.preventDefault();
+			$(this).datepicker('show');
+		}
+	});
+
+	$(document).on('datepickeropen', function ()
+	{
+		setTimeout(function() {
+			$('.ui-datepicker-close').attr('tabindex', '0');
+		}, 0);
 	});
 
 	// Fix: Close datepicker when OK button is clicked (month/year selection)
@@ -184,6 +238,14 @@ function initializeDatepicker()
 		setTimeout(function() {
 			$('#invoice_date').focus();
 		}, 0);
+	});
+	
+	// Add keyboard support for the OK button
+	$(document).on('keydown', '.ui-datepicker-close', function(e) {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			$(this).click();
+		}
 	});
 }
 

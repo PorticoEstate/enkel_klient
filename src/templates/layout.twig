@@ -20,11 +20,11 @@
 				</div>
 				<!-- Accessibility Controls -->
 				<div class="accessibility-controls" role="region" aria-label="{{ __('text_spacing_controls') }}">
-					<button id="increase-spacing" class="btn btn-sm btn-outline-secondary">
+					<button id="increase-spacing" class="btn btn-sm btn-primary accessibility-btn">
 						<i class="fas fa-text-height" aria-hidden="true"></i>
 						{{ __('increase_text_spacing') }}
 					</button>
-					<button id="reset-spacing" class="btn btn-sm btn-outline-secondary">
+					<button id="reset-spacing" class="btn btn-sm btn-dark accessibility-btn">
 						{{ __('reset_text_spacing') }}
 					</button>
 				</div>
@@ -157,6 +157,36 @@
 				// Sjekk om brukeren tidligere har valgt økt tekstavstand
 				if (localStorage.getItem('increased-spacing') === 'true') {
 				document.body.classList.add('increased-spacing');
+				}
+
+				// Check if the stylesheet for high contrast accessibility buttons exists
+				if (!document.getElementById('accessibility-btn-styles')) {
+					// Create a style element for additional contrast
+					const styleElement = document.createElement('style');
+					styleElement.id = 'accessibility-btn-styles';
+					styleElement.innerHTML = `
+						.accessibility-btn {
+							border: 2px solid #000;
+							font-weight: bold;
+							margin-right: 5px;
+						}
+						
+						.btn-primary.accessibility-btn {
+							background-color: #0045b5;
+							color: #ffffff;
+						}
+						
+						.btn-dark.accessibility-btn {
+							background-color: #333333;
+							color: #ffffff;
+						}
+						
+						.accessibility-btn:focus {
+							box-shadow: 0 0 0 3px #ffff00;
+							outline: 2px solid #000000;
+						}
+					`;
+					document.head.appendChild(styleElement);
 				}
 			</script>
 

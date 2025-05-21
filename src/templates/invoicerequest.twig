@@ -21,6 +21,7 @@
 	<link href="{{ base_path }}/src/css/quill-custom.css?n={{ cache_refresh_token }}" rel="stylesheet">
 	<!-- Flatpickr styles - using specific version -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+	<!--<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">-->
 	<!-- Keep jQuery UI CSS for file upload styling -->
 	<link href="{{ base_path }}/src/css/jquery-ui.min.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
@@ -30,31 +31,62 @@
 		<!-- Common styles moved to src/css/common.css -->
 	<style>
 		/* Flatpickr styles replacing jQuery UI datepicker styles */
+		
+		/* Improved contrast for flatpickr calendar */
 		.flatpickr-calendar {
-			font-size: 14px;
-			border-radius: 4px;
-			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-			width: auto !important;
+			background: #ffffff;
+			box-shadow: 0 3px 13px rgba(0,0,0,0.2);
+			border: 1px solid #d9d9d9;
 		}
 		
-		.flatpickr-month {
-			background: #0d6efd;
-			color: white;
-			border: none;
-			height: 40px;
+		/* Better contrast for day elements */
+		.flatpickr-day {
+			color: #000000; /* Darkest text for maximum contrast */
+			font-weight: 500;
 		}
 		
-		.flatpickr-monthDropdown-months, .numInputWrapper {
-			color: white;
+		.flatpickr-day.selected, 
+		.flatpickr-day.startRange, 
+		.flatpickr-day.endRange {
+			background: #0045b5; /* Darker blue for better contrast with white text */
+			color: #ffffff;
+			font-weight: bold;
+			border-color: #003084; /* Darker border for definition */
 		}
 		
-		.flatpickr-monthDropdown-months option {
-			color: #000;
+		/* Higher contrast for today's date */
+		.flatpickr-day.today {
+			border-color: #0045b5; /* Darker border */
+			background-color: #e6f0ff;
+			color: #0045b5; /* Darker blue text */
+			font-weight: bold;
+			box-shadow: inset 0 0 0 2px #0045b5; /* Additional visual indicator */
 		}
 		
-		.flatpickr-current-month .numInputWrapper span.arrowUp:after,
-		.flatpickr-current-month .numInputWrapper span.arrowDown:after {
-			border-color: white transparent;
+		/* Improved month navigation controls */
+		.flatpickr-months {
+			background: #e0e0e0; /* Consistent with weekday background */
+		}
+		
+		.flatpickr-months .flatpickr-prev-month, 
+		.flatpickr-months .flatpickr-next-month {
+			color: #000000;
+			fill: #000000; /* Black icons for maximum contrast */
+			padding: 8px;
+		}
+		
+		.flatpickr-months .flatpickr-prev-month:hover, 
+		.flatpickr-months .flatpickr-next-month:hover {
+			background: #c0c0c0; /* Darker background on hover */
+			color: #000000;
+			fill: #000000;
+		}
+		
+		/* Month/year header with better contrast */
+		.flatpickr-current-month {
+			color: #000000; /* Black text for maximum contrast */
+			font-weight: bold;
+			background-color: #e0e0e0; /* Consistent background */
 		}
 		
 		/* Style for valid form fields - green left border */
@@ -84,15 +116,106 @@
 		.flatpickr-day:focus,
 		.flatpickr-months .flatpickr-prev-month:focus, 
 		.flatpickr-months .flatpickr-next-month:focus {
-			background: #e6e6e6;
+			background: #e6f0ff;
 			outline: 2px solid #0d6efd;
 		}
 		
 		/* Make month selection dropdown more visible against background */
 		.flatpickr-current-month .flatpickr-monthDropdown-months {
-			background-color: transparent;
-			border: 1px solid rgba(255,255,255,0.2);
+			background-color: #ffffff;
+			color: #000000; /* Black text for maximum contrast */
+			border: 1px solid #555555; /* Darker border for better definition */
 			padding: 2px 5px;
+			font-weight: bold;
+		}
+		
+		/* Month dropdown hover and focus states */
+		.flatpickr-current-month .flatpickr-monthDropdown-months:hover,
+		.flatpickr-current-month .flatpickr-monthDropdown-months:focus {
+			background-color: #f0f0f0;
+			border-color: #000000;
+		}
+		
+		/* Improved weekday header contrast */
+		.flatpickr-weekdays {
+	/*		background: #333333; 
+			border-bottom: 1px solid #000000;*/
+		}
+		
+		.flatpickr-weekday {
+			color: #ffffff;  /* White text on dark background for maximum contrast */
+			font-weight: bold;
+			font-size: 1.1em;  /* Slightly larger font size for better visibility */
+			background-color: transparent !important; /* Override any default background */
+			opacity: 1 !important; /* Ensure full opacity for better visibility */
+			padding: 10px 0;  /* More padding for larger touch target */
+			text-shadow: none; /* Remove text shadow for cleaner appearance */
+		}
+		
+		/* Add a divider between weekdays for better visual separation */
+		.flatpickr-weekday:not(:last-child) {
+			border-right: 1px solid rgba(255,255,255,0.1);
+		}
+		
+		/* Improved contrast for disabled dates */
+		.flatpickr-day.disabled,
+		.flatpickr-day.disabled:hover {
+			color: #777777; /* Darker gray for better visibility against white background */
+			text-decoration: line-through; /* Additional visual indicator */
+		}
+		
+		/* Hovering over days */
+		.flatpickr-day:hover {
+			background-color: #c0c0c0; /* Darker background on hover */
+			color: #000000;
+		}
+		
+		/* Calendar container border and shadow enhancement */
+		.flatpickr-calendar.open {
+			box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+			border: 2px solid #0045b5;
+		}
+		
+		/* Ensure high contrast in the month dropdown */
+		.flatpickr-current-month .flatpickr-monthDropdown-months option {
+			background-color: #ffffff;
+			color: #000000;
+		}
+		
+		 /* Improved contrast for days from adjacent months (prev/next) */
+		.flatpickr-day.prevMonthDay,
+		.flatpickr-day.nextMonthDay {
+			color: #444444; /* Darker than default gray but still distinguishable from current month */
+			background-color: #f0f0f0; /* Light gray background to indicate different month */
+			font-weight: normal;
+			border: 1px solid #e6e6e6; /* Subtle border */
+		}
+		
+		/* Hover state for adjacent month days */
+		.flatpickr-day.prevMonthDay:hover,
+		.flatpickr-day.nextMonthDay:hover {
+			background-color: #d0d0d0; /* Darker on hover */
+			color: #000000;
+			border-color: #c0c0c0;
+		}
+		
+		/* Selected state for adjacent month days */
+		.flatpickr-day.prevMonthDay.selected,
+		.flatpickr-day.nextMonthDay.selected {
+			background-color: #0045b5; /* Same as regular selected days */
+			color: #ffffff;
+			border-color: #003084;
+			font-weight: bold;
+		}
+		
+		/* Make numbering inputs more visible */
+		.numInputWrapper span {
+			border: 1px solid #0045b5;
+			background: #e0e0e0;
+		}
+		
+		.numInputWrapper span:hover {
+			background: #c0c0c0;
 		}
 
 	</style>

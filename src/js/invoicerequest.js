@@ -2,13 +2,14 @@
  * Invoice Request form handler
  * 
  * Handles form validation, rich text editing, submission and file uploads for invoice requests
- * Includes month/year datepicker functionality
- * Enhanced for WCAG 2.0 compliance with improved keyboard accessibility and screen reader support
+ * Includes month/year datepicker functionality using Flatpickr
+ * Enhanced for WCAG 2.1 compliance with improved keyboard accessibility and screen reader support
  */
 
 // Global variables
 var redirect_action = `${strBaseURL}/invoicerequest`;
 var fileUploader = null;
+var datepicker = null;
 
 $(document).ready(function ()
 {
@@ -59,193 +60,167 @@ function markRequiredFields()
 		// Set ARIA attributes for screen readers
 		$(this).attr('aria-required', 'true');
 	});
-
 }
 
 function initializeDatepicker()
 {
-	// Initialize jQuery UI datepicker with month/year selection only
-	$("#invoice_date").datepicker({
-		dateFormat: 'MM yy',
-		changeMonth: true,
-		changeYear: true,
-		showButtonPanel: true, // Enable the OK button
-		yearRange: "-5:+5", // Allow 5 years in past and 5 years in future
+	// Initialize Flatpickr datepicker with month/year selection only
+	datepicker = flatpickr("#invoice_date", {
+		dateFormat: "F Y", // Month name and year format
+		plugins: [],
+		disableMobile: true, // Prevent native mobile pickers
+		static: true,
+		monthSelectorType: "dropdown",
 		
-		// Merge both beforeShow handlers
-		beforeShow: function(input, inst) {
-			// Month/year logic
-			if ((datestr = $(this).val()).length > 0)
-			{
-				var year = datestr.substring(datestr.length - 4, datestr.length);
-				var month = $.inArray(datestr.substring(0, datestr.length - 5),
-					$(this).datepicker('option', 'monthNames'));
-				$(this).datepicker('option', 'defaultDate', new Date(year, month, 1));
-				$(this).datepicker('setDate', new Date(year, month, 1));
-			}
+		// Only show month/year picker, without days
+		enableTime: false,
+		enableSeconds: false,
+		noCalendar: false,
+		
+		// Configure UI to show only month/year
+		showMonths: 1,
+	
 
-			// Accessibility enhancements
+		// Disable direct input but allow external button trigger
+		allowInput: false, // Prevent direct editing
+		clickOpens: true, // Allow clicking on the input to open calendar
+		
+		// Year range setting (approximately 5 years in past to 5 years in future)
+		maxDate: new Date().fp_incr(14), // 14 days from now
+		minDate: new Date().fp_incr(-1825), // 5 years in the past
+	
+		// On open event
+		onOpen: function(selectedDates, dateStr, instance) {
+			// Announce to screen readers that datepicker is open
+			$('#date-selection-announcement').remove();
+			$('<div>', {
+				id: 'date-selection-announcement',
+				'class': 'sr-only',
+				'aria-live': 'assertive'
+			})
+			.text('Date picker opened. Use arrow keys to navigate months, Tab to navigate year dropdown. Press Escape to close.')
+			.appendTo('body');
+			
+			// Add accessibility attributes to the calendar container
 			setTimeout(function() {
-				// Add instruction for dismissal
-				if (!$('#datepicker-instructions').length) {
-					$('<div>', {
-						id: 'datepicker-instructions',
-						'class': 'sr-only',
-						'aria-live': 'polite'
-					})
-					.text('Press Escape to close the date picker without making a selection.')
-					.appendTo('#ui-datepicker-div');
-				}
-				// Add instructions for screen reader users
-				if (!$('#ui-datepicker-instructions').length)
-				{
-					$('#ui-datepicker-div').prepend(
-						'<div id="ui-datepicker-instructions" class="sr-only">Use arrow keys to navigate the calendar, space or enter to select a date.</div>'
-					);
+				// Set role and label for the calendar
+				instance.calendarContainer.setAttribute('role', 'dialog');
+				instance.calendarContainer.setAttribute('aria-label', 'Choose invoice date');
+				
+				// Make navigation controls explicitly focusable and labeled
+				const prevMonthButton = instance.calendarContainer.querySelector('.flatpickr-prev-month');
+				const nextMonthButton = instance.calendarContainer.querySelector('.flatpickr-next-month');
+				
+				if (prevMonthButton) {
+					prevMonthButton.setAttribute('tabindex', '0');
+					prevMonthButton.setAttribute('role', 'button');
+					prevMonthButton.setAttribute('aria-label', 'Previous month');
 				}
 				
-				// Add proper roles and labels
-				$('#ui-datepicker-div').attr('role', 'dialog').attr('aria-label', 'Choose invoice date');
+				if (nextMonthButton) {
+					nextMonthButton.setAttribute('tabindex', '0');
+					nextMonthButton.setAttribute('role', 'button');
+					nextMonthButton.setAttribute('aria-label', 'Next month');
+				}
 				
-				// Make navigation controls keyboard accessible
-				$('.ui-datepicker-prev').attr({
-					'role': 'button',
-					'aria-label': 'Previous month',
-					'tabindex': '0'
-				});
+				// Ensure month/year dropdowns are keyboard accessible
+				const monthDropdown = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+				if (monthDropdown) {
+					monthDropdown.setAttribute('aria-label', 'Select month');
+				}
 				
-				$('.ui-datepicker-next').attr({
-					'role': 'button',
-					'aria-label': 'Next month',
-					'tabindex': '0'
-				});
+				const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
+				if (yearInput) {
+					yearInput.setAttribute('aria-label', 'Select year');
+				}
 				
-				// Make month and year dropdowns accessible
-				$('.ui-datepicker-month, .ui-datepicker-year').attr('tabindex', '0');
-				
-				// Make sure OK button is keyboard accessible
-				$('.ui-datepicker-close, .ui-datepicker-current').attr('tabindex', '0');
-				
-				// Make datepicker dismissible with Escape key
-				$(document).on('keydown.datepicker', function(e) {
-					if (e.key === "Escape") {
-						$("#invoice_date").datepicker('hide');
-						$("#invoice_date").focus();
-						e.preventDefault();
-					}
-				});
-				
-				// Add keyboard support for previous/next buttons
-				$('.ui-datepicker-prev, .ui-datepicker-next').on('keydown', function(e) {
-					if (e.key === "Enter" || e.key === " ") {
-						e.preventDefault();
-						$(this).click();
-					}
-				});
-				
-				// Set initial focus to the month dropdown for better keyboard navigation
-				setTimeout(function() {
-					$('.ui-datepicker-month').focus();
-				}, 50);
-				
+				// Set focus to the month dropdown for better keyboard navigation
+				if (monthDropdown) {
+					setTimeout(function() {
+						monthDropdown.focus();
+					}, 50);
+				}
 			}, 100);
 		},
-
-		// Format the datepicker to show month and year only
-		onClose: function (dateText, inst)
-		{
-			var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
-			var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
-			$(this).datepicker('setDate', new Date(year, month, 1));
-
-			// Update ARIA live region to announce selected date
-			$("#date-selection-announcement").remove();
+		
+		// On close event
+		onClose: function(selectedDates, dateStr, instance) {
+			// Announce selected date to screen readers
+			$('#date-selection-announcement').remove();
 			$('<div>', {
 				id: 'date-selection-announcement',
 				'class': 'sr-only',
 				'aria-live': 'polite'
 			})
-				.text('Selected date: ' + $(this).val())
-				.appendTo('body');
-				
-			// Remove the event handler when datepicker is closed
-			$(document).off('keydown.datepicker');
+			.text('Selected date: ' + dateStr)
+			.appendTo('body');
 			
-			// Remove custom event handlers
-			$('.ui-datepicker-prev, .ui-datepicker-next').off('keydown');
-
+			// Set focus back to input
+			setTimeout(function() {
+				$('#invoice_date').focus();
+			}, 0);
+			
 			// Validate field
-			validateField($(this));
+			validateField($('#invoice_date'));
 		},
-
-		// Immediately close the datepicker when a date is selected
-		onSelect: function(dateText, inst) {
-			var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
-			var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
-			$(this).datepicker('setDate', new Date(year, month, 1));
-			$("#invoice_date").datepicker('hide');
-			$("#date-selection-announcement").remove();
+		
+		// On change event
+		onChange: function(selectedDates, dateStr, instance) {
+			// Announce to screen readers
+			$('#date-selection-announcement').remove();
 			$('<div>', {
 				id: 'date-selection-announcement',
-				'class': 'sr-only',
+				'class': 'sr-only', 
 				'aria-live': 'polite'
 			})
-				.text('Selected date: ' + $(this).val())
-				.appendTo('body');
-			validateField($(this));
-			setTimeout(() => { $(this).focus(); }, 0);
-		},
+			.text('Selected date: ' + dateStr)
+			.appendTo('body');
+			
+			// Only validate but don't close the picker
+			validateField($('#invoice_date'));
+		}
 	});
 
-	// Don't allow typing directly in the field
-	$("#invoice_date").on('keydown paste', function (e)
-	{
-		// Allow TAB key to navigate away from the field
-		if (e.key === "Tab") {
-			return true;
-		}
-		
-		// Allow spacebar to open the datepicker
-		if (e.key === " ") {
-			e.preventDefault();
-			$(this).datepicker('show');
-			return;
-		}
-		
-		// Prevent other keys from typing in the field
+	// Connect open calendar button 
+	$('#open-datepicker').on('click', function(e) {
 		e.preventDefault();
+		datepicker.open();
 	});
-
+	
+	// Add keyboard accessibility for datepicker opener button
+	$('#open-datepicker').on('keydown', function(e) {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			datepicker.open();
+		}
+	});
+	
 	// Make the invoice_date field itself keyboard accessible
 	$("#invoice_date").on('keydown', function(e) {
 		// Enter or Down arrow opens the datepicker
-		if (e.key === "Enter" || e.key === "ArrowDown") {
+		if (e.key === "Enter" || e.key === "ArrowDown" || e.key === " ") {
 			e.preventDefault();
-			$(this).datepicker('show');
+			datepicker.open();
 		}
-	});
-
-	$(document).on('datepickeropen', function ()
-	{
-		setTimeout(function() {
-			$('.ui-datepicker-close').attr('tabindex', '0');
-		}, 0);
-	});
-
-	// Fix: Close datepicker when OK button is clicked (month/year selection)
-	$(document).on('click', '.ui-datepicker-close', function() {
-		$('#invoice_date').datepicker('hide');
-		setTimeout(function() {
-			$('#invoice_date').focus();
-		}, 0);
+		
+		// Tab should still work normally
+		if (e.key === "Tab") {
+			return true;
+		}
 	});
 	
-	// Add keyboard support for the OK button
-	$(document).on('keydown', '.ui-datepicker-close', function(e) {
-		if (e.key === "Enter" || e.key === " ") {
+	// Add global escape key handler when datepicker is open
+	$(document).on('keydown.flatpickrEsc', function(e) {
+		if (e.key === "Escape" && datepicker && datepicker.isOpen) {
 			e.preventDefault();
-			$(this).click();
+			datepicker.close();
+			$('#invoice_date').focus();
 		}
+	});
+	
+	// Clean up handler when document is unloaded
+	$(window).on('unload', function() {
+		$(document).off('keydown.flatpickrEsc');
 	});
 }
 
@@ -346,14 +321,6 @@ function enhanceKeyboardAccessibility()
 		$(this).removeClass('hover-active');
 	});
 	
-	// Add keyboard accessibility for datepicker button
-	$('#open-datepicker').on('keydown', function(e) {
-		if (e.key === "Enter" || e.key === " ") {
-			e.preventDefault();
-			$('#invoice_date').datepicker('show');
-		}
-	});
-
 	// We rely on the natural tab order of elements for keyboard navigation
 	// No need to add tabindex attributes as it can disrupt natural flow
 

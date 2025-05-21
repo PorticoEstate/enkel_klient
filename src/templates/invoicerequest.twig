@@ -19,6 +19,9 @@
 	<!-- Theme included stylesheets -->
 	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 	<link href="{{ base_path }}/src/css/quill-custom.css?n={{ cache_refresh_token }}" rel="stylesheet">
+	<!-- Flatpickr styles - using specific version -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+	<!-- Keep jQuery UI CSS for file upload styling -->
 	<link href="{{ base_path }}/src/css/jquery-ui.min.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
@@ -26,53 +29,37 @@
 
 		<!-- Common styles moved to src/css/common.css -->
 	<style>
-		/* Custom datepicker styles specific to invoicerequest.twig */
-		.ui-datepicker-year, .ui-datepicker-month {
-			color: #000;
-		}
-		
-		.ui-datepicker {
+		/* Flatpickr styles replacing jQuery UI datepicker styles */
+		.flatpickr-calendar {
 			font-size: 14px;
 			border-radius: 4px;
 			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			width: auto !important;
 		}
 		
-		.ui-datepicker .ui-datepicker-header {
+		.flatpickr-month {
 			background: #0d6efd;
 			color: white;
 			border: none;
+			height: 40px;
 		}
 		
-		.ui-datepicker .ui-datepicker-title select {
-			padding: 3px;
-			margin: 2px;
-			border-radius: 3px;
-			border: 1px solid #ddd;
+		.flatpickr-monthDropdown-months, .numInputWrapper {
+			color: white;
 		}
 		
-		.ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next {
-			border: 1px solid transparent;
-			background: transparent;
+		.flatpickr-monthDropdown-months option {
+			color: #000;
 		}
 		
-		.ui-datepicker .ui-datepicker-prev:hover, .ui-datepicker .ui-datepicker-next:hover {
-			background: #0b5ed7;
-			border: 1px solid white;
-			cursor: pointer;
+		.flatpickr-current-month .numInputWrapper span.arrowUp:after,
+		.flatpickr-current-month .numInputWrapper span.arrowDown:after {
+			border-color: white transparent;
 		}
 		
 		/* Style for valid form fields - green left border */
 		.form-control.is-valid {
 			border-left: 5px solid #198754; /* Bootstrap's success green color */
-		}
-		
-	
-		/* Make datepicker accessible and persistent when focused */
-		.ui-datepicker:focus-within,
-		.ui-datepicker:hover {
-			visibility: visible !important;
-			display: block !important;
-			opacity: 1 !important;
 		}
 		
 		/* Visual indicator for keyboard accessible elements */
@@ -83,12 +70,29 @@
 		}
 		
 		/* Add focus styles to interactive elements in popups */
-		.ui-datepicker a:focus,
-		.ui-datepicker button:focus,
-		.ui-datepicker select:focus,
+		.flatpickr-calendar button:focus,
+		.flatpickr-calendar select:focus,
+		.flatpickr-monthDropdown-months:focus,
+		.numInputWrapper:focus,
+		.flatpickr-calendar .flatpickr-monthDropdown-months:focus,
 		.autoComplete_result:focus {
 			outline: 2px solid #0d6efd;
 			outline-offset: 2px;
+		}
+		
+		/* Ensure accessibility focus states */
+		.flatpickr-day:focus,
+		.flatpickr-months .flatpickr-prev-month:focus, 
+		.flatpickr-months .flatpickr-next-month:focus {
+			background: #e6e6e6;
+			outline: 2px solid #0d6efd;
+		}
+		
+		/* Make month selection dropdown more visible against background */
+		.flatpickr-current-month .flatpickr-monthDropdown-months {
+			background-color: transparent;
+			border: 1px solid rgba(255,255,255,0.2);
+			padding: 2px 5px;
 		}
 
 	</style>
@@ -280,7 +284,11 @@
 			<script src="{{ base_path }}/src/js/location.js?n={{ cache_refresh_token }}"></script>
 		{% endif %}
 
-		<script src="{{ base_path }}/src/js/jquery-ui.min.js?n={{ cache_refresh_token }}"></script>
+		<!-- jQuery UI Core and Widget Factory - needed for file upload -->
+		<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
+		
+		<!-- Flatpickr for datepicker - using specific version -->
+		<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 		
 		{% if enable_fileupload == 1 %}
 			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>

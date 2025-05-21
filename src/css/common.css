@@ -501,6 +501,29 @@ footer p {
     margin-bottom: 0.1rem;
 }
 
+.footer-divider {
+    margin: 10px 0;
+    border-top: 1px solid #dee2e6;
+}
+
+.footer-links {
+    margin-top: 8px;
+    font-size: 0.8rem;
+}
+
+.footer-links a {
+    color: #0854c1;
+    text-decoration: none;
+}
+
+.footer-links a:hover, .footer-links a:focus {
+    text-decoration: underline;
+}
+
+.footer-spacing {
+    padding-bottom: 15px;
+}
+
 /* Update the mobile styles for footer */
 @media(max-width: 768px) {
     .content {

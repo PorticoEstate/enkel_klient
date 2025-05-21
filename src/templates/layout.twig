@@ -82,20 +82,18 @@
 						{{ config.footer.contact_info_opening_hours }}</p>
 					<p>{{ __('org_number') }}:
 						{{ config.footer.contact_info_org_nr }}</p>
+					
+					<hr class="footer-divider">
+					<div class="footer-links">
+						<a href="{{ config.footer.cookie_policy }}" target="_blank" rel="noopener">{{ __('cookie_policy') }}</a> |
+						<a href="{{ config.footer.privacy_policy }}" target="_blank" rel="noopener">{{ __('privacy_policy') }}</a>
+						{% if config.footer.accessibility_statement %}
+						 | <a href="{{ config.footer.accessibility_statement }}" target="_blank" rel="noopener">{{ __('accessibility_statement') }}</a>
+						{% endif %}
+					</div>
+					<div class="footer-spacing"></div>
 				</div>
 			</footer>
-			<!-- Cookie Consent Banner -->
-			<div class="cookie-consent" id="cookieConsent" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-description">
-				<div class="cookie-text">
-					<h2 id="cookie-title" class="sr-only">{{ __('cookie_consent_title') }}</h2>
-					<p id="cookie-description">{{ __('cookie_text') }}</p>
-				</div>
-				<div class="cookie-buttons">
-					<button class="cookie-btn accept-btn" id="acceptCookies" aria-label="{{ __('accept_cookies') }}">{{ __('accept') }}</button>
-					<button class="cookie-btn decline-btn" id="declineCookies" aria-label="{{ __('decline_cookies') }}">{{ __('decline') }}</button>
-				</div>
-			</div>
-
 			<script>
 				document.querySelector('.navbar-toggler').addEventListener('click', function () {
 const sidebar = document.querySelector('.sidebar');
@@ -130,82 +128,6 @@ if (window.innerWidth<= 768) {
     });
 
 
-// Cookie consent functionality with improved accessibility
-document.addEventListener('DOMContentLoaded', function () {
-    const cookieConsent = document.getElementById('cookieConsent');
-    const acceptBtn = document.getElementById('acceptCookies');
-    const declineBtn = document.getElementById('declineCookies');
-    const currentLang = document.documentElement.lang || 'no';
-
-    // Check if user has already made a choice
-    const cookieChoice = localStorage.getItem('cookieConsent');
-
-    if (!cookieChoice) {
-        // Show the banner after a short delay
-        setTimeout(() => {
-            cookieConsent.classList.add('active');
-            
-            // Announce to screen readers
-            if (typeof announceToScreenReader === 'function') {
-                const cookieTitle = document.getElementById('cookie-title').textContent;
-                const cookieDescription = document.getElementById('cookie-description').textContent;
-                announceToScreenReader(`${cookieTitle}: ${cookieDescription}`, 'polite');
-            }
-            
-            // Set focus on the first button for keyboard users
-            acceptBtn.focus();
-        }, 500);
-    }
-
-    // Handle accept button click
-    acceptBtn.addEventListener('click', () => {
-        localStorage.setItem('cookieConsent', 'accepted');
-        cookieConsent.classList.remove('active');
-
-        // Announce to screen readers
-        if (typeof announceToScreenReader === 'function') {
-            announceToScreenReader('Cookies accepted. Thank you for your choice.', 'polite');
-        }
-        
-        // Here you could initialize your analytics or tracking scripts
-        console.log('Cookies accepted');
-    });
-
-    // Handle decline button click
-    declineBtn.addEventListener('click', () => {
-        // Remove the cookieConsent item instead of setting it to 'declined'
-        localStorage.removeItem('cookieConsent');
-        cookieConsent.classList.remove('active');
-        
-        // Announce to screen readers
-        if (typeof announceToScreenReader === 'function') {
-            announceToScreenReader('Cookies declined. Redirecting to alternative site.', 'assertive');
-        }
-        
-        // Here you could disable any non-essential cookies
-        setTimeout(() => {
-            // Redirect to Bergen Kommune website
-            window.location.href = 'https://www.bergen.kommune.no/innbyggerhjelpen/bolig-og-sosiale-tjenester/botilbud/kommunal-bolig/apningstider-og-telefonnumre-til-etat-for-boligforvaltning/';
-        }, 1500); // Small delay to ensure screen reader announcement completes
-        
-        console.log('Cookies declined, redirecting...');
-    });            // Add keyboard trap handling for the cookie consent dialog
-    document.addEventListener('keydown', function(e) {
-        const cookieConsent = document.getElementById('cookieConsent');
-        
-        // If cookie consent is active and the user presses Escape
-        if (cookieConsent.classList.contains('active') && e.key === 'Escape') {
-            // Hide the banner but don't make a choice
-            cookieConsent.classList.remove('active');
-            
-            // Announce to screen readers
-            if (typeof announceToScreenReader === 'function') {
-                announceToScreenReader('Cookie consent banner dismissed. You can make your choice later.', 'polite');
-            }
-        }
-    });
-    // Language change functionality is now provided by accessibility-helpers.js
-});
 			</script>
 
 			<!-- Add a global screen reader announcer element -->

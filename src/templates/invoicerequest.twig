@@ -357,16 +357,24 @@
 							{% if enable_fileupload == 1 %}
 								<div class="form-group mt-4">
 									<label for="fileupload" id="fileupload-label">{{ __('upload_file') }}</label>
+									<small id="fileuploadHelp" class="form-text text-muted d-block mb-2">{{ __('upload_instructions') }}</small>
 									<div id="drop-area" aria-live="polite">
 										<div style="border: 2px dashed #ccc; padding: 20px;">
 											<p id="upload-instructions">{{ __('upload_instructions') }}</p>
 											<div class="fileupload-buttonbar" role="group" aria-labelledby="upload-instructions">
 												<div class="fileupload-buttons">
-													<span class="fileinput-button btn btn-success">
+													<!-- Accessible file upload button -->
+													<button type="button" class="btn btn-success file-select-btn" id="file-select-btn">
 														<i class="fas fa-plus" aria-hidden="true"></i>
 														<span>{{ __('add_files') }}</span>
-														<input id="fileupload" type="file" name="files[]" multiple="" aria-labelledby="fileupload-label upload-instructions">
-													</span>
+													</button>
+													<input id="fileupload" type="file" name="files[]" multiple 
+														   aria-labelledby="fileupload-label upload-instructions"
+														   style="position: absolute; width: 1px; height: 1px; overflow: hidden;" 
+														   tabindex="-1">
+													<small id="fileupload-keyboard-hint" class="form-text text-muted d-block mt-1">
+														{{ __('press_enter_to_select_files') }}
+													</small>
 													<span class="fileupload-process"></span>
 												</div>
 												<div class="fileupload-count">
@@ -382,8 +390,7 @@
 												<div class="presentation files" style="display: inline-table;" aria-live="polite"></div>
 											</div>
 										</div>
-									</div>
-								</div>
+									</div>								</div>
 							{% endif %}
 
 							<button type="submit" class="btn btn-primary mt-4">{{ __('send') }}</button>

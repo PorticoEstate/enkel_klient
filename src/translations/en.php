@@ -113,6 +113,7 @@ return [
         'error' => 'Error',
         'go_to_homepage' => 'Go to homepage',
         'go_back' => 'Go back',
+        'press_enter_to_select_files' => 'Press Enter to open file selector'
     ],
     'landing' => [
         'title' => 'Welcome to Bergen Municipality, Housing Management Department',

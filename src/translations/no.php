@@ -113,6 +113,7 @@ return [
         'error' => 'Feil',
         'go_to_homepage' => 'Gå til forsiden',
         'go_back' => 'Gå tilbake',
+        'press_enter_to_select_files' => 'Trykk Enter for å velge filer',
     ],
     'landing' => [
         'title' => 'Velkommen til Bergen kommune, etat for boligforvaltning',

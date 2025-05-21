@@ -321,10 +321,95 @@ function enhanceKeyboardAccessibility()
 		$(this).removeClass('hover-active');
 	});
 	
-	// We rely on the natural tab order of elements for keyboard navigation
-	// No need to add tabindex attributes as it can disrupt natural flow
+    // Make file upload button keyboard accessible
+    $('#file-select-btn').on('click keydown', function(e) {
+        // Trigger on click or Enter key
+        if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
+            e.preventDefault();
+            $('#fileupload').click();
+        }
+    });
+    
+    // Add keyboard support for file list items
+    $(document).on('keydown', '.presentation.files .file-item', function(e) {
+        // Delete file when Delete key or Backspace is pressed
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            // Find and click the delete button within this file item
+            $(this).find('.delete').click();
+        }
+    });
+    
+    // Make delete buttons keyboard accessible
+    $(document).on('keydown', '.presentation.files .delete', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            $(this).click();
+        }
+    });
 
-	// Use shared form validation
+    // Ensure file items are focusable
+    $(document).on('DOMNodeInserted', '.presentation.files', function() {
+        setTimeout(function() {
+            $('.file-item').each(function() {
+                if (!$(this).attr('tabindex')) {
+                    $(this).attr('tabindex', '0');
+                    
+                    // Add proper accessibility roles
+                    $(this).attr('role', 'listitem');
+                    
+                    // Ensure delete buttons are keyboard accessible
+                    $(this).find('.delete').attr({
+                        'tabindex': '0',
+                        'role': 'button',
+                        'aria-label': 'Delete file'
+                    });
+                }
+            });
+            
+            // Set the proper role for the file list container
+            $('.presentation.files').attr('role', 'list');
+        }, 100);
+    });
+
+    // Announce file operations to screen readers
+    function announceFileOperation(message) {
+        // Create or update the status element
+        if (!$('#file-status-announcement').length) {
+            $('<div>', {
+                id: 'file-status-announcement',
+                'class': 'sr-only',
+                'aria-live': 'polite'
+            }).appendTo('body');
+        }
+        
+        $('#file-status-announcement').text(message);
+    }
+
+    // Hook into FileUploader events to make announcements
+    if (typeof FileUploader !== 'undefined') {
+        // Override these methods in the FileUploader initialization
+        const originalOnAdd = FileUploader.prototype.onAdd;
+        FileUploader.prototype.onAdd = function(file) {
+            if (originalOnAdd) originalOnAdd.call(this, file);
+            announceFileOperation('File ' + file.name + ' added.');
+        };
+        
+        const originalOnDelete = FileUploader.prototype.onDelete;
+        FileUploader.prototype.onDelete = function(file) {
+            if (originalOnDelete) originalOnDelete.call(this, file);
+            announceFileOperation('File ' + file.name + ' removed.');
+        };
+        
+        const originalOnProgress = FileUploader.prototype.onProgress;
+        FileUploader.prototype.onProgress = function(progress) {
+            if (originalOnProgress) originalOnProgress.call(this, progress);
+            if (progress >= 100) {
+                announceFileOperation('Upload complete.');
+            }
+        };
+    }
+    
 	setupFormValidation($('form'));
 }
 

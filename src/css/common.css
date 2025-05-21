@@ -204,7 +204,43 @@ legend {
 .file.done {
     background: lightgreen;
 }
+/* File upload keyboard accessibility styles */
+.file-item:focus,
+.file-item:focus-within {
+    outline: 2px solid #0d6efd;
+    background-color: #f8f9fa;
+}
 
+.file-select-btn:focus {
+    outline: 2px solid #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.5);
+}
+
+.file-item .delete:focus {
+    outline: 2px solid #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.5);
+}
+
+/* Make delete buttons more visible */
+.file-item .delete {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #f8d7da;
+    color: #842029;
+    border: 1px solid #f5c2c7;
+    margin-left: 0.5rem;
+}
+
+/* Style for the file item to make it look more interactive */
+.file-item {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 /* ===== Timeline Styles ===== */
 .timeline {
     position: relative;

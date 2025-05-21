@@ -69,12 +69,22 @@ function initializeDatepicker()
 		dateFormat: 'MM yy',
 		changeMonth: true,
 		changeYear: true,
-		showButtonPanel: true,
+		showButtonPanel: true, // Enable the OK button
 		yearRange: "-5:+5", // Allow 5 years in past and 5 years in future
 		
-		// WCAG 1.4.13: Ensure content can be dismissed, hovered over, and persistent
+		// Merge both beforeShow handlers
 		beforeShow: function(input, inst) {
-			// Add aria attributes for WCAG 1.4.13 compliance
+			// Month/year logic
+			if ((datestr = $(this).val()).length > 0)
+			{
+				var year = datestr.substring(datestr.length - 4, datestr.length);
+				var month = $.inArray(datestr.substring(0, datestr.length - 5),
+					$(this).datepicker('option', 'monthNames'));
+				$(this).datepicker('option', 'defaultDate', new Date(year, month, 1));
+				$(this).datepicker('setDate', new Date(year, month, 1));
+			}
+
+			// Accessibility enhancements
 			setTimeout(function() {
 				// Add instruction for dismissal
 				if (!$('#datepicker-instructions').length) {
@@ -86,7 +96,17 @@ function initializeDatepicker()
 					.text('Press Escape to close the date picker without making a selection.')
 					.appendTo('#ui-datepicker-div');
 				}
-				
+				// Add instructions for screen reader users
+				if (!$('#ui-datepicker-instructions').length)
+				{
+					$('#ui-datepicker-div').prepend(
+						'<div id="ui-datepicker-instructions" class="sr-only">Use arrow keys to navigate the calendar, space or enter to select a date.</div>'
+					);
+				}
+				// Add proper roles and labels
+				$('#ui-datepicker-div').attr('role', 'dialog').attr('aria-label', 'Choose invoice date');
+				$('.ui-datepicker-prev').attr('role', 'button').attr('aria-label', 'Previous month');
+				$('.ui-datepicker-next').attr('role', 'button').attr('aria-label', 'Next month');
 				// Make datepicker dismissible with Escape key
 				$(document).on('keydown.datepicker', function(e) {
 					if (e.key === "Escape") {
@@ -122,35 +142,23 @@ function initializeDatepicker()
 			validateField($(this));
 		},
 
-		// Open datepicker in month view
-		beforeShow: function (input, inst)
-		{
-			if ((datestr = $(this).val()).length > 0)
-			{
-				year = datestr.substring(datestr.length - 4, datestr.length);
-				month = $.inArray(datestr.substring(0, datestr.length - 5),
-					$(this).datepicker('option', 'monthNames'));
-				$(this).datepicker('option', 'defaultDate', new Date(year, month, 1));
-				$(this).datepicker('setDate', new Date(year, month, 1));
-			}
-
-			// Enhance datepicker accessibility when opened
-			setTimeout(function ()
-			{
-				// Add instructions for screen reader users
-				if (!$('#ui-datepicker-instructions').length)
-				{
-					$('#ui-datepicker-div').prepend(
-						'<div id="ui-datepicker-instructions" class="sr-only">Use arrow keys to navigate the calendar, space or enter to select a date.</div>'
-					);
-				}
-
-				// Add proper roles and labels
-				$('#ui-datepicker-div').attr('role', 'dialog').attr('aria-label', 'Choose invoice date');
-				$('.ui-datepicker-prev').attr('role', 'button').attr('aria-label', 'Previous month');
-				$('.ui-datepicker-next').attr('role', 'button').attr('aria-label', 'Next month');
-			}, 100);
-		}
+		// Immediately close the datepicker when a date is selected
+		onSelect: function(dateText, inst) {
+			var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
+			var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
+			$(this).datepicker('setDate', new Date(year, month, 1));
+			$("#invoice_date").datepicker('hide');
+			$("#date-selection-announcement").remove();
+			$('<div>', {
+				id: 'date-selection-announcement',
+				'class': 'sr-only',
+				'aria-live': 'polite'
+			})
+				.text('Selected date: ' + $(this).val())
+				.appendTo('body');
+			validateField($(this));
+			setTimeout(() => { $(this).focus(); }, 0);
+		},
 	});
 
 	// Connect the existing button to open the datepicker
@@ -170,6 +178,13 @@ function initializeDatepicker()
 		e.preventDefault();
 	});
 
+	// Fix: Close datepicker when OK button is clicked (month/year selection)
+	$(document).on('click', '.ui-datepicker-close', function() {
+		$('#invoice_date').datepicker('hide');
+		setTimeout(function() {
+			$('#invoice_date').focus();
+		}, 0);
+	});
 }
 
 function initializeFileUploader()

@@ -5,10 +5,6 @@
 /* ===== Accessibility Styles ===== */
 /* Language switcher styles */
 .language-switcher {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    z-index: 2000;
     padding: 5px 10px;
     border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.9);
@@ -269,7 +265,16 @@ main h2:first-child {
         margin-top: 10px;
         margin-bottom: 10px;
     }
-    
+ /* CSS for å definere økt tekstavstand */
+.increased-spacing {
+    line-height: 1.5 !important;
+    letter-spacing: 0.12em !important;
+    word-spacing: 0.16em !important;
+  }
+  
+  .increased-spacing p {
+    margin-bottom: 2em !important;
+  }   
     .container main {
         padding-top: 10px; /* Less padding needed on mobile as switcher is not absolute positioned */
     }
@@ -290,7 +295,54 @@ body {
     flex-direction: column;
     min-height: 100vh;
 }
+/* CSS for å definere økt tekstavstand */
+.increased-spacing {
+    line-height: 1.5 !important;
+    letter-spacing: 0.12em !important;
+    word-spacing: 0.16em !important;
+  }
+  
+  .increased-spacing p {
+    margin-bottom: 2em !important;
+  }
+ /* Top controls styling */
+.top-controls-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    position: relative;
+    z-index: 2000;
+}
 
+.user-controls-group {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 0.25rem 0.5rem;
+}
+
+.language-switcher, 
+.accessibility-controls {
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.language-switcher {
+    margin-left: 0;
+    padding-right: 1rem;
+    border-right: 1px solid #dee2e6;
+}
+
+.accessibility-controls button {
+    margin-left: 0.5rem;
+}
+ 
 .content {
     flex: 1;
     margin-left: 250px;
@@ -543,5 +595,42 @@ footer p {
     
     footer.active {
         margin-left: 250px;
+    }
+}
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .top-controls-wrapper {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    .user-controls-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+    
+    .language-switcher, 
+    .accessibility-controls {
+        margin-left: 0;
+        margin-bottom: 0.5rem;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .language-switcher {
+        padding-right: 0;
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .accessibility-controls {
+        flex-wrap: wrap;
+    }
+
+    .accessibility-controls button {
+        margin-top: 0.25rem;
     }
 }

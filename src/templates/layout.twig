@@ -9,10 +9,26 @@
 		<!-- Skip to content link for keyboard users -->
 		<a href="#main-content" class="skip-link">{{ __('skip_to_content') }}</a>
 		
-		<!-- Language Switcher -->
-		<div class="language-switcher" role="navigation" aria-label="{{ __('language_selection') }}">
-			<a href="?lang=no" {% if current_lang == 'no' %}aria-current="true" class="active"{% endif %} lang="no" hreflang="no" onclick="announceLangChange('no')">Norsk</a> |
-			<a href="?lang=en" {% if current_lang == 'en' %}aria-current="true" class="active"{% endif %} lang="en" hreflang="en" onclick="announceLangChange('en')">English</a>
+		<!-- Top bar with language and accessibility controls -->
+		<div class="top-controls-wrapper">
+			<!-- User controls group -->
+			<div class="user-controls-group">
+				<!-- Language Switcher -->
+				<div class="language-switcher" role="navigation" aria-label="{{ __('language_selection') }}">
+					<a href="?lang=no" {% if current_lang == 'no' %}aria-current="true" class="active"{% endif %} lang="no" hreflang="no" onclick="announceLangChange('no')">Norsk</a> |
+					<a href="?lang=en" {% if current_lang == 'en' %}aria-current="true" class="active"{% endif %} lang="en" hreflang="en" onclick="announceLangChange('en')">English</a>
+				</div>
+				<!-- Accessibility Controls -->
+				<div class="accessibility-controls" role="region" aria-label="{{ __('text_spacing_controls') }}">
+					<button id="increase-spacing" class="btn btn-sm btn-outline-secondary">
+						<i class="fas fa-text-height" aria-hidden="true"></i>
+						{{ __('increase_text_spacing') }}
+					</button>
+					<button id="reset-spacing" class="btn btn-sm btn-outline-secondary">
+						{{ __('reset_text_spacing') }}
+					</button>
+				</div>
+			</div>
 		</div>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
@@ -96,38 +112,52 @@
 			</footer>
 			<script>
 				document.querySelector('.navbar-toggler').addEventListener('click', function () {
-const sidebar = document.querySelector('.sidebar');
-const content = document.querySelector('.content');
-const footer = document.querySelector('footer');
+				const sidebar = document.querySelector('.sidebar');
+				const content = document.querySelector('.content');
+				const footer = document.querySelector('footer');
 
-sidebar.classList.toggle('active');
-content.classList.toggle('active');
+				sidebar.classList.toggle('active');
+				content.classList.toggle('active');
 
-// Toggle footer active class instead of directly setting style
-if (window.innerWidth<= 768) {
-            footer.classList.toggle('active');
-        }
-    });
+			// Toggle footer active class instead of directly setting style
+				if (window.innerWidth<= 768) {
+						footer.classList.toggle('active');
+					}
+				});
 
-    // Window resize handler to properly adjust footer on window resize
-    window.addEventListener('resize', function() {
-        const sidebar = document.querySelector('.sidebar');
-        const footer = document.querySelector('footer');
-        
-        if (window.innerWidth <= 768) {
-            // If sidebar is active in mobile view, apply active class to footer
-            if (sidebar.classList.contains('active')) {
-                footer.classList.add('active');
-            } else {
-                footer.classList.remove('active');
-            }
-        } else {
-            // In desktop view, remove active class (footer uses default margin)
-            footer.classList.remove('active');
-        }
-    });
+				// Window resize handler to properly adjust footer on window resize
+				window.addEventListener('resize', function() {
+					const sidebar = document.querySelector('.sidebar');
+					const footer = document.querySelector('footer');
+					
+					if (window.innerWidth <= 768) {
+						// If sidebar is active in mobile view, apply active class to footer
+						if (sidebar.classList.contains('active')) {
+							footer.classList.add('active');
+						} else {
+							footer.classList.remove('active');
+						}
+					} else {
+						// In desktop view, remove active class (footer uses default margin)
+						footer.classList.remove('active');
+					}
+				});
 
+				// JavaScript for å implementere funksjonaliteten
+				document.getElementById('increase-spacing').addEventListener('click', function() {
+				document.body.classList.toggle('increased-spacing');
+				localStorage.setItem('increased-spacing', document.body.classList.contains('increased-spacing'));
+				});
 
+				document.getElementById('reset-spacing').addEventListener('click', function() {
+				document.body.classList.remove('increased-spacing');
+				localStorage.setItem('increased-spacing', false);
+				});
+
+				// Sjekk om brukeren tidligere har valgt økt tekstavstand
+				if (localStorage.getItem('increased-spacing') === 'true') {
+				document.body.classList.add('increased-spacing');
+				}
 			</script>
 
 			<!-- Add a global screen reader announcer element -->

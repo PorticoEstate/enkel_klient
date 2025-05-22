@@ -324,7 +324,8 @@ function initializeAccessibleFileUpload(formId, options = {}) {
             allowedFileTypes: fileInput.accept ? fileInput.accept.split(',') : [],
             maxFileSizeMB: parseInt(fileInput.dataset.maxsize || 10),
             required: fileInput.required,
-            counterId: fileInput.dataset.counter || null
+            counterId: fileInput.dataset.counter || null,
+            multiple: fileInput.multiple // Preserve multiple attribute from the input
         };
         
         // Merge with custom options

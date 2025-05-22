@@ -13,6 +13,7 @@ function FileUploader(config)
 		counterId: 'files-count',
 		uploadContainerId: 'content_upload_download',
 		required: false,
+		multiple: true,        // Default to true for multiple file selection
 		onComplete: null,
 		onAdd: null,          // Callback when a file is added
 		onDelete: null,       // Callback when a file is deleted
@@ -212,8 +213,17 @@ function FileUploader(config)
 			return false;
 		}
 
-		// Set the initial URL on the element
+		// Set the initial URL and multiple attribute on the element
 		$fileInput.attr('data-url', settings.uploadUrl);
+        
+        // Ensure multiple attribute is set correctly based on settings
+        if (settings.multiple) {
+            $fileInput.attr('multiple', 'multiple');
+            console.log("Multiple file selection enabled");
+        } else {
+            $fileInput.removeAttr('multiple');
+            console.log("Multiple file selection disabled");
+        }
         
         // Add keyboard accessibility enhancements
         enhanceKeyboardAccessibility();

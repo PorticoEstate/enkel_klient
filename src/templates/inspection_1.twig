@@ -149,36 +149,9 @@
 							<small id="merknadHelp" class="form-text text-muted">{{ __('remark_help') }}</small>
 							<textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp" name="values_attribute[5][value]"></textarea>
 						</div>
-						{% if enable_fileupload == 1 %}
-							<div class="form-group mt-2">
-								<label for="fileupload" id="upload-label">{{ __('upload_file') }}</label>
-								<div id="drop-area" class="" aria-labelledby="upload-label" aria-describedby="upload-instructions">
-									<div style="border: 2px dashed #ccc; padding: 20px;" role="region">
-										<p id="upload-instructions">{{ __('upload_instructions') }}</p>
-										<div class="fileupload-buttonbar">
-											<div class="fileupload-buttons">
-												<span class="fileinput-button btn btn-success">
-													<i class="fas fa-plus" aria-hidden="true"></i>
-													<span>{{ __('add_files') }}</span>
-													<input id="fileupload" type="file" name="files[]" multiple="" data-url=""></span>
-												<span class="fileupload-process" aria-live="polite"></span>
-											</div>
-											<div class="fileupload-count">
-												{{ __('number_of_files') }}:
-												<span id="files-count" aria-live="polite">0</span>
-											</div>
-											<div class="fileupload-progress" style="display:none">
-												<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
-												<div class="progress-extended" aria-live="polite"></div>
-											</div>
-										</div>
-										<div class="content_upload_download">
-											<div class="presentation files" style="display: inline-table;" aria-live="polite" role="log"></div>
-										</div>
-									</div>
-								</div>
-							</div>
-						{% endif %}
+						{% include 'components/file-upload.twig' with {
+							'required': false
+						} %}
 						<button id="submit" type="submit" class="btn btn-primary mt-2">
 							<i class="far fa-paper-plane" aria-hidden="true"></i>
 							{{ __('send') }}

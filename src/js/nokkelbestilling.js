@@ -55,61 +55,126 @@ function markRequiredFields()
 
 function initializeFileUploader()
 {
-	fileUploader = new FileUploader({
-		formId: 'nokkelbestilling',
-		uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
-		required: filesRequired,
-		onComplete: function (success)
+	try
+	{
+		// Use the generic function from form-accessibility.js if available
+		if (typeof initializeAccessibleFileUpload === 'function')
 		{
-			if (success)
-			{
-				// Update screen reader status before navigation
-				updateScreenReaderStatus('{{ __("form_submitted_successfully") }}');
-
-				// Allow time for screen reader announcement
-				window.setTimeout(function ()
+			// Initialize with custom options for nokkelbestilling form
+			fileUploader = initializeAccessibleFileUpload('nokkelbestilling', {
+				uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
+				required: filesRequired,
+				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
+				maxFileSizeMB: 15,
+				onComplete: function (success)
 				{
-					window.location.href = redirect_action;
-				}, 500);
-			} else
-			{
-				// Update screen reader status with error
-				updateScreenReaderStatus('{{ __("upload_error") }}');
+					if (success)
+					{
+						// Update screen reader status before navigation
+						updateScreenReaderStatus('{{ __("form_submitted_successfully") }}');
 
-				// Small delay to allow user to see error messages
-				window.setTimeout(function ()
+						// Allow time for screen reader announcement
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 500);
+					} else
+					{
+						// Update screen reader status with error
+						updateScreenReaderStatus('{{ __("upload_error") }}');
+
+						// Small delay to allow user to see error messages
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 1000);
+					}
+				},
+				// Add callback functions for accessibility announcements
+				onAdd: function (fileName)
 				{
-					window.location.href = redirect_action;
-				}, 1000);
-			}
-		},
-		// Add callback functions for accessibility announcements
-		onFileAdded: function (fileName)
-		{
-			updateScreenReaderStatus('{{ __("file_added") }}: ' + fileName);
-		},
-		onUploadProgress: function (progress)
-		{
-			// Update ARIA value on progress bar
-			$('#progress').attr('aria-valuenow', progress).attr('aria-valuetext', progress + '%');
-		},
-		onFileUploadSuccess: function (fileName)
-		{
-			updateScreenReaderStatus('{{ __("file_uploaded") }}: ' + fileName);
-		},
-		onFileUploadError: function (fileName, error)
-		{
-			updateScreenReaderStatus('{{ __("file_error") }}: ' + fileName + ' - ' + error);
+					updateScreenReaderStatus('{{ __("file_added") }}: ' + fileName);
+				},
+				onProgress: function (progress)
+				{
+					// Update ARIA value on progress bar
+					$('#progress').attr('aria-valuenow', progress).attr('aria-valuetext', progress + '%');
+				}
+			});
 		}
-	});
+		// Fallback to direct initialization if generic function is not available
+		else if (typeof FileUploader === 'function')
+		{
+			fileUploader = new FileUploader({
+				formId: 'nokkelbestilling',
+				uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
+				required: filesRequired,
+				onComplete: function (success)
+				{
+					if (success)
+					{
+						// Update screen reader status before navigation
+						updateScreenReaderStatus('{{ __("form_submitted_successfully") }}');
 
-	fileUploader.initialize();
+						// Allow time for screen reader announcement
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 500);
+					} else
+					{
+						// Update screen reader status with error
+						updateScreenReaderStatus('{{ __("upload_error") }}');
+
+						// Small delay to allow user to see error messages
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 1000);
+					}
+				},
+				// Add callback functions for accessibility announcements
+				onFileAdded: function (fileName)
+				{
+					updateScreenReaderStatus('{{ __("file_added") }}: ' + fileName);
+				},
+				onUploadProgress: function (progress)
+				{
+					// Update ARIA value on progress bar
+					$('#progress').attr('aria-valuenow', progress).attr('aria-valuetext', progress + '%');
+				},
+				onFileUploadSuccess: function (fileName)
+				{
+					updateScreenReaderStatus('{{ __("file_uploaded") }}: ' + fileName);
+				},
+				onFileUploadError: function (fileName, error)
+				{
+					updateScreenReaderStatus('{{ __("file_error") }}: ' + fileName + ' - ' + error);
+				}
+			});
+
+			fileUploader.initialize();
+		}
+	}
+	catch (e)
+	{
+		console.error('Error initializing file uploader:', e);
+	}
 }
 
 function updateFileUploadRequirements()
 {
+	// Safely check for pending files
+	let pendingFiles = 0;
+	try {
+		pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
+			fileUploader.getPendingCount() : 0;
+	} catch (e) {
+		console.warn("Error checking pending files count:", e);
+	}
+
 	// Update the file uploader's required state based on location_code
-	if (filesRequired && fileUploader.getPendingCount() === 0)
+	if (filesRequired && pendingFiles === 0)
 	{
 		$('#fileupload').attr('required', 'required')
 			.attr('aria-required', 'true');
@@ -135,7 +200,17 @@ $('#nokkelbestilling').on('submit', function (e)
 
 	// Check form validity excluding the file input
 	var form = this;
-	var fileInputValid = !filesRequired || fileUploader.getPendingCount() > 0;
+	
+	// Safely check for pending files
+	let pendingFiles = 0;
+	try {
+		pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
+			fileUploader.getPendingCount() : 0;
+	} catch (e) {
+		console.warn("Error checking pending files count:", e);
+	}
+	
+	var fileInputValid = !filesRequired || pendingFiles > 0;
 
 	// Temporarily remove required attribute for validation check
 	var fileInputRequired = $('#fileupload').attr('required');
@@ -275,7 +350,16 @@ ajax_submit_form = function (action)
 					// Announce success to screen readers
 					updateScreenReaderStatus('{{ __("form_saved_successfully") }}');
 
-					if (fileUploader.getPendingCount() === 0)
+					// Safely check for pending files
+					let pendingFiles = 0;
+					try {
+						pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
+							fileUploader.getPendingCount() : 0;
+					} catch (e) {
+						console.warn("Error checking pending files count:", e);
+					}
+
+					if (pendingFiles === 0)
 					{
 						// Wait a moment to ensure screen readers announce the success message
 						setTimeout(function ()

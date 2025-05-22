@@ -67,6 +67,9 @@ function initializeAllForms()
 		// Add submit announcement
 		enhanceFormSubmission(form);
 
+		// Initialize file uploads
+		initializeAccessibleFileUpload(form.id);
+
 		// Mark as enhanced
 		form.dataset.a11yEnhanced = 'true';
 	});
@@ -247,4 +250,104 @@ function enhanceFormSubmission(form)
 			}
 		}
 	});
+}
+
+/**
+ * Initialize file uploads with accessibility features
+ * This automatically configures any form with file upload fields
+ * 
+ * @param {string} formId - The ID of the form containing file uploads
+ * @param {object} options - Custom options for FileUploader
+ */
+function initializeAccessibleFileUpload(formId, options = {}) {
+    // Ensure FileUploader is available
+    if (typeof FileUploader !== 'function') {
+        console.error('FileUploader not found. Make sure file-uploader.js is loaded.');
+        return false;
+    }
+    
+    // Get the form - try both by ID and by attribute selector if ID fails
+    let form = document.getElementById(formId);
+    
+    // If form not found by ID, try using a query selector to find the form
+    if (!form) {
+        console.warn(`Form with ID "${formId}" not found, trying alternative selector...`);
+        // Try to find the first form element in case there's only one form
+        form = document.querySelector('form');
+        
+        if (form) {
+            console.log(`Found form without ID, adding ID "${formId}" to it`);
+            form.id = formId; // Add the ID to the form element for future reference
+        } else {
+            console.error(`No form element found on the page.`);
+            return false;
+        }
+    }
+    
+    // Find file inputs
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    if (fileInputs.length === 0) {
+        console.log(`No file inputs found in form "${formId}".`);
+        return false;
+    }
+    
+    // Initialize each file input
+    fileInputs.forEach((fileInput, index) => {
+        // Generate IDs if not present
+        const fileInputId = fileInput.id || `${formId}-fileupload-${index}`;
+        const dropAreaId = fileInput.dataset.droparea || `${formId}-drop-area-${index}`;
+        const fileSelectBtnId = fileInput.dataset.selectbtn || `${formId}-file-select-btn-${index}`;
+        
+        // Set IDs if they don't exist
+        if (!fileInput.id) {
+            fileInput.id = fileInputId;
+        }
+        
+        // Create drop area if it doesn't exist but is specified in data attribute
+        if (fileInput.dataset.droparea && !document.getElementById(dropAreaId)) {
+            const dropArea = document.createElement('div');
+            dropArea.id = dropAreaId;
+            dropArea.className = 'file-drop-area';
+            fileInput.parentNode.insertBefore(dropArea, fileInput.nextSibling);
+            
+            // Move the file input inside the drop area for better accessibility
+            dropArea.appendChild(fileInput);
+        }
+        
+        // Default options
+        const defaultOptions = {
+            formId: formId,
+            fileInputId: fileInputId,
+            dropAreaId: dropAreaId,
+            fileSelectBtnId: fileSelectBtnId,
+            uploadUrl: fileInput.dataset.uploadUrl || '',
+            allowedFileTypes: fileInput.accept ? fileInput.accept.split(',') : [],
+            maxFileSizeMB: parseInt(fileInput.dataset.maxsize || 10),
+            required: fileInput.required,
+            counterId: fileInput.dataset.counter || null
+        };
+        
+        // Merge with custom options
+        const mergedOptions = { ...defaultOptions, ...options };
+        
+        // Create FileUploader instance
+        const uploader = new FileUploader(mergedOptions);
+        
+        // Initialize (this will automatically connect to existing file select buttons)
+        uploader.initialize();
+        
+        // Store uploader instance on the form
+        if (!form.fileUploaders) {
+            form.fileUploaders = [];
+        }
+        form.fileUploaders.push(uploader);
+        
+        // If this is the first uploader, return it for use in the calling script
+        if (index === 0) {
+            window.firstUploader = uploader; // Store first uploader for access
+        }
+    });
+    
+    // Return the first uploader instance for convenience
+    return window.firstUploader || false;
 }

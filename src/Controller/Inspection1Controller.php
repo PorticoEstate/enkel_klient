@@ -16,7 +16,7 @@ class Inspection1Controller extends BaseFormController
     public function __construct(Twig $twig, ApiClient $api)
     {
         parent::__construct($twig, $api);
-        if (!$this->checkAcl())
+        if ($this->checkAcl())
         {
             // Render error template for access denied
             http_response_code(403);

@@ -92,60 +92,110 @@ function enhanceKeyboardAccessibility()
 
 function initializeFileUploader()
 {
-	// Only initialize if the element exists
-	if ($("#fileupload").length > 0)
+	try
 	{
-		// Initialize FileUploader component with accessibility enhancements
-		fileUploader = new FileUploader({
-			formId: 'helpdesk',
-			uploadUrl: `${strBaseURL}/helpdesk/upload`,
-			required: false,
-			onComplete: function (success)
-			{
-				if (success)
-				{
-					// Update status for screen readers before redirecting
-					updateScreenReaderStatus('Form submitted successfully. Redirecting to confirmation page.');
-					window.location.href = redirect_action;
-				} else
-				{
-					// Show an accessible error message
-					var alertMessage = 'There was a problem with your file upload. We will redirect you to the main page in 5 seconds.';
-
-					// Create accessible alert
-					createAccessibleAlert(alertMessage, 'error');
-
-					// Wait longer before redirecting to allow user to see errors
-					window.setTimeout(function ()
-					{
-						window.location.href = redirect_action;
-					}, 5000);
-				}
-			},
-			// Add file validation messages
-			onAdd: function (file)
-			{
-				// Update screen reader status
-				updateScreenReaderStatus('File added: ' + file.name);
-			},
-			onProgress: function (progress)
-			{
-				// Update ARIA attributes on progress bar
-				$('#progress').attr('aria-valuenow', progress);
-			}
-		});
-
-		fileUploader.initialize();
-
-		// Add screen reader status region
-		if (!$('#file-upload-status').length)
+		// Use the generic function from form-accessibility.js if available
+		if (typeof initializeAccessibleFileUpload === 'function')
 		{
-			$('<div>', {
-				id: 'file-upload-status',
-				'class': 'sr-only',
-				'aria-live': 'polite'
-			}).appendTo('#drop-area');
+			// Initialize with custom options for helpdesk form
+			fileUploader = initializeAccessibleFileUpload('helpdesk', {
+				uploadUrl: `${strBaseURL}/helpdesk/upload`,
+				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
+				maxFileSizeMB: 15,
+				onComplete: function (success)
+				{
+					if (success)
+					{
+						// Update status for screen readers before redirecting
+						updateScreenReaderStatus('Form submitted successfully. Redirecting to confirmation page.');
+						window.location.href = redirect_action;
+					} else
+					{
+						// Show an accessible error message
+						var alertMessage = 'There was a problem with your file upload. We will redirect you to the main page in 5 seconds.';
+
+						// Create accessible alert
+						createAccessibleAlert(alertMessage, 'error');
+
+						// Wait longer before redirecting to allow user to see errors
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 5000);
+					}
+				},
+				// Add file validation messages
+				onAdd: function (file)
+				{
+					// Update screen reader status
+					updateScreenReaderStatus('File added: ' + file.name);
+				},
+				onProgress: function (progress)
+				{
+					// Update ARIA attributes on progress bar
+					$('#progress').attr('aria-valuenow', progress);
+				}
+			});
 		}
+		// Fallback to direct initialization if generic function is not available
+		else if ($("#fileupload").length > 0 && typeof FileUploader === 'function')
+		{
+			// Initialize FileUploader component with accessibility enhancements
+			fileUploader = new FileUploader({
+				formId: 'helpdesk',
+				uploadUrl: `${strBaseURL}/helpdesk/upload`,
+				required: false,
+				onComplete: function (success)
+				{
+					if (success)
+					{
+						// Update status for screen readers before redirecting
+						updateScreenReaderStatus('Form submitted successfully. Redirecting to confirmation page.');
+						window.location.href = redirect_action;
+					} else
+					{
+						// Show an accessible error message
+						var alertMessage = 'There was a problem with your file upload. We will redirect you to the main page in 5 seconds.';
+
+						// Create accessible alert
+						createAccessibleAlert(alertMessage, 'error');
+
+						// Wait longer before redirecting to allow user to see errors
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 5000);
+					}
+				},
+				// Add file validation messages
+				onAdd: function (file)
+				{
+					// Update screen reader status
+					updateScreenReaderStatus('File added: ' + file.name);
+				},
+				onProgress: function (progress)
+				{
+					// Update ARIA attributes on progress bar
+					$('#progress').attr('aria-valuenow', progress);
+				}
+			});
+
+			fileUploader.initialize();
+
+			// Add screen reader status region
+			if (!$('#file-upload-status').length)
+			{
+				$('<div>', {
+					id: 'file-upload-status',
+					'class': 'sr-only',
+					'aria-live': 'polite'
+				}).appendTo('#drop-area');
+			}
+		}
+	}
+	catch (e)
+	{
+		console.error('Error initializing file uploader:', e);
 	}
 }
 
@@ -272,7 +322,18 @@ function ajax_submit_form()
 				{
 					var id = data.id;
 
-					if (fileUploader.getPendingCount() === 0)
+					// Safely check for pending files
+					let pendingFiles = 0;
+					try
+					{
+						pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
+							fileUploader.getPendingCount() : 0;
+					} catch (e)
+					{
+						console.warn("Error checking pending files count:", e);
+					}
+
+					if (pendingFiles === 0)
 					{
 						window.location.href = redirect_action;
 					} else

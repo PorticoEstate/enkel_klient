@@ -244,7 +244,7 @@
 					<p>{{ __('form_info')| raw }}</p>
 				{% endif %}
 
-				<form method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate onsubmit="return validateForm(this);">
+				<form id="invoicerequest" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate onsubmit="return validateForm(this);">
 					<input type="hidden" value="{{ rand }}" name="randcheck"/>
 					<fieldset>
 						<legend class="sr-only">{{ __('contact_information') }}</legend>
@@ -354,44 +354,9 @@
 								<div id="message-error" class="invalid-feedback">{{ __('invalid_message') }}</div>
 							</div>
 
-							{% if enable_fileupload == 1 %}
-								<div class="form-group mt-4">
-									<label for="fileupload" id="fileupload-label">{{ __('upload_file') }}</label>
-									<small id="fileuploadHelp" class="form-text text-muted d-block mb-2">{{ __('upload_instructions') }}</small>
-									<div id="drop-area" aria-live="polite">
-										<div style="border: 2px dashed #ccc; padding: 20px;">
-											<p id="upload-instructions">{{ __('upload_instructions') }}</p>
-											<div class="fileupload-buttonbar" role="group" aria-labelledby="upload-instructions">
-												<div class="fileupload-buttons">
-													<!-- Accessible file upload button -->
-													<button type="button" class="btn btn-success file-select-btn" id="file-select-btn">
-														<i class="fas fa-plus" aria-hidden="true"></i>
-														<span>{{ __('add_files') }}</span>
-													</button>
-													<input id="fileupload" type="file" name="files[]" multiple 
-														   aria-labelledby="fileupload-label upload-instructions"
-														   style="position: absolute; width: 1px; height: 1px; overflow: hidden;" 
-														   tabindex="-1">
-													<small id="fileupload-keyboard-hint" class="form-text text-muted d-block mt-1">
-														{{ __('press_enter_to_select_files') }}
-													</small>
-													<span class="fileupload-process"></span>
-												</div>
-												<div class="fileupload-count">
-													{{ __('number_of_files') }}:
-													<span id="files-count" aria-live="polite">0</span>
-												</div>
-												<div class="fileupload-progress" style="display:none">
-													<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
-													<div class="progress-extended" aria-live="polite"></div>
-												</div>
-											</div>
-											<div class="content_upload_download">
-												<div class="presentation files" style="display: inline-table;" aria-live="polite"></div>
-											</div>
-										</div>
-									</div>								</div>
-							{% endif %}
+							{% include 'components/file-upload.twig' with {
+								'required': false
+							} %}
 
 							<button type="submit" class="btn btn-primary mt-4">{{ __('send') }}</button>
 						</fieldset>

@@ -182,35 +182,86 @@ $(document).ready(function ()
 		}
 	}
 
-	// Initialize FileUploader component
-	fileUploader = new FileUploader({
-		formId: 'inspection_1',
-		uploadUrl: `${strBaseURL}/inspection_1/upload`,
-		onComplete: function (success)
+	// Initialize FileUploader component using generic approach
+	try {
+		// Use the generic function from form-accessibility.js if available
+		if (typeof initializeAccessibleFileUpload === 'function')
 		{
-			if (success)
-			{
-				console.log("All uploads completed successfully");
-				announceChange("All files uploaded successfully. Redirecting to main page.");
-				window.location.href = redirect_action;
-			}
-			else
-			{
-				console.error("There were errors during file upload");
-
-				// Show an alert to the user and update screen reader announcement
-				announceChange("Error during file upload. Redirecting to main page in 5 seconds.");
-				alert('Det oppstod en feil under filopplastingen. Vi omdirigerer deg til hovedsiden om 5 sekunder.');
-
-				// Wait longer before redirecting to allow user to see errors
-				window.setTimeout(function ()
+			// Initialize with custom options for inspection_1 form
+			fileUploader = initializeAccessibleFileUpload('inspection_1', {
+				uploadUrl: `${strBaseURL}/inspection_1/upload`,
+				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
+				maxFileSizeMB: 15,
+				onComplete: function (success)
 				{
-					window.location.href = redirect_action;
-				}, 5000);
-			}
+					if (success)
+					{
+						console.log("All uploads completed successfully");
+						announceChange("All files uploaded successfully. Redirecting to main page.");
+						window.location.href = redirect_action;
+					}
+					else
+					{
+						console.error("There were errors during file upload");
+
+						// Show an alert to the user and update screen reader announcement
+						announceChange("Error during file upload. Redirecting to main page in 5 seconds.");
+						alert('Det oppstod en feil under filopplastingen. Vi omdirigerer deg til hovedsiden om 5 sekunder.');
+
+						// Wait longer before redirecting to allow user to see errors
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 5000);
+					}
+				},
+				// Add callback functions for accessibility announcements
+				onAdd: function (file) {
+					announceChange("File added: " + file.name);
+				},
+				onProgress: function (progress) {
+					// Update ARIA value on progress bar if it exists
+					if ($('#progress').length) {
+						$('#progress').attr('aria-valuenow', progress).attr('aria-valuetext', progress + '%');
+					}
+				}
+			});
 		}
-	});
-	fileUploader.initialize();
+		// Fallback to direct initialization if generic function is not available
+		else if (typeof FileUploader === 'function')
+		{
+			fileUploader = new FileUploader({
+				formId: 'inspection_1',
+				uploadUrl: `${strBaseURL}/inspection_1/upload`,
+				onComplete: function (success)
+				{
+					if (success)
+					{
+						console.log("All uploads completed successfully");
+						announceChange("All files uploaded successfully. Redirecting to main page.");
+						window.location.href = redirect_action;
+					}
+					else
+					{
+						console.error("There were errors during file upload");
+
+						// Show an alert to the user and update screen reader announcement
+						announceChange("Error during file upload. Redirecting to main page in 5 seconds.");
+						alert('Det oppstod en feil under filopplastingen. Vi omdirigerer deg til hovedsiden om 5 sekunder.');
+
+						// Wait longer before redirecting to allow user to see errors
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 5000);
+					}
+				}
+			});
+			fileUploader.initialize();
+		}
+	} catch (e) {
+		console.error('Error initializing file uploader:', e);
+	}
 });
 
 $('#inspection_1').on('submit', function (e)
@@ -299,7 +350,16 @@ ajax_submit_form = function (action)
 				{
 					var id = data.id;
 
-					if (fileUploader.getPendingCount() === 0)
+					// Safely check for pending files
+					let pendingFiles = 0;
+					try {
+						pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
+							fileUploader.getPendingCount() : 0;
+					} catch (e) {
+						console.warn("Error checking pending files count:", e);
+					}
+
+					if (pendingFiles === 0)
 					{
 						window.location.href = redirect_action;
 					} else

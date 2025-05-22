@@ -228,13 +228,14 @@ function initializeFileUploader()
 {
 	try
 	{
-		// Only initialize if the element exists
-		if ($("#fileupload").length > 0)
+		// Use the new generic function from form-accessibility.js if available
+		if (typeof initializeAccessibleFileUpload === 'function')
 		{
-			// Initialize FileUploader component with accessibility enhancements
-			fileUploader = new FileUploader({
-				formId: 'invoicerequest',
+			// Initialize with custom options for invoicerequest form
+			fileUploader = initializeAccessibleFileUpload('invoicerequest', {
 				uploadUrl: `${strBaseURL}/invoicerequest/upload`,
+				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
+				maxFileSizeMB: 15,
 				onComplete: function (success)
 				{
 					if (success)
@@ -246,11 +247,10 @@ function initializeFileUploader()
 					{
 						console.error("There were errors during file upload");
 
-						// Show an accessible error message
-						var alertMessage = 'There was a problem with your file upload. We will redirect you to the main page in 5 seconds.';
-
-						// Create accessible alert
-						createAccessibleAlert(alertMessage, 'error');
+						// Use the accessible alert method
+						if (this.createAccessibleAlert) {
+							this.createAccessibleAlert('There was a problem with your file upload. We will redirect you to the main page in 5 seconds.', 'error');
+						}
 
 						// Wait longer before redirecting to allow user to see errors
 						window.setTimeout(function ()
@@ -258,31 +258,44 @@ function initializeFileUploader()
 							window.location.href = redirect_action;
 						}, 5000);
 					}
-				},
-				// Add file validation messages
-				onAdd: function (file)
-				{
-					// Update screen reader status
-					updateScreenReaderStatus('File added: ' + file.name);
-				},
-				onProgress: function (progress)
-				{
-					// Update ARIA attributes on progress bar
-					$('#progress').attr('aria-valuenow', progress);
 				}
 			});
-
+		}
+		// Fallback to direct initialization if generic function is not available
+		else if ($("#fileupload").length > 0 && typeof FileUploader === 'function')
+		{
+			// Initialize FileUploader component with accessibility enhancements
+			fileUploader = new FileUploader({
+				formId: 'invoicerequest',
+				uploadUrl: `${strBaseURL}/invoicerequest/upload`,
+				fileSelectBtnId: 'file-select-btn',
+				dropAreaId: 'drop-area',
+				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
+				maxFileSizeMB: 15,
+				onComplete: function (success)
+				{
+					if (success)
+					{
+						console.log("All uploads completed successfully");
+						window.location.href = redirect_action;
+					}
+					else
+					{
+						console.error("There were errors during file upload");
+						
+						// Show an accessible error message
+						this.createAccessibleAlert('There was a problem with your file upload. We will redirect you to the main page in 5 seconds.', 'error');
+						
+						// Wait longer before redirecting to allow user to see errors
+						window.setTimeout(function ()
+						{
+							window.location.href = redirect_action;
+						}, 5000);
+					}
+				}
+			});
+			
 			fileUploader.initialize();
-
-			// Add screen reader status region
-			if (!$('#file-upload-status').length)
-			{
-				$('<div>', {
-					id: 'file-upload-status',
-					'class': 'sr-only',
-					'aria-live': 'polite'
-				}).appendTo('#drop-area');
-			}
 		}
 	}
 	catch (error)
@@ -321,123 +334,13 @@ function enhanceKeyboardAccessibility()
 		$(this).removeClass('hover-active');
 	});
 	
-    // Make file upload button keyboard accessible
-    $('#file-select-btn').on('click keydown', function(e) {
-        // Trigger on click or Enter key
-        if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
-            e.preventDefault();
-            $('#fileupload').click();
-        }
-    });
-    
-    // Add keyboard support for file list items
-    $(document).on('keydown', '.presentation.files .file-item', function(e) {
-        // Delete file when Delete key or Backspace is pressed
-        if (e.key === 'Delete' || e.key === 'Backspace') {
-            e.preventDefault();
-            // Find and click the delete button within this file item
-            $(this).find('.delete').click();
-        }
-    });
-    
-    // Make delete buttons keyboard accessible
-    $(document).on('keydown', '.presentation.files .delete', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            $(this).click();
-        }
-    });
-
-    // Ensure file items are focusable
-    $(document).on('DOMNodeInserted', '.presentation.files', function() {
-        setTimeout(function() {
-            $('.file-item').each(function() {
-                if (!$(this).attr('tabindex')) {
-                    $(this).attr('tabindex', '0');
-                    
-                    // Add proper accessibility roles
-                    $(this).attr('role', 'listitem');
-                    
-                    // Ensure delete buttons are keyboard accessible
-                    $(this).find('.delete').attr({
-                        'tabindex': '0',
-                        'role': 'button',
-                        'aria-label': 'Delete file'
-                    });
-                }
-            });
-            
-            // Set the proper role for the file list container
-            $('.presentation.files').attr('role', 'list');
-        }, 100);
-    });
-
-    // Announce file operations to screen readers
-    function announceFileOperation(message) {
-        // Create or update the status element
-        if (!$('#file-status-announcement').length) {
-            $('<div>', {
-                id: 'file-status-announcement',
-                'class': 'sr-only',
-                'aria-live': 'polite'
-            }).appendTo('body');
-        }
-        
-        $('#file-status-announcement').text(message);
-    }
-
-    // Hook into FileUploader events to make announcements
-    if (typeof FileUploader !== 'undefined') {
-        // Override these methods in the FileUploader initialization
-        const originalOnAdd = FileUploader.prototype.onAdd;
-        FileUploader.prototype.onAdd = function(file) {
-            if (originalOnAdd) originalOnAdd.call(this, file);
-            announceFileOperation('File ' + file.name + ' added.');
-        };
-        
-        const originalOnDelete = FileUploader.prototype.onDelete;
-        FileUploader.prototype.onDelete = function(file) {
-            if (originalOnDelete) originalOnDelete.call(this, file);
-            announceFileOperation('File ' + file.name + ' removed.');
-        };
-        
-        const originalOnProgress = FileUploader.prototype.onProgress;
-        FileUploader.prototype.onProgress = function(progress) {
-            if (originalOnProgress) originalOnProgress.call(this, progress);
-            if (progress >= 100) {
-                announceFileOperation('Upload complete.');
-            }
-        };
-    }
+    // File handling accessibility features are now managed by FileUploader
     
 	setupFormValidation($('form'));
 }
 
-function updateScreenReaderStatus(message)
-{
-	$('#file-upload-status').text(message);
-}
-
-function createAccessibleAlert(message, type)
-{
-	// Remove existing alerts
-	$('.alert-accessible').remove();
-
-	// Create alert with proper ARIA role
-	var $alert = $('<div>', {
-		'class': 'alert alert-' + (type || 'info') + ' alert-accessible',
-		'role': 'alert',
-		'aria-live': 'assertive'
-	}).text(message);
-
-	// Add to page
-	$('form').before($alert);
-
-	// Scroll to alert
-	$('html, body').animate({
-		scrollTop: $alert.offset().top - 100
-	}, 200);
-}
+// These functions are now provided by FileUploader component
+// Using fileUploader.announceToScreenReader() and fileUploader.createAccessibleAlert() instead
 
 $('form').on('submit', function (e)
 {
@@ -504,7 +407,15 @@ function ajax_submit_form()
 				{
 					var id = data.id;
 
-					if (!fileUploader || fileUploader.getPendingCount() === 0)
+					let pendingFiles = 0;
+					try {
+						pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
+							fileUploader.getPendingCount() : 0;
+					} catch (e) {
+						console.warn("Error checking pending files count:", e);
+					}
+					
+					if (!fileUploader || pendingFiles === 0)
 					{
 						$('#submission-status').text('Form submitted successfully. Redirecting to confirmation page.');
 						window.location.href = redirect_action;

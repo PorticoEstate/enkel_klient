@@ -143,37 +143,7 @@
 							<div id="message-error" class="invalid-feedback">Please provide additional information</div>
 						</div>
 
-						{% if enable_fileupload == 1 %}
-							<div class="form-group mt-4">
-								<label for="fileupload" id="fileupload-label">{{ __('upload_file') }}</label>
-								<div id="drop-area" aria-live="polite">
-									<div style="border: 2px dashed #ccc; padding: 20px;">
-										<p id="upload-instructions">{{ __('upload_instructions') }}</p>
-										<div class="fileupload-buttonbar" role="group" aria-labelledby="upload-instructions">
-											<div class="fileupload-buttons">
-												<span class="fileinput-button btn btn-success">
-													<i class="fas fa-plus" aria-hidden="true"></i>
-													<span>{{ __('add_files') }}</span>
-													<input id="fileupload" type="file" name="files[]" multiple="" aria-labelledby="fileupload-label upload-instructions">
-												</span>
-												<span class="fileupload-process"></span>
-											</div>
-											<div class="fileupload-count">
-												{{ __('number_of_files') }}:
-												<span id="files-count" aria-live="polite">0</span>
-											</div>
-											<div class="fileupload-progress" style="display:none">
-												<div id="progress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
-												<div class="progress-extended" aria-live="polite"></div>
-											</div>
-										</div>
-										<div class="content_upload_download">
-											<div class="presentation files" style="display: inline-table;" aria-live="polite"></div>
-										</div>
-									</div>
-								</div>
-							</div>
-						{% endif %}
+						{% include 'components/file-upload.twig' %}
 
 						<button type="submit" class="btn btn-primary mt-4">{{ __('send') }}</button>
 					</fieldset>

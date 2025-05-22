@@ -270,7 +270,9 @@ function FileUploader(config)
 								}));
 
 						pendingList++;
-						$(`#${settings.counterId}`).html(pendingList);
+						// Use the counterId if provided, otherwise fall back to default 'files-count'
+						const counterId = settings.counterId || 'files-count';
+						$(`#${counterId}`).html(pendingList);
 
 						// Remove required validation when files are added
 						if (settings.required && pendingList > 0)
@@ -637,7 +639,9 @@ function FileUploader(config)
 					
 					// Decrement file count
 					pendingList--;
-					$(`#${settings.counterId}`).html(pendingList);
+					// Use the counterId if provided, otherwise fall back to default 'files-count'
+					const counterId = settings.counterId || 'files-count';
+					$(`#${counterId}`).html(pendingList);
 					
 					// Re-add required validation if needed
 					if (settings.required && pendingList === 0) {
@@ -778,7 +782,9 @@ function FileUploader(config)
 			pendingList = 0;
 			file_count = 0;
 			uploaded_count = 0;
-			$(`#${settings.counterId}`).html(pendingList);
+			// Use the counterId if provided, otherwise fall back to default 'files-count'
+			const counterId = settings.counterId || 'files-count';
+			$(`#${counterId}`).html(pendingList);
 		},
 		isInitialized: function ()
 		{

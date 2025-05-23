@@ -40,10 +40,10 @@ function toggleFormDebug(enable, options = {})
 	}
 
 	// Update form-accessibility.js debug flag
-	if (config.a11y && typeof FORM_A11Y_CONFIG !== 'undefined')
+	if (config.a11y && typeof window.FORM_A11Y_CONFIG !== 'undefined')
 	{
-		FORM_A11Y_CONFIG.debug = !!enable;
-		isEnabled = isEnabled || FORM_A11Y_CONFIG.debug;
+		window.FORM_A11Y_CONFIG.debug = !!enable;
+		isEnabled = isEnabled || window.FORM_A11Y_CONFIG.debug;
 	}
 
 	// Log status change if requested
@@ -52,7 +52,7 @@ function toggleFormDebug(enable, options = {})
 		console.log(
 			`[FormDebug] Validation debugging ${isEnabled ? 'enabled' : 'disabled'} ` +
 			`(validator: ${config.validator && typeof FORM_VALIDATOR_CONFIG !== 'undefined'}, ` +
-			`a11y: ${config.a11y && typeof FORM_A11Y_CONFIG !== 'undefined'})`
+			`a11y: ${config.a11y && typeof window.FORM_A11Y_CONFIG !== 'undefined'})`
 		);
 	}
 
@@ -68,9 +68,9 @@ function getFormDebugStatus()
 	return {
 		validator: typeof FORM_VALIDATOR_CONFIG !== 'undefined' ?
 			!!FORM_VALIDATOR_CONFIG.debug : false,
-		a11y: typeof FORM_A11Y_CONFIG !== 'undefined' ?
-			!!FORM_A11Y_CONFIG.debug : false,
+		a11y: typeof window.FORM_A11Y_CONFIG !== 'undefined' ?
+			!!window.FORM_A11Y_CONFIG.debug : false,
 		enabled: (typeof FORM_VALIDATOR_CONFIG !== 'undefined' && !!FORM_VALIDATOR_CONFIG.debug) ||
-			(typeof FORM_A11Y_CONFIG !== 'undefined' && !!FORM_A11Y_CONFIG.debug)
+			(typeof window.FORM_A11Y_CONFIG !== 'undefined' && !!window.FORM_A11Y_CONFIG.debug)
 	};
 }

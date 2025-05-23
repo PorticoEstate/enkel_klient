@@ -6,20 +6,23 @@
  * consistent experience for screen reader users across all forms
  * 
  * Updated May 2025 - Fixed recursion issues with form-validator.js
+ * Updated May 23, 2025 - Fixed duplicate constant declaration issue
  */
 
-// Debug logging configuration
-const FORM_A11Y_CONFIG = {
-	debug: false,  // Set to true to enable debug logging
-	logPrefix: '[FormA11y]'
-};
+// Debug logging configuration - check if already declared to prevent redeclaration errors
+if (typeof window.FORM_A11Y_CONFIG === 'undefined') {
+	window.FORM_A11Y_CONFIG = {
+		debug: false,  // Set to true to enable debug logging
+		logPrefix: '[FormA11y]'
+	};
+}
 
 // Debug logger function
 function formA11yLog(...args)
 {
-	if (FORM_A11Y_CONFIG && FORM_A11Y_CONFIG.debug)
+	if (window.FORM_A11Y_CONFIG && window.FORM_A11Y_CONFIG.debug)
 	{
-		console.log(FORM_A11Y_CONFIG.logPrefix, ...args);
+		console.log(window.FORM_A11Y_CONFIG.logPrefix, ...args);
 	}
 }
 

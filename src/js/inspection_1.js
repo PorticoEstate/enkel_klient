@@ -2,20 +2,76 @@
  * Inspection form handler
  * 
  * Handles form validation, submission and file uploads for inspection form
+ * Enhanced for WCAG 2.0 compliance with improved accessibility
+ * Updated May 23, 2025 - Refactored to use FormHandler class
  */
 
-// Document ready function for initialization
-document.addEventListener('DOMContentLoaded', function ()
+// Global variables
+var redirect_action = `${strBaseURL}/inspection_1`;
+var formHandler = null;
+
+$(document).ready(function ()
 {
-	// Set up common form validation
-	if (typeof setupFormValidation === 'function')
-	{
-		setupFormValidation(document.getElementById('inspection_1'));
-	}
+	// Initialize form handler with form-specific options
+	formHandler = new FormHandler({
+		formId: 'inspection_1',
+		redirectUrl: redirect_action,
+		uploadUrl: `${strBaseURL}/inspection_1/upload`,
+		fileRequired: true, // Inspection forms typically require file uploads
+		allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
+		maxFileSizeMB: 15,
+		customHandlers: {
+			// Form-specific pre-validation logic
+			preValidate: function() {
+				// Any inspection-specific validation can go here
+				return true;
+			}
+		}
+	});
+
+	// Make form accessible when JavaScript is loaded
+	$('#details').attr('aria-hidden', 'true');
+
+	// Ensure real-time validation is working for phone and email fields
+	setupRealTimeValidation();
 
 	// Initialize any other form-specific functionality
 	initializeAccessibility();
 });
+
+function setupRealTimeValidation()
+{
+	// Ensure real-time validation for phone and email fields
+	const $form = $('#inspection_1');
+	
+	// Phone field validation - validate on input and blur
+	$('#phone').on('input blur', function() {
+		if (typeof validateField === 'function') {
+			validateField($(this));
+		}
+	});
+	
+	// Email field validation - validate on input and blur  
+	$('#email').on('input blur', function() {
+		if (typeof validateField === 'function') {
+			validateField($(this));
+		}
+	});
+	
+	// Also validate other required fields for consistency
+	$form.find('input[required], textarea[required], select[required]').on('input blur', function() {
+		// Skip if already handled above
+		if ($(this).attr('id') === 'phone' || $(this).attr('id') === 'email') {
+			return;
+		}
+		
+		if (typeof validateField === 'function') {
+			validateField($(this));
+		}
+	});
+	
+	console.log('Real-time validation setup completed for inspection_1 form');
+}
 
 // Form-specific utility functions
 function showDiv(divId, element)
@@ -60,6 +116,11 @@ function handleChangeTilgang(src)
 		innerDetails.style.display = 'none';
 		innerDetails.setAttribute('aria-hidden', 'true');
 
+		// Refresh required field indicators after changing requirements
+		if (formHandler) {
+			formHandler.markRequiredFields();
+		}
+
 		// Announce to screen readers
 		announceChange('Required fields removed as access is missing');
 	} else
@@ -84,6 +145,11 @@ function handleChangeTilgang(src)
 		innerDetails.style.display = 'block';
 		innerDetails.setAttribute('aria-hidden', 'false');
 
+		// Refresh required field indicators after changing requirements
+		if (formHandler) {
+			formHandler.markRequiredFields();
+		}
+
 		// Announce to screen readers
 		announceChange('Required fields added as access is available');
 	}
@@ -92,18 +158,21 @@ function handleChangeTilgang(src)
 // Helper function to announce changes to screen readers
 function announceChange(message)
 {
-	const liveRegion = document.getElementById('form-submission-status');
-	if (!liveRegion)
-	{
-		return;
-	}
-	liveRegion.textContent = message;
+	if (formHandler) {
+		formHandler.announceToScreenReader(message);
+	} else {
+		// Fallback implementation
+		const liveRegion = document.getElementById('form-submission-status');
+		if (!liveRegion) {
+			return;
+		}
+		liveRegion.textContent = message;
 
-	// Clear the announcement after screen readers have time to read it
-	setTimeout(() =>
-	{
-		liveRegion.textContent = '';
-	}, 3000);
+		// Clear the announcement after screen readers have time to read it
+		setTimeout(() => {
+			liveRegion.textContent = '';
+		}, 3000);
+	}
 }
 
 // Initialize accessibility features for the form
@@ -147,283 +216,39 @@ function handleChangeSlukkeutstyr(src)
 	}
 }
 
-// Global variables
-var redirect_action = `${strBaseURL}/inspection_1`;
-var fileUploader = null;
+// All functions have been moved to FormHandler class
 
-$(document).ready(function ()
+// Form submission is now handled by the FormHandler class
+
+/**
+ * Legacy functions kept for backward compatibility
+ * @deprecated These functions will be removed in a future update
+ */
+
+/**
+ * @deprecated Use formHandler.submitForm() instead
+ */
+function confirm_session(action)
 {
-	// Make form accessible when JavaScript is loaded
-	$('#details').attr('aria-hidden', 'true');
-
-	// Add asterisk to all labels of required fields and set required class
-	// This is already handled by form-validator.js
-
-	// Make drop area keyboard accessible
-	const dropArea = document.getElementById('drop-area');
-	if (dropArea)
-	{
-		const dropRegion = dropArea.querySelector('div[tabindex="0"]');
-		if (dropRegion)
-		{
-			dropRegion.addEventListener('keydown', function (e)
-			{
-				// If Enter or Space is pressed, trigger click on the file input
-				if (e.key === 'Enter' || e.key === ' ')
-				{
-					e.preventDefault();
-					const fileInput = document.getElementById('fileupload');
-					if (fileInput)
-					{
-						fileInput.click();
-					}
-				}
-			});
+	if (formHandler) {
+		if (action === 'cancel') {
+			window.location.href = redirect_action;
+			return;
 		}
+		formHandler.submitForm();
+	} else {
+		console.warn('FormHandler not initialized, unable to submit form');
 	}
+}
 
-	// Initialize FileUploader component using generic approach
-	try {
-		// Use the generic function from form-accessibility.js if available
-		if (typeof initializeAccessibleFileUpload === 'function')
-		{
-			// Initialize with custom options for inspection_1 form
-			fileUploader = initializeAccessibleFileUpload('inspection_1', {
-				uploadUrl: `${strBaseURL}/inspection_1/upload`,
-				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
-				maxFileSizeMB: 15,
-				onComplete: function (success)
-				{
-					if (success)
-					{
-						console.log("All uploads completed successfully");
-						announceChange("All files uploaded successfully. Redirecting to main page.");
-						window.location.href = redirect_action;
-					}
-					else
-					{
-						console.error("There were errors during file upload");
-
-						// Show an alert to the user and update screen reader announcement
-						announceChange("Error during file upload. Redirecting to main page in 5 seconds.");
-						alert('Det oppstod en feil under filopplastingen. Vi omdirigerer deg til hovedsiden om 5 sekunder.');
-
-						// Wait longer before redirecting to allow user to see errors
-						window.setTimeout(function ()
-						{
-							window.location.href = redirect_action;
-						}, 5000);
-					}
-				},
-				// Add callback functions for accessibility announcements
-				onAdd: function (file) {
-					announceChange("File added: " + file.name);
-				},
-				onProgress: function (progress) {
-					// Update ARIA value on progress bar if it exists
-					if ($('#progress').length) {
-						$('#progress').attr('aria-valuenow', progress).attr('aria-valuetext', progress + '%');
-					}
-				}
-			});
-		}
-		// Fallback to direct initialization if generic function is not available
-		else if (typeof FileUploader === 'function')
-		{
-			fileUploader = new FileUploader({
-				formId: 'inspection_1',
-				uploadUrl: `${strBaseURL}/inspection_1/upload`,
-				onComplete: function (success)
-				{
-					if (success)
-					{
-						console.log("All uploads completed successfully");
-						announceChange("All files uploaded successfully. Redirecting to main page.");
-						window.location.href = redirect_action;
-					}
-					else
-					{
-						console.error("There were errors during file upload");
-
-						// Show an alert to the user and update screen reader announcement
-						announceChange("Error during file upload. Redirecting to main page in 5 seconds.");
-						alert('Det oppstod en feil under filopplastingen. Vi omdirigerer deg til hovedsiden om 5 sekunder.');
-
-						// Wait longer before redirecting to allow user to see errors
-						window.setTimeout(function ()
-						{
-							window.location.href = redirect_action;
-						}, 5000);
-					}
-				}
-			});
-			fileUploader.initialize();
-		}
-	} catch (e) {
-		console.error('Error initializing file uploader:', e);
-	}
-});
-
-$('#inspection_1').on('submit', function (e)
+/**
+ * @deprecated Use formHandler.submitForm() instead
+ */
+function ajax_submit_form(action)
 {
-	e.preventDefault();
-
-	// Use the form-validator to validate the form
-	if (!validateForm(this))
-	{
-		return false;
+	if (formHandler) {
+		formHandler.submitForm();
+	} else {
+		console.warn('FormHandler not initialized, unable to submit form');
 	}
-
-	confirm_session('save');
-});
-
-this.confirm_session = function (action)
-{
-	if (action === 'cancel')
-	{
-		window.location.href = redirect_action;
-		return;
-	}
-
-	/**
-	 * Block doubleclick
-	 */
-	$('#submit').prop('disabled', true);
-	$('#fileupload').prop('disabled', true);
-
-	var form = document.getElementById('inspection_1');
-	$('<div id="spinner" class="d-flex align-items-center">')
-		.append($('<strong>').text('Lagrer...'))
-		.append($('<div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>')).insertAfter(form);
-	window.scrollBy(0, 100);
-
-	// Announce submission to screen readers
-	document.getElementById('form-submission-status').textContent = 'Form is being submitted. Please wait...';
-
-	try
-	{
-		ajax_submit_form(action);
-	} catch (e)
-	{
-		console.error('Error during AJAX submission:', e);
-		$('#submit').prop('disabled', false);
-		$('#fileupload').prop('disabled', false);
-
-		var element = document.getElementById('spinner');
-		if (element)
-		{
-			element.parentNode.removeChild(element);
-		}
-
-		alert('Det oppstod en feil ved sending av skjemaet: ' + e.message);
-	}
-};
-
-ajax_submit_form = function (action)
-{
-	var thisForm = $('#inspection_1');
-	var requestUrl = $(thisForm).attr("action");
-	var formdata = false;
-	if (window.FormData)
-	{
-		try
-		{
-			formdata = new FormData(thisForm[0]);
-		} catch (e)
-		{
-			console.error('FormData error:', e);
-		}
-	}
-
-	$.ajax({
-		cache: false,
-		contentType: false,
-		processData: false,
-		type: 'POST',
-		url: `${requestUrl}?phpgw_return_as=json`,
-		data: formdata ? formdata : thisForm.serialize(),
-		success: function (data, textStatus, jqXHR)
-		{
-			if (data)
-			{
-				if (data.status == "saved")
-				{
-					var id = data.id;
-
-					// Safely check for pending files
-					let pendingFiles = 0;
-					try {
-						pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
-							fileUploader.getPendingCount() : 0;
-					} catch (e) {
-						console.warn("Error checking pending files count:", e);
-					}
-
-					if (pendingFiles === 0)
-					{
-						window.location.href = redirect_action;
-					} else
-					{
-						fileUploader.sendAllFiles(id);
-					}
-				} else
-				{
-					$('#submit').prop('disabled', false);
-					$('#fileupload').prop('disabled', false);
-
-					var element = document.getElementById('spinner');
-					if (element)
-					{
-						element.parentNode.removeChild(element);
-					}
-
-					var error_message = '';
-					$.each(data.message, function (index, error)
-					{
-						error_message += error + "\n";
-					});
-
-					// Create an accessible error message using form-validator pattern
-					let errorDiv = document.createElement('div');
-					errorDiv.className = 'alert alert-danger';
-					errorDiv.setAttribute('role', 'alert');
-					errorDiv.setAttribute('aria-live', 'assertive');
-
-					let errorHeading = document.createElement('h2');
-					errorHeading.textContent = 'Form submission error';
-					errorHeading.className = 'h5';
-
-					let errorPara = document.createElement('p');
-					errorPara.textContent = error_message;
-
-					errorDiv.appendChild(errorHeading);
-					errorDiv.appendChild(errorPara);
-
-					// Insert error message at top of form
-					const form = document.getElementById('inspection_1');
-					form.prepend(errorDiv);
-
-					// Also use alert for compatibility
-					alert(error_message);
-
-					// Update screen reader status
-					document.getElementById('form-submission-status').textContent = 'Form submission failed: ' + error_message;
-				}
-			}
-		},
-		error: function (jqXHR, textStatus, errorThrown)
-		{
-			console.error('Ajax error:', textStatus, errorThrown);
-			$('#submit').prop('disabled', false);
-			$('#fileupload').prop('disabled', false);
-
-			var element = document.getElementById('spinner');
-			if (element)
-			{
-				element.parentNode.removeChild(element);
-			}
-
-			alert('Det oppstod en feil ved sending av skjemaet');
-		}
-	});
-};
+}

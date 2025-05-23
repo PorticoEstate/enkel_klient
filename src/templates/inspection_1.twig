@@ -173,38 +173,14 @@
 
 	{% if saved != 1 %}
 		<script src="{{ base_path }}/src/js/autocomplete/autoComplete.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/vendor/components/jquery/jquery.min.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/jquery-ui.min.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/accessibility-helpers.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/inspection_1.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/location.js?n={{ cache_refresh_token }}"></script>
 		<!-- Fix for drop area functionality -->
 		<script src="{{ base_path }}/src/js/drop-fix.js?n={{ cache_refresh_token }}"></script>
-		<script>
-			// Initialize accessibility features when DOM is ready
-			document.addEventListener('DOMContentLoaded', function() {
-				// Make file dropzone accessible
-				makeDropzoneAccessible('drop-area', 'fileupload');
-				
-				// Setup accessible form validation
-				setupAccessibleValidation('inspection_1');
-				
-				// Add keyboard support for the location search
-				document.getElementById('location_name').addEventListener('keydown', function(e) {
-					// When down arrow is pressed in the search box, move focus to first suggestion if available
-					if (e.key === 'ArrowDown') {
-						const firstSuggestion = document.querySelector('.selection a');
-						if (firstSuggestion) {
-							e.preventDefault();
-							firstSuggestion.focus();
-						}
-					}
-				});
-			});
-		</script>
 	{% endif %}
 {% endblock %}

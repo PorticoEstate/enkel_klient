@@ -295,7 +295,11 @@ function initializeAccessibleFileUpload(formId, options = {}) {
     fileInputs.forEach((fileInput, index) => {
         // Generate IDs if not present
         const fileInputId = fileInput.id || `${formId}-fileupload-${index}`;
+        
+        // Use the specified drop area ID if it exists in data-droparea attribute, otherwise use default naming
         const dropAreaId = fileInput.dataset.droparea || `${formId}-drop-area-${index}`;
+        console.log(`Using drop area ID: ${dropAreaId} from data-droparea=${fileInput.dataset.droparea}`);
+        
         const fileSelectBtnId = fileInput.dataset.selectbtn || `${formId}-file-select-btn-${index}`;
         
         // Set IDs if they don't exist

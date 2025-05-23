@@ -105,31 +105,67 @@ function FileUploader(config) {
 
 function setupDropZone() {
     const $dropZone = $(`#${settings.dropAreaId}`);
-    if (!$dropZone.length) return;
+    if (!$dropZone.length) {
+        console.error(`Drop zone #${settings.dropAreaId} not found in the document`);
+        return;
+    }
+    
+    console.log(`Setting up drop zone #${settings.dropAreaId}`, $dropZone);
     
     // Only add visual feedback, do NOT handle drop event for file processing
     $dropZone.off('dragover dragenter dragleave dragend drop');
+    
+    // Handle dragover/dragenter for visual feedback only
     $dropZone.on('dragover dragenter', function(e) {
         e.preventDefault();
         $(this).addClass('is-dragover');
+        console.log('Dragover/enter detected, added is-dragover class');
     });
-    $dropZone.on('dragleave dragend drop', function(e) {
+    
+    // Handle dragleave/dragend for visual feedback only
+    $dropZone.on('dragleave dragend', function(e) {
         e.preventDefault();
         $(this).removeClass('is-dragover');
+        console.log('Dragleave/end detected, removed is-dragover class');
     });
-    // Do NOT handle 'drop' for file processing! Let jQuery File Upload handle it.
+    
+    // For drop event, ONLY remove visual feedback. LET THE PLUGIN HANDLE THE FILE PROCESSING
+    $dropZone.on('drop', function(e) {
+        console.log('DROP DETECTED IN DROP ZONE', e);
+        e.preventDefault(); // Prevent browser from opening file
+        $(this).removeClass('is-dragover');
+        // DO NOT stop propagation - let the event bubble to jQuery File Upload
+        console.log('Drop event should now bubble to jQuery File Upload handler');
+    });
+    
+    // Also log when events happen at the document level
+    $(document).on('drop', function(e) {
+        console.log('Document drop event occurred', e.target);
+    });
+    
     announce("Drop files here to upload", "polite");
 }
 
 	function initialize()
 	{
-
-		if (!$.fn.fileupload || !$fileInput.length) return false;
+		// Check if jQuery File Upload is available
+		// Check if jQuery File Upload is available
+		if (!$.fn.fileupload) {
+		    console.error('jQuery File Upload plugin not found or not properly loaded');
+		    return false;
+		}
+		
+		if (!$fileInput.length) {
+		    console.error(`File input #${settings.fileInputId} not found in the document`);
+		    return false;
+		}
+		
 		// First, clean up any existing instance properly
 		try
 		{ 
 			if ($fileInput.data('blueimp-fileupload'))
 			{
+				console.log('Cleaning up existing fileupload instance');
 				$fileInput.fileupload('destroy');
 				// Remove any extra UI elements created by the plugin
 				$fileInput.siblings('.ui-button').remove();
@@ -148,9 +184,23 @@ function setupDropZone() {
 		setupDropZone(); 
 		if (settings.allowedFileTypes.length) setupValidation();
 
+        // Debug output before initializing the plugin
+        console.log('Initializing jQuery File Upload with settings:', {
+            url: settings.uploadUrl,
+            dropZoneId: settings.dropAreaId,
+            fileInputId: settings.fileInputId,
+            dropZoneExists: $(`#${settings.dropAreaId}`).length > 0,
+            fileInputExists: $fileInput.length > 0
+        });
+        
+        // If the drop area ID matches "drop-area", use direct jQuery selector
+        // This is a fallback for compatibility with old code using static IDs
+        const $dropZone = settings.dropAreaId === 'drop-area' ? $('#drop-area') : $(`#${settings.dropAreaId}`);
+        console.log('Using drop zone:', $dropZone.length ? 'Found' : 'Not found', $dropZone);
+        
         $fileInput.fileupload({
             url: settings.uploadUrl,
-            dropZone: $(`#${settings.dropAreaId}`),
+            dropZone: $dropZone,
             autoUpload: false,
 			sequentialUploads: true,
 			fileInput: $fileInput, // Explicitly set the file input

@@ -23,13 +23,43 @@ function FileUploader(config) {
     const $fileInput = $(`#${settings.fileInputId}`);
 
     // --- Helpers ---
-    const formatSize = b => b >= 1e9 ? (b/1e9).toFixed(2)+' GB' : b >= 1e6 ? (b/1e6).toFixed(2)+' MB' : (b/1e3).toFixed(2)+' KB';
-    const announce = (msg, prio='polite') => {
+	const formatSize = b => {
+		const KB = 1024;
+		const MB = KB * 1024;
+		const GB = MB * 1024;
+		return b >= GB ? (b/GB).toFixed(2)+' GB' : 
+			   b >= MB ? (b/MB).toFixed(2)+' MB' : 
+			   (b/KB).toFixed(2)+' KB';
+	};
+	
+	const announce = (msg, prio = 'polite') =>
+	{
         let $el = $('#file-upload-status');
         if (!$el.length) $el = $('<div>',{id:'file-upload-status','class':'sr-only','aria-live':prio}).appendTo('body');
         $el.text(msg);
     };
-    const updateCounter = () => $(`#${settings.counterId}`).html(pending);
+	const updateCounter = () => {
+		// First find directly by ID
+		const $counter = $(`#${settings.counterId}`);
+		if ($counter.length) {
+			$counter.html(pending);
+			console.log(`Counter updated: ${pending} files`);
+			return;
+		}
+		
+		// Fallback to find within specific containers
+		const $fallback = $(`.fileupload-count #${settings.counterId}`);
+		if ($fallback.length) {
+			$fallback.html(pending);
+			console.log(`Counter updated (fallback): ${pending} files`);
+			return;
+		}
+		
+		// Last resort: update all elements with the counter class
+		$(`.fileupload-count span`).html(pending);
+		console.log(`Counter updated (generic): ${pending} files`);
+	};	
+
     const setRequired = req => req ? $fileInput.attr('required','required') : $fileInput.removeAttr('required');
 
     // --- File Validation ---
@@ -72,19 +102,79 @@ function FileUploader(config) {
     // Maintain a persistent file list
     let allFiles = [];
 
-    function initialize() {
-        if (!$.fn.fileupload || !$fileInput.length) return false;
-        $fileInput.attr('data-url', settings.uploadUrl);
+function setupDropZone() {
+    const $dropZone = $(`#${settings.dropAreaId}`);
+    if (!$dropZone.length) return;
+    
+     // Visual feedback handlers (these are fine)
+	 $dropZone.on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('is-dragover');
+    });
+    
+    // Separate the drop handler to add file processing
+    $dropZone.on('dragleave dragend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('is-dragover');
+    });
+    
+    // Add specific drop handler with file processing
+    $dropZone.on('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('is-dragover');
+        
+        // Process the dropped files
+        if (e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files.length) {
+            // Pass files to the fileupload plugin
+            $fileInput.fileupload('add', {
+                files: e.originalEvent.dataTransfer.files
+            });
+            announce("Files dropped, processing...");
+        }
+    });
+    
+    // Ensure users know they can drop files
+    announce("Drop files here to upload", "polite");
+}
+
+	function initialize()
+	{
+
+		if (!$.fn.fileupload || !$fileInput.length) return false;
+		// First, clean up any existing instance properly
+		try
+		{ 
+			if ($fileInput.data('blueimp-fileupload'))
+			{
+				$fileInput.fileupload('destroy');
+				// Remove any extra UI elements created by the plugin
+				$fileInput.siblings('.ui-button').remove();
+			}
+		}
+		catch (e)
+		{
+			console.error('Error cleaning up file upload widget:', e);
+		}
+	
+     // Setup accessibility and event handlers before initializing the widget
+	 	$fileInput.attr('data-url', settings.uploadUrl);
         settings.multiple ? $fileInput.attr('multiple','multiple') : $fileInput.removeAttr('multiple');
         enhanceAccessibility();
         setupDeletion();
-        if (settings.allowedFileTypes.length) setupValidation();
-        try { if ($fileInput.data('blueimp-fileupload')) $fileInput.fileupload('destroy'); } catch {}
+		setupDropZone(); 
+		if (settings.allowedFileTypes.length) setupValidation();
+
         $fileInput.fileupload({
             url: settings.uploadUrl,
             dropZone: $(`#${settings.dropAreaId}`),
             autoUpload: false,
-            sequentialUploads: true,
+			sequentialUploads: true,
+			fileInput: $fileInput, // Explicitly set the file input
+			replaceFileInput: false, // Don't replace the file input element
+	
             add: (e, data) => {
                 // Append new files to allFiles, avoiding duplicates by name+size
                 const newFiles = Array.from(data.files).filter(f => !allFiles.some(existing => existing.name === f.name && existing.size === f.size));
@@ -173,8 +263,21 @@ function FileUploader(config) {
             if (e.key==='Enter'||e.key===' ') { e.preventDefault(); $(e.currentTarget).click(); }
         });
         $fileInput.attr({'aria-label':'File upload','aria-description':'Select files to upload'});
-        const $drop = $(`#${settings.dropAreaId}`);
-        if ($drop.length) $drop.attr({'role':'region','aria-label':'File drop zone','tabindex':'0'});
+		const $drop = $(`#${settings.dropAreaId}`);
+
+		if ($drop.length)
+		{
+			$drop.attr({
+				'role': 'region',
+				'aria-label': 'File drop zone',
+				'tabindex': '0'
+			});
+			
+			$drop.on('dragenter', () => announce("Files detected. Drop to upload."));
+			$drop.on('dragleave dragend', () => announce("Drag cancelled."));
+			$drop.on('drop', () => announce("Files dropped, processing..."));
+		}
+	
     }
     function setupDeletion() {
         $(document).off('click.fileDelete').on('click.fileDelete', '.file-item .delete', function(e) {
@@ -199,16 +302,6 @@ function FileUploader(config) {
         if (!$fileInput.next('.file-type-info').length) {
             $('<div>',{'class':'file-type-info','aria-live':'polite'}).html(`<small>Allowed: ${settings.allowedFileTypes.join(', ')}<br>Max: ${formatSize(settings.maxFileSizeMB*1024*1024)}</small>`).insertAfter($fileInput);
         }
-        // Ensure we're not attaching multiple handlers
-        $fileInput.off('change.fileupload').on('change.fileupload', e => {
-            if (e.target.files && e.target.files.length) {
-                // Pass the files to the fileupload add handler
-                $fileInput.fileupload('add', {files: e.target.files});
-            }
-            // Always clear the input value so the same files can be selected again
-            $fileInput.val('');
-            return true;
-        });
     }
 
     // --- Public API ---

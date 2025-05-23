@@ -241,6 +241,61 @@ legend {
     justify-content: space-between;
     align-items: center;
 }
+
+#fileupload {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0,0,0,0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+}
+
+.fileupload-count {
+    display: flex !important;
+    align-items: center;
+    margin-top: 12px;
+    font-size: 0.95rem;
+    color: #495057;
+}
+
+.fileupload-count #files-count {
+    font-weight: 600;
+    margin-left: 5px;
+    color: #0045b5; /* Matches your blue accent color */
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 2px 8px;
+    min-width: 24px;
+    text-align: center;
+    display: inline-block;
+}
+
+/* When file count is non-zero */
+.fileupload-count #files-count:not(:empty):not([innerHTML="0"]) {
+    background-color: #e6f0ff; /* Light blue background when files exist */
+    border: 1px solid #b8daff;
+}
+
+#drop-area {
+    transition: all 0.3s ease;
+}
+#drop-area.is-dragover {
+    background-color: rgba(0,123,255,0.1);
+    border-color: #007bff;
+}
+#drop-area > div {
+    transition: all 0.3s ease;
+}
+#drop-area.is-dragover > div {
+    border-color: #007bff;
+    background-color: rgba(0,123,255,0.05);
+}
+
 /* ===== Timeline Styles ===== */
 .timeline {
     position: relative;

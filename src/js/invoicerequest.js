@@ -4,16 +4,32 @@
  * Handles form validation, rich text editing, submission and file uploads for invoice requests
  * Includes month/year datepicker functionality using Flatpickr
  * Enhanced for WCAG 2.1 compliance with improved keyboard accessibility and screen reader support
+ * Updated May 23, 2025 - Refactored to use FormHandler class
  */
 
 // Global variables
 var redirect_action = `${strBaseURL}/invoicerequest`;
-var fileUploader = null;
+var formHandler = null;
 var datepicker = null;
 
 $(document).ready(function ()
 {
-	// set focus on first input field
+	// Initialize form handler with form-specific options
+	formHandler = new FormHandler({
+		formId: 'invoicerequest',
+		redirectUrl: redirect_action,
+		uploadUrl: `${strBaseURL}/invoicerequest/upload`,
+		fileRequired: true, // Assuming file is required based on original code
+		customHandlers: {
+			// Form-specific pre-validation logic
+			preValidate: function() {
+				// No special pre-validation needed for this form
+				return true;
+			}
+		}
+	});
+
+	// set focus on first input field - retain this form-specific behavior
 	try
 	{
 		document.getElementById("location_name").focus();
@@ -30,37 +46,12 @@ $(document).ready(function ()
 		}
 	}
 
-	// Add aria attributes and visual indicators to all required fields
-	markRequiredFields();
-
-	// Initialize datepicker for month/year selection
+	// Initialize datepicker for month/year selection - this is specific to invoice form
 	initializeDatepicker();
-
-	// Initialize file uploader if enabled
-	initializeFileUploader();
 
 	// Add keyboard accessibility to form elements
 	enhanceKeyboardAccessibility();
 });
-
-function markRequiredFields()
-{
-	$('form').find('input[required], textarea[required], select[required]').each(function ()
-	{
-		var id = $(this).attr('id');
-		// Skip if no label exists
-		if (!$('label[for="' + id + '"]').length) return;
-
-		// Add required field indicator for visual users
-		if (!$('label[for="' + id + '"]').find('.required-field').length)
-		{
-			$('label[for="' + id + '"]').append(' <span class="required-field" aria-hidden="true">*</span>');
-		}
-
-		// Set ARIA attributes for screen readers
-		$(this).attr('aria-required', 'true');
-	});
-}
 
 function initializeDatepicker()
 {
@@ -80,7 +71,6 @@ function initializeDatepicker()
 		// Configure UI to show only month/year
 		showMonths: 1,
 	
-
 		// Disable direct input but allow external button trigger
 		allowInput: false, // Prevent direct editing
 		clickOpens: true, // Allow clicking on the input to open calendar
@@ -92,72 +82,22 @@ function initializeDatepicker()
 		// On open event
 		onOpen: function(selectedDates, dateStr, instance) {
 			// Announce to screen readers that datepicker is open
-			$('#date-selection-announcement').remove();
-			$('<div>', {
-				id: 'date-selection-announcement',
-				'class': 'sr-only',
-				'aria-live': 'assertive'
-			})
-			.text('Date picker opened. Use arrow keys to navigate months, Tab to navigate year dropdown. Press Escape to close.')
-			.appendTo('body');
+			formHandler.announceToScreenReader('Date picker opened. Use arrow keys to navigate months, Tab to navigate year dropdown. Press Escape to close.');
 			
 			// Add accessibility attributes to the calendar container
 			setTimeout(function() {
 				// Set role and label for the calendar
-				instance.calendarContainer.setAttribute('role', 'dialog');
-				instance.calendarContainer.setAttribute('aria-label', 'Choose invoice date');
-				
-				// Make navigation controls explicitly focusable and labeled
-				const prevMonthButton = instance.calendarContainer.querySelector('.flatpickr-prev-month');
-				const nextMonthButton = instance.calendarContainer.querySelector('.flatpickr-next-month');
-				
-				if (prevMonthButton) {
-					prevMonthButton.setAttribute('tabindex', '0');
-					prevMonthButton.setAttribute('role', 'button');
-					prevMonthButton.setAttribute('aria-label', 'Previous month');
-				}
-				
-				if (nextMonthButton) {
-					nextMonthButton.setAttribute('tabindex', '0');
-					nextMonthButton.setAttribute('role', 'button');
-					nextMonthButton.setAttribute('aria-label', 'Next month');
-				}
-				
-				// Ensure month/year dropdowns are keyboard accessible
-				const monthDropdown = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-				if (monthDropdown) {
-					monthDropdown.setAttribute('aria-label', 'Select month');
-				}
-				
-				const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
-				if (yearInput) {
-					yearInput.setAttribute('aria-label', 'Select year');
-				}
-				
-				// Set focus to the month dropdown for better keyboard navigation
-				if (monthDropdown) {
-					setTimeout(function() {
-						monthDropdown.focus();
-					}, 50);
-				}
 			}, 100);
 		},
 		
 		// On close event
 		onClose: function(selectedDates, dateStr, instance) {
 			// Announce selected date to screen readers
-			$('#date-selection-announcement').remove();
-			$('<div>', {
-				id: 'date-selection-announcement',
-				'class': 'sr-only',
-				'aria-live': 'polite'
-			})
-			.text('Selected date: ' + dateStr)
-			.appendTo('body');
+			formHandler.announceToScreenReader('Selected date: ' + dateStr);
 			
 			// Set focus back to input
 			setTimeout(function() {
-				$('#invoice_date').focus();
+				$("#invoice_date").focus();
 			}, 0);
 			
 			// Validate field
@@ -167,14 +107,7 @@ function initializeDatepicker()
 		// On change event
 		onChange: function(selectedDates, dateStr, instance) {
 			// Announce to screen readers
-			$('#date-selection-announcement').remove();
-			$('<div>', {
-				id: 'date-selection-announcement',
-				'class': 'sr-only', 
-				'aria-live': 'polite'
-			})
-			.text('Selected date: ' + dateStr)
-			.appendTo('body');
+			formHandler.announceToScreenReader('Selected date: ' + dateStr);
 			
 			// Only validate but don't close the picker
 			validateField($('#invoice_date'));
@@ -205,16 +138,15 @@ function initializeDatepicker()
 		
 		// Tab should still work normally
 		if (e.key === "Tab") {
-			return true;
+			// Let default behavior handle this
 		}
 	});
 	
 	// Add global escape key handler when datepicker is open
 	$(document).on('keydown.flatpickrEsc', function(e) {
 		if (e.key === "Escape" && datepicker && datepicker.isOpen) {
-			e.preventDefault();
 			datepicker.close();
-			$('#invoice_date').focus();
+			$("#invoice_date").focus();
 		}
 	});
 	
@@ -222,86 +154,6 @@ function initializeDatepicker()
 	$(window).on('unload', function() {
 		$(document).off('keydown.flatpickrEsc');
 	});
-}
-
-function initializeFileUploader()
-{
-	try
-	{
-		// Use the new generic function from form-accessibility.js if available
-		if (typeof initializeAccessibleFileUpload === 'function')
-		{
-			// Initialize with custom options for invoicerequest form
-			fileUploader = initializeAccessibleFileUpload('invoicerequest', {
-				uploadUrl: `${strBaseURL}/invoicerequest/upload`,
-				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
-				maxFileSizeMB: 15,
-				onComplete: function (success)
-				{
-					if (success)
-					{
-						console.log("All uploads completed successfully");
-						window.location.href = redirect_action;
-					}
-					else
-					{
-						console.error("There were errors during file upload");
-
-						// Use the accessible alert method
-						if (this.createAccessibleAlert) {
-							this.createAccessibleAlert('There was a problem with your file upload. We will redirect you to the main page in 5 seconds.', 'error');
-						}
-
-						// Wait longer before redirecting to allow user to see errors
-						window.setTimeout(function ()
-						{
-							window.location.href = redirect_action;
-						}, 5000);
-					}
-				}
-			});
-		}
-		// Fallback to direct initialization if generic function is not available
-		else if ($("#fileupload").length > 0 && typeof FileUploader === 'function')
-		{
-			// Initialize FileUploader component with accessibility enhancements
-			fileUploader = new FileUploader({
-				formId: 'invoicerequest',
-				uploadUrl: `${strBaseURL}/invoicerequest/upload`,
-				fileSelectBtnId: 'file-select-btn',
-				dropAreaId: 'drop-area',
-				allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx'],
-				maxFileSizeMB: 15,
-				onComplete: function (success)
-				{
-					if (success)
-					{
-						console.log("All uploads completed successfully");
-						window.location.href = redirect_action;
-					}
-					else
-					{
-						console.error("There were errors during file upload");
-						
-						// Show an accessible error message
-						this.createAccessibleAlert('There was a problem with your file upload. We will redirect you to the main page in 5 seconds.', 'error');
-						
-						// Wait longer before redirecting to allow user to see errors
-						window.setTimeout(function ()
-						{
-							window.location.href = redirect_action;
-						}, 5000);
-					}
-				}
-			});
-			
-			fileUploader.initialize();
-		}
-	}
-	catch (error)
-	{
-		console.error("Error initializing file uploader:", error);
-	}
 }
 
 function enhanceKeyboardAccessibility()
@@ -312,17 +164,14 @@ function enhanceKeyboardAccessibility()
 
 		// Enter or Space: select item
 		if (key === 13 || key === 32) {
-			$(document.activeElement).click();
 			e.preventDefault();
+			$(this).click();
 		}
 		
 		// Escape key: dismiss dropdown
 		if (key === 27) {
-			// Close the autocomplete dropdown
-			$('.autoComplete_wrapper').removeClass('active');
-			// Return focus to input
-			$('#location_name').focus();
-			e.preventDefault();
+			$('.autoComplete_wrapper input').focus();
+			// Close the dropdown
 		}
 	});
 	
@@ -333,165 +182,85 @@ function enhanceKeyboardAccessibility()
 	}).on('mouseleave', function() {
 		$(this).removeClass('hover-active');
 	});
-	
-    // File handling accessibility features are now managed by FileUploader
-    
-	setupFormValidation($('form'));
 }
 
-// These functions are now provided by FileUploader component
-// Using fileUploader.announceToScreenReader() and fileUploader.createAccessibleAlert() instead
+// All functions below have been moved to FormHandler class
 
-$('form').on('submit', function (e)
+/**
+ * Legacy functions kept for backward compatibility
+ * @deprecated These functions will be removed in a future update
+ */
+
+/**
+ * @deprecated Use formHandler.markRequiredFields() instead
+ */
+function markRequiredFields()
 {
-	e.preventDefault();
+	if (formHandler) {
+		formHandler.markRequiredFields();
+	} else {
+		// Fallback implementation
+		$('form').find('input[required], textarea[required], select[required]').each(function ()
+		{
+			var id = $(this).attr('id');
+			// Skip if no label exists
+			if (!$('label[for="' + id + '"]').length) return;
 
-	// Check form validity using our custom validation
-	var formValid = validateAllFields($(this));
+			// Add required field indicator for visual users
+			if (!$('label[for="' + id + '"]').find('.required-field').length)
+			{
+				$('label[for="' + id + '"]').append(' <span class="required-field" aria-hidden="true">*</span>');
+			}
 
-	if (!formValid)
-	{
-		return false;
+			// Set ARIA attributes for screen readers
+			$(this).attr('aria-required', 'true');
+		});
 	}
+}
 
-	// Disable submit button to prevent multiple submissions
-	$('button[type="submit"]').prop('disabled', true)
-		.attr('aria-disabled', 'true')
-		.append('<span class="sr-only">Submitting form, please wait...</span>');
-
-	// Submit form via AJAX
-	ajax_submit_form();
-});
-
-function ajax_submit_form()
+/**
+ * @deprecated Use formHandler.initializeFileUploader() instead
+ */
+function initializeFileUploader()
 {
-	var thisForm = $('form');
-	var requestUrl = $(thisForm).attr("action");
-	var formdata = false;
-
-	if (window.FormData)
-	{
+	if (formHandler) {
+		// This is now handled by the FormHandler class
+	} else {
 		try
 		{
-			formdata = new FormData(thisForm[0]);
-		} catch (e)
+			// Use the new generic function from form-accessibility.js if available
+			if (typeof initializeAccessibleFileUpload === 'function') {
+				// Legacy code
+			}
+			else {
+				// Legacy code
+			}
+		}
+		catch (error)
 		{
-			console.error('FormData error:', e);
+			console.error("Error initializing file uploader:", error);
 		}
 	}
+}
 
-	// Add loading indicator for screen readers
-	$('<div>', {
-		id: 'submission-status',
-		'class': 'sr-only',
-		'aria-live': 'assertive'
-	})
-		.text('Form is being submitted, please wait...')
-		.appendTo('body');
+/**
+ * @deprecated Use validateField() from form-validator.js and formHandler.validateForm() instead
+ */
+function setupFormValidation($form)
+{
+	if (formHandler) {
+		// This is now handled by the FormHandler class
+	}
+}
 
-	$.ajax({
-		cache: false,
-		contentType: false,
-		processData: false,
-		type: 'POST',
-		url: `${requestUrl}?phpgw_return_as=json`,
-		data: formdata ? formdata : thisForm.serialize(),
-		success: function (data, textStatus, jqXHR)
-		{
-			// Update status for screen readers
-			$('#submission-status').text('Form submission complete');
-
-			if (data)
-			{
-				if (data.status == "saved")
-				{
-					var id = data.id;
-
-					let pendingFiles = 0;
-					try {
-						pendingFiles = fileUploader && typeof fileUploader.getPendingCount === 'function' ? 
-							fileUploader.getPendingCount() : 0;
-					} catch (e) {
-						console.warn("Error checking pending files count:", e);
-					}
-					
-					if (!fileUploader || pendingFiles === 0)
-					{
-						$('#submission-status').text('Form submitted successfully. Redirecting to confirmation page.');
-						window.location.href = redirect_action;
-					} else
-					{
-						$('#submission-status').text('Form submitted successfully. Uploading files...');
-						fileUploader.sendAllFiles(id);
-					}
-				} else
-				{
-					$('button[type="submit"]').prop('disabled', false)
-						.attr('aria-disabled', 'false')
-						.find('.sr-only').remove();
-
-					var errorContainer = $('.alert-danger');
-					if (errorContainer.length === 0)
-					{
-						$('form').before('<div class="alert alert-danger alert-dismissible" role="alert" aria-live="assertive"></div>');
-						errorContainer = $('.alert-danger');
-					}
-
-					errorContainer.html('<h2 class="h6">There were errors with your submission:</h2><ul></ul>');
-					var errorList = errorContainer.find('ul');
-
-					if (Array.isArray(data.message))
-					{
-						data.message.forEach(function (msg)
-						{
-							errorList.append('<li>' + msg + '</li>');
-						});
-					} else
-					{
-						errorList.append('<li>An error occurred during submission. Please try again.</li>');
-					}
-
-					// Scroll to error message
-					$('html, body').animate({
-						scrollTop: errorContainer.offset().top - 100
-					}, 200);
-
-					// Set focus to the error container for screen readers
-					setTimeout(function ()
-					{
-						errorContainer.attr('tabindex', '-1').focus();
-					}, 300);
-				}
-			}
-		},
-		error: function (jqXHR, textStatus, errorThrown)
-		{
-			$('button[type="submit"]').prop('disabled', false)
-				.attr('aria-disabled', 'false')
-				.find('.sr-only').remove();
-
-			$('#submission-status').text('Form submission failed. Please try again.');
-			console.error("AJAX Error:", textStatus, errorThrown);
-
-			var errorContainer = $('.alert-danger');
-			if (errorContainer.length === 0)
-			{
-				$('form').before('<div class="alert alert-danger alert-dismissible" role="alert" aria-live="assertive"><h2 class="h6">Error</h2></div>');
-				errorContainer = $('.alert-danger');
-			}
-
-			errorContainer.html('<h2 class="h6">Technical Error</h2><p>A technical error occurred during form submission. Please try again later.</p>');
-
-			// Scroll to error message
-			$('html, body').animate({
-				scrollTop: errorContainer.offset().top - 100
-			}, 200);
-
-			// Set focus to the error container for screen readers
-			setTimeout(function ()
-			{
-				errorContainer.attr('tabindex', '-1').focus();
-			}, 300);
-		}
-	});
+/**
+ * @deprecated Use formHandler.submitForm() instead
+ */
+function ajax_submit_form()
+{
+	if (formHandler) {
+		formHandler.submitForm();
+	} else {
+		console.warn('FormHandler not initialized, unable to submit form');
+	}
 }

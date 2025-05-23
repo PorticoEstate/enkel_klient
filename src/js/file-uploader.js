@@ -1,4 +1,5 @@
 // Refactored FileUploader: Modular, concise, and accessible
+$(document).on('dragover drop', function (e) { e.preventDefault(); });
 
 function FileUploader(config) {
     // --- Settings & State ---
@@ -106,37 +107,17 @@ function setupDropZone() {
     const $dropZone = $(`#${settings.dropAreaId}`);
     if (!$dropZone.length) return;
     
-     // Visual feedback handlers (these are fine)
-	 $dropZone.on('dragover dragenter', function(e) {
+    // Only add visual feedback, do NOT handle drop event for file processing
+    $dropZone.off('dragover dragenter dragleave dragend drop');
+    $dropZone.on('dragover dragenter', function(e) {
         e.preventDefault();
-        e.stopPropagation();
         $(this).addClass('is-dragover');
     });
-    
-    // Separate the drop handler to add file processing
-    $dropZone.on('dragleave dragend', function(e) {
+    $dropZone.on('dragleave dragend drop', function(e) {
         e.preventDefault();
-        e.stopPropagation();
         $(this).removeClass('is-dragover');
     });
-    
-    // Add specific drop handler with file processing
-    $dropZone.on('drop', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).removeClass('is-dragover');
-        
-        // Process the dropped files
-        if (e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files.length) {
-            // Pass files to the fileupload plugin
-            $fileInput.fileupload('add', {
-                files: e.originalEvent.dataTransfer.files
-            });
-            announce("Files dropped, processing...");
-        }
-    });
-    
-    // Ensure users know they can drop files
+    // Do NOT handle 'drop' for file processing! Let jQuery File Upload handle it.
     announce("Drop files here to upload", "polite");
 }
 

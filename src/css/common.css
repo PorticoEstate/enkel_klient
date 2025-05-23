@@ -300,6 +300,14 @@ legend {
     background-color: rgba(0,123,255,0.05);
 }
 
+/* Added focus styles for keyboard accessibility */
+#drop-area:focus,
+#drop-area:focus-visible {
+    outline: 2px solid #ff6b00 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.25) !important;
+}
+
 /* ===== Timeline Styles ===== */
 .timeline {
     position: relative;

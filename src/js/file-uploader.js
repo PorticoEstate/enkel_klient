@@ -298,10 +298,31 @@ function setupDropZone() {
 
 		if ($drop.length)
 		{
+			// Make the drop area only focusable when using keyboard modifiers (like Alt+Tab)
+			// This allows screen reader users to access it if needed but doesn't put it in
+			// the normal tab sequence, improving keyboard navigation efficiency
 			$drop.attr({
 				'role': 'region',
 				'aria-label': 'File drop zone',
-				'tabindex': '0'
+				'tabindex': '-1', // Remove from normal tab flow
+				'aria-description': 'To activate drag and drop mode, press Alt+D'
+			});
+			
+			// Add keyboard activation for the drop area
+			$(document).on('keydown', e => {
+				// Alt+D activates drop zone focus
+				if (e.altKey && e.key === 'd') {
+					e.preventDefault();
+					$drop.focus();
+					announce("Drop zone activated. Press Escape to exit.");
+				}
+				
+				// Escape exits drop zone focus
+				if (e.key === 'Escape' && document.activeElement === $drop[0]) {
+					e.preventDefault();
+					$(`#${settings.fileSelectBtnId}`).focus();
+					announce("Exited drop zone.");
+				}
 			});
 			
 			$drop.on('dragenter', () => announce("Files detected. Drop to upload."));

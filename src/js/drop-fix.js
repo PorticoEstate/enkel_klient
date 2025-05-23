@@ -23,6 +23,14 @@ $(document).ready(function() {
                 })
                 .on('drop', function() {
                     console.log('Drop area drop event detected - should be handled by jQuery File Upload');
+                })
+                .on('keydown', function(e) {
+                    // When focused with Alt+D, allow Space to trigger file select button
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        $('#file-select-btn').click();
+                        console.log('Drop area keyboard activation - triggering file select');
+                    }
                 });
         } else {
             console.error('Could not fix drop area: missing elements or plugin');

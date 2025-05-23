@@ -110,11 +110,7 @@ textarea[required] {
     border-left: 3px solid #dc3545;
 }
 
-/* Required field indicator */
-label.required::after {
-    content: " *";
-    color: #dc3545;
-}
+
 
 /* Form validation styles */
 .is-invalid {

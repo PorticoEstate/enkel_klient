@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Validation Test - All Forms</title>
+    
+    <!-- Include the same CSS and scripts as the real forms -->
+    <link href="../../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/common.css" rel="stylesheet">
+    
+    <script src="../../vendor/components/jquery/jquery.min.js"></script>
+    <script src="../js/accessibility-helpers.js"></script>
+    <script src="../js/form-accessibility.js"></script>
+    <script src="../js/form-handler.js"></script>
+    <script src="../js/form-validator.js"></script>
+    
+    <style>
+        body { padding: 2rem; }
+        .container { max-width: 1000px; }
+        .form-section { 
+            margin-bottom: 3rem; 
+            padding: 1.5rem; 
+            border: 1px solid #ddd; 
+            border-radius: 0.5rem; 
+        }
+        .test-controls { 
+            background: #f8f9fa; 
+            padding: 1rem; 
+            margin-bottom: 1rem; 
+            border-radius: 0.25rem; 
+        }
+        .validation-status { 
+            margin-top: 1rem; 
+            padding: 0.5rem; 
+            border-radius: 0.25rem; 
+            font-size: 0.9rem;
+        }
+        .status-valid { background: #d1edff; border: 1px solid #0d6efd; }
+        .status-invalid { background: #f8d7da; border: 1px solid #dc3545; }
+        .status-neutral { background: #f8f9fa; border: 1px solid #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-Time Validation Test - All Forms</h1>
+        <p>This page tests real-time validation for phone and email fields across all three forms.</p>
+        
+        <!-- Helpdesk Form -->
+        <div class="form-section">
+            <h2>1. Helpdesk Form</h2>
+            <div class="test-controls">
+                <button class="btn btn-sm btn-primary me-2" onclick="testHelpdeskPhone('12345678')">Valid Phone</button>
+                <button class="btn btn-sm btn-warning me-2" onclick="testHelpdeskPhone('123')">Invalid Phone</button>
+                <button class="btn btn-sm btn-info me-2" onclick="testHelpdeskEmail('test@example.com')">Valid Email</button>
+                <button class="btn btn-sm btn-warning me-2" onclick="testHelpdeskEmail('invalid')">Invalid Email</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearHelpdesk()">Clear</button>
+            </div>
+            
+            <form id="helpdesk">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="helpdesk-phone">Phone <span class="text-danger">*</span></label>
+                        <input type="text" id="helpdesk-phone" name="phone" class="form-control" required>
+                        <div id="helpdesk-phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="helpdesk-email">Email <span class="text-danger">*</span></label>
+                        <input type="email" id="helpdesk-email" name="email" class="form-control" required>
+                        <div id="helpdesk-email-error" class="invalid-feedback">Please enter a valid email address</div>
+                    </div>
+                </div>
+            </form>
+            <div id="helpdesk-status" class="validation-status status-neutral">
+                Status: Ready for testing
+            </div>
+        </div>
+        
+        <!-- Nokkelbestilling Form -->
+        <div class="form-section">
+            <h2>2. Nokkelbestilling Form</h2>
+            <div class="test-controls">
+                <button class="btn btn-sm btn-primary me-2" onclick="testNokkelPhone('87654321')">Valid Phone</button>
+                <button class="btn btn-sm btn-warning me-2" onclick="testNokkelPhone('456')">Invalid Phone</button>
+                <button class="btn btn-sm btn-info me-2" onclick="testNokkelEmail('user@domain.no')">Valid Email</button>
+                <button class="btn btn-sm btn-warning me-2" onclick="testNokkelEmail('bad-email')">Invalid Email</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearNokkel()">Clear</button>
+            </div>
+            
+            <form id="nokkelbestilling">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="nokkel-phone">Phone <span class="text-danger">*</span></label>
+                        <input type="text" id="nokkel-phone" name="phone" class="form-control" required>
+                        <div id="nokkel-phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nokkel-email">Email <span class="text-danger">*</span></label>
+                        <input type="email" id="nokkel-email" name="email" class="form-control" required>
+                        <div id="nokkel-email-error" class="invalid-feedback">Please enter a valid email address</div>
+                    </div>
+                </div>
+            </form>
+            <div id="nokkel-status" class="validation-status status-neutral">
+                Status: Ready for testing
+            </div>
+        </div>
+        
+        <!-- Invoice Request Form -->
+        <div class="form-section">
+            <h2>3. Invoice Request Form</h2>
+            <div class="test-controls">
+                <button class="btn btn-sm btn-primary me-2" onclick="testInvoicePhone('91234567')">Valid Phone</button>
+                <button class="btn btn-sm btn-warning me-2" onclick="testInvoicePhone('78')">Invalid Phone</button>
+                <button class="btn btn-sm btn-info me-2" onclick="testInvoiceEmail('invoice@company.com')">Valid Email</button>
+                <button class="btn btn-sm btn-warning me-2" onclick="testInvoiceEmail('@invalid')">Invalid Email</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearInvoice()">Clear</button>
+            </div>
+            
+            <form id="invoicerequest">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="invoice-phone">Phone <span class="text-danger">*</span></label>
+                        <input type="text" id="invoice-phone" name="phone" class="form-control" required>
+                        <div id="invoice-phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="invoice-email">Email <span class="text-danger">*</span></label>
+                        <input type="email" id="invoice-email" name="email" class="form-control" required>
+                        <div id="invoice-email-error" class="invalid-feedback">Please enter a valid email address</div>
+                    </div>
+                </div>
+            </form>
+            <div id="invoice-status" class="validation-status status-neutral">
+                Status: Ready for testing
+            </div>
+        </div>
+        
+        <div class="mt-4 alert alert-info">
+            <h4>Expected Behavior:</h4>
+            <ul>
+                <li><strong>Valid fields:</strong> Green left border with checkmark icon</li>
+                <li><strong>Invalid fields:</strong> Red left border with error message</li>
+                <li><strong>Real-time validation:</strong> Should validate as you type or on blur</li>
+                <li><strong>Phone validation:</strong> Requires 8 or more digits</li>
+                <li><strong>Email validation:</strong> Must follow email format (xxx@yyy.zzz)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // Test functions for each form
+        function testHelpdeskPhone(value) {
+            $('#helpdesk-phone').val(value).trigger('input');
+            updateStatus('helpdesk', 'phone', value);
+        }
+        
+        function testHelpdeskEmail(value) {
+            $('#helpdesk-email').val(value).trigger('input');
+            updateStatus('helpdesk', 'email', value);
+        }
+        
+        function testNokkelPhone(value) {
+            $('#nokkel-phone').val(value).trigger('input');
+            updateStatus('nokkel', 'phone', value);
+        }
+        
+        function testNokkelEmail(value) {
+            $('#nokkel-email').val(value).trigger('input');
+            updateStatus('nokkel', 'email', value);
+        }
+        
+        function testInvoicePhone(value) {
+            $('#invoice-phone').val(value).trigger('input');
+            updateStatus('invoice', 'phone', value);
+        }
+        
+        function testInvoiceEmail(value) {
+            $('#invoice-email').val(value).trigger('input');
+            updateStatus('invoice', 'email', value);
+        }
+        
+        function clearHelpdesk() {
+            $('#helpdesk input').val('').removeClass('is-valid is-invalid');
+            $('#helpdesk-status').text('Status: Cleared').removeClass('status-valid status-invalid').addClass('status-neutral');
+        }
+        
+        function clearNokkel() {
+            $('#nokkelbestilling input').val('').removeClass('is-valid is-invalid');
+            $('#nokkel-status').text('Status: Cleared').removeClass('status-valid status-invalid').addClass('status-neutral');
+        }
+        
+        function clearInvoice() {
+            $('#invoicerequest input').val('').removeClass('is-valid is-invalid');
+            $('#invoice-status').text('Status: Cleared').removeClass('status-valid status-invalid').addClass('status-neutral');
+        }
+        
+        function updateStatus(form, field, value) {
+            setTimeout(function() {
+                const fieldId = form === 'helpdesk' ? `helpdesk-${field}` : 
+                              form === 'nokkel' ? `nokkel-${field}` : `invoice-${field}`;
+                const $field = $(`#${fieldId}`);
+                const hasValid = $field.hasClass('is-valid');
+                const hasInvalid = $field.hasClass('is-invalid');
+                const statusId = `${form}-status`;
+                
+                let statusText = `Testing ${field}: "${value}" - `;
+                let statusClass = 'status-neutral';
+                
+                if (hasValid) {
+                    statusText += '✅ VALID (Green border should be visible)';
+                    statusClass = 'status-valid';
+                } else if (hasInvalid) {
+                    statusText += '❌ INVALID (Red border should be visible)';
+                    statusClass = 'status-invalid';
+                } else {
+                    statusText += '⚠️ NO VALIDATION STYLING (Check console for errors)';
+                }
+                
+                $(`#${statusId}`).text(statusText)
+                    .removeClass('status-valid status-invalid status-neutral')
+                    .addClass(statusClass);
+                    
+                console.log(`${form} ${field} validation:`, {
+                    value,
+                    hasValid,
+                    hasInvalid,
+                    fieldId
+                });
+            }, 100);
+        }
+        
+        // Setup real-time validation monitoring
+        $(document).ready(function() {
+            console.log('Real-time validation test page loaded');
+            console.log('validateField available:', typeof validateField === 'function');
+            
+            // Add universal input monitoring
+            $('input[type="text"], input[type="email"]').on('input blur', function() {
+                const fieldId = $(this).attr('id');
+                console.log(`Field ${fieldId} triggered validation`);
+                
+                if (typeof validateField === 'function') {
+                    validateField($(this));
+                } else {
+                    console.error('validateField function not available!');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

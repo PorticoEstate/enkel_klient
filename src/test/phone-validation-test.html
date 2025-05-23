@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Validation Test</title>
+    <link href="../css/common.css" rel="stylesheet">
+    <link href="../../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="../../vendor/components/jquery/jquery.min.js"></script>
+    <script src="../js/accessibility-helpers.js"></script>
+    <script src="../js/form-accessibility.js"></script>
+    <script src="../js/form-validator.js"></script>
+    
+    <style>
+        body {
+            padding: 2rem;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .test-result {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .test-pass {
+            background-color: #d1edff;
+            border: 1px solid #0d6efd;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            border: 1px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Phone Field Validation Test</h1>
+        
+        <form id="phone-test-form" onsubmit="return false;">
+            <div class="form-group mb-3">
+                <label for="phone">Phone Number <span class="text-danger">*</span></label>
+                <small class="form-text text-muted d-block mb-2">Enter at least 8 digits</small>
+                <input type="text" id="phone" name="phone" class="form-control" 
+                       required aria-required="true" aria-describedby="phone-error"
+                       placeholder="12345678">
+                <div id="phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+            </div>
+            
+            <button type="button" class="btn btn-primary me-2" onclick="testValidation()">Test Validation</button>
+            <button type="button" class="btn btn-secondary me-2" onclick="clearField()">Clear Field</button>
+            <button type="button" class="btn btn-info" onclick="fillValid()">Fill Valid Number</button>
+        </form>
+        
+        <div id="test-results"></div>
+        
+        <div class="mt-4">
+            <h3>Test Cases</h3>
+            <ul>
+                <li><strong>Valid:</strong> 12345678, +47 123 45 678, (555) 123-4567</li>
+                <li><strong>Invalid:</strong> 123, abc, empty field</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function testValidation() {
+            const phoneField = $('#phone');
+            const phoneValue = phoneField.val();
+            const isValid = validateField(phoneField);
+            
+            const resultDiv = $('#test-results');
+            const hasValidClass = phoneField.hasClass('is-valid');
+            const hasInvalidClass = phoneField.hasClass('is-invalid');
+            const ariaInvalid = phoneField.attr('aria-invalid');
+            
+            const resultHtml = `
+                <div class="test-result ${isValid ? 'test-pass' : 'test-fail'}">
+                    <h4>Test Result for: "${phoneValue}"</h4>
+                    <ul>
+                        <li><strong>Validation Result:</strong> ${isValid ? 'VALID' : 'INVALID'}</li>
+                        <li><strong>CSS Classes:</strong> 
+                            is-valid: ${hasValidClass ? 'YES' : 'NO'}, 
+                            is-invalid: ${hasInvalidClass ? 'YES' : 'NO'}
+                        </li>
+                        <li><strong>ARIA Invalid:</strong> ${ariaInvalid}</li>
+                        <li><strong>Digit Count:</strong> ${phoneValue.replace(/\D/g, "").length}</li>
+                    </ul>
+                    ${!hasValidClass && isValid ? 
+                        '<div class="alert alert-warning mt-2">⚠️ ISSUE: Field is valid but missing is-valid class!</div>' : ''}
+                </div>
+            `;
+            
+            resultDiv.html(resultHtml);
+            
+            // Log to console for debugging
+            console.log('Phone validation test:', {
+                value: phoneValue,
+                isValid: isValid,
+                hasValidClass: hasValidClass,
+                hasInvalidClass: hasInvalidClass,
+                ariaInvalid: ariaInvalid,
+                digitCount: phoneValue.replace(/\D/g, "").length
+            });
+        }
+        
+        function clearField() {
+            $('#phone').val('').removeClass('is-valid is-invalid').attr('aria-invalid', 'false');
+            $('#test-results').empty();
+        }
+        
+        function fillValid() {
+            $('#phone').val('12345678');
+        }
+        
+        // Auto-test on input
+        $('#phone').on('input blur', function() {
+            setTimeout(testValidation, 100);
+        });
+        
+        $(document).ready(function() {
+            console.log('Phone validation test page loaded');
+            console.log('validateField function available:', typeof validateField === 'function');
+            console.log('validatePhone function available:', typeof validatePhone === 'function');
+        });
+    </script>
+</body>
+</html>

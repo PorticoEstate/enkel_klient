@@ -26,6 +26,9 @@ $(document).ready(function ()
 		}
 	});
 
+	// Ensure real-time validation is working for phone and email fields
+	setupRealTimeValidation();
+
 	// set focus on first input field - retain this form-specific behavior
 	try
 	{
@@ -46,6 +49,40 @@ $(document).ready(function ()
 	// Add keyboard accessibility to form elements - form-specific behavior
 	enhanceKeyboardAccessibility();
 });
+
+function setupRealTimeValidation()
+{
+	// Ensure real-time validation for phone and email fields
+	const $form = $('#helpdesk');
+	
+	// Phone field validation - validate on input and blur
+	$('#phone').on('input blur', function() {
+		if (typeof validateField === 'function') {
+			validateField($(this));
+		}
+	});
+	
+	// Email field validation - validate on input and blur  
+	$('#email').on('input blur', function() {
+		if (typeof validateField === 'function') {
+			validateField($(this));
+		}
+	});
+	
+	// Also validate other required fields for consistency
+	$form.find('input[required], textarea[required], select[required]').on('input blur', function() {
+		// Skip if already handled above
+		if ($(this).attr('id') === 'phone' || $(this).attr('id') === 'email') {
+			return;
+		}
+		
+		if (typeof validateField === 'function') {
+			validateField($(this));
+		}
+	});
+	
+	console.log('Real-time validation setup completed for helpdesk form');
+}
 
 function enhanceKeyboardAccessibility()
 {

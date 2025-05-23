@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Validation Debug</title>
+    <link href="../css/common.css" rel="stylesheet">
+    <style>
+        body { padding: 2rem; font-family: Arial, sans-serif; }
+        .test-field { margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; }
+        .form-control { width: 300px; padding: 0.5rem; border: 1px solid #ccc; }
+        .is-valid { border-color: #198754 !important; border-left: 3px solid #198754 !important; }
+        .is-invalid { border-color: #dc3545 !important; border-left: 3px solid #dc3545 !important; }
+        .invalid-feedback { color: #dc3545; font-size: 0.875rem; }
+        .log { background: #f8f9fa; padding: 1rem; margin: 1rem 0; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Phone Validation Debug Test</h1>
+    
+    <div class="test-field">
+        <label for="phone">Phone Number:</label><br>
+        <input type="text" id="phone" name="phone" class="form-control" placeholder="Enter phone number">
+        <div id="phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+        <button onclick="testValidation()">Test Validation</button>
+        <button onclick="clearField()">Clear</button>
+    </div>
+    
+    <div class="test-field">
+        <h3>Quick Test Buttons:</h3>
+        <button onclick="testValue('12345678')">Test: 12345678 (Valid)</button>
+        <button onclick="testValue('123')">Test: 123 (Invalid)</button>
+        <button onclick="testValue('+47 123 45 678')">Test: +47 123 45 678 (Valid)</button>
+        <button onclick="testValue('')">Test: Empty (Invalid)</button>
+    </div>
+    
+    <div id="log" class="log"></div>
+    
+    <script src="../../vendor/components/jquery/jquery.min.js"></script>
+    <script>
+        // Simple phone validation function (copied from form-validator.js)
+        function validatePhone($field) {
+            const phone = $field.val();
+            const digitCount = phone.replace(/\D/g, "").length;
+            console.log("Phone validation - value:", phone, "digit count:", digitCount);
+            return digitCount >= 8;
+        }
+        
+        // Simple field status update function
+        function updateFieldValidationStatus($field, isValid, errorId) {
+            const $errorElement = $("#" + errorId);
+            
+            if (!isValid) {
+                $field.addClass("is-invalid").removeClass("is-valid");
+                $errorElement.show();
+                $field.attr("aria-invalid", "true");
+                log("❌ Field marked as INVALID");
+            } else {
+                $field.removeClass("is-invalid").addClass("is-valid");
+                $errorElement.hide();
+                $field.attr("aria-invalid", "false");
+                log("✅ Field marked as VALID");
+            }
+        }
+        
+        function testValidation() {
+            const $phoneField = $('#phone');
+            const phoneValue = $phoneField.val();
+            const isValid = validatePhone($phoneField);
+            
+            log(`Testing validation for: "${phoneValue}"`);
+            log(`Validation result: ${isValid ? 'VALID' : 'INVALID'}`);
+            
+            updateFieldValidationStatus($phoneField, isValid, 'phone-error');
+            
+            // Check if classes were applied
+            const hasValid = $phoneField.hasClass('is-valid');
+            const hasInvalid = $phoneField.hasClass('is-invalid');
+            log(`CSS classes after update: is-valid=${hasValid}, is-invalid=${hasInvalid}`);
+            
+            return isValid;
+        }
+        
+        function testValue(value) {
+            $('#phone').val(value);
+            testValidation();
+        }
+        
+        function clearField() {
+            $('#phone').val('').removeClass('is-valid is-invalid').attr('aria-invalid', 'false');
+            $('#phone-error').hide();
+            log("Field cleared");
+        }
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // Auto-test on input
+        $('#phone').on('input', function() {
+            testValidation();
+        });
+        
+        $(document).ready(function() {
+            log("Phone validation debug page loaded");
+            log("Testing with valid number: 12345678");
+            testValue('12345678');
+        });
+    </script>
+</body>
+</html>

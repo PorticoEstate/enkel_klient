@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helpdesk Form Validation Test</title>
+    
+    <!-- Include the same CSS as the real form -->
+    <link href="../../vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/common.css" rel="stylesheet">
+    
+    <!-- Include the same scripts as head.twig -->
+    <script src="../../vendor/components/jquery/jquery.min.js"></script>
+    <script src="../js/accessibility-helpers.js"></script>
+    <script src="../js/form-accessibility.js"></script>
+    <script src="../js/form-handler.js"></script>
+    <script src="../js/form-validator.js"></script>
+    
+    <style>
+        body { padding: 2rem; }
+        .container { max-width: 800px; }
+        .test-controls { background: #f8f9fa; padding: 1rem; margin-bottom: 2rem; border-radius: 0.25rem; }
+        .validation-status { margin-top: 1rem; padding: 0.5rem; border-radius: 0.25rem; }
+        .valid-status { background: #d1edff; border: 1px solid #0d6efd; }
+        .invalid-status { background: #f8d7da; border: 1px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Helpdesk Form - Phone Validation Test</h1>
+        
+        <div class="test-controls">
+            <h3>Test Controls</h3>
+            <button class="btn btn-primary me-2" onclick="testValid()">Fill Valid Phone (12345678)</button>
+            <button class="btn btn-warning me-2" onclick="testInvalid()">Fill Invalid Phone (123)</button>
+            <button class="btn btn-secondary me-2" onclick="clearPhone()">Clear Phone</button>
+            <button class="btn btn-info" onclick="checkValidation()">Check Validation Status</button>
+        </div>
+        
+        <!-- Recreate the exact helpdesk form structure -->
+        <form id="helpdesk" name="helpdesk" method="post" action="#" onsubmit="return validateForm(this);">
+            <fieldset>
+                <legend>Contact Information</legend>
+                
+                <div class="form-group mt-2">
+                    <label for="phone">
+                        Phone
+                        <span class="required-field" aria-hidden="true">*</span>
+                    </label>
+                    <small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">
+                        Please enter your phone number for contact
+                    </small>
+                    <input type="text" id="phone" name="phone" class="form-control" 
+                           autocomplete="tel" required="required" aria-required="true" 
+                           aria-describedby="contact_infoHelpPhone phone-error"/>
+                    <div id="phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+                </div>
+                
+                <div class="form-group mt-2">
+                    <label for="email">
+                        Email
+                        <span class="required-field" aria-hidden="true">*</span>
+                    </label>
+                    <small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">
+                        Please enter your email address
+                    </small>
+                    <input type="email" id="email" name="email" class="form-control" 
+                           autocomplete="email" required="required" aria-required="true" 
+                           aria-describedby="contact_infoHelpEmail email-error" 
+                           pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"/>
+                    <div id="email-error" class="invalid-feedback">Please enter a valid email address</div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary mt-4">Send</button>
+            </fieldset>
+        </form>
+        
+        <div id="validation-status" class="validation-status"></div>
+        
+        <div class="mt-4">
+            <h3>Expected Behavior</h3>
+            <ul>
+                <li><strong>Valid phone (8+ digits):</strong> Should show green left border and check mark</li>
+                <li><strong>Invalid phone (&lt;8 digits):</strong> Should show red left border and error message</li>
+                <li><strong>Empty required field:</strong> Should show red left border and error message</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        let formHandler;
+        
+        $(document).ready(function() {
+            console.log('Helpdesk validation test loaded');
+            console.log('validateField available:', typeof validateField === 'function');
+            console.log('FormHandler available:', typeof FormHandler === 'function');
+            
+            // Initialize FormHandler like in helpdesk.js
+            if (typeof FormHandler === 'function') {
+                formHandler = new FormHandler({
+                    formId: 'helpdesk',
+                    redirectUrl: '#',
+                    uploadUrl: '/test/upload',
+                    fileRequired: false
+                });
+                console.log('FormHandler initialized');
+            }
+            
+            // Add real-time validation
+            $('#phone').on('input blur', function() {
+                setTimeout(checkValidation, 50);
+            });
+            
+            $('#email').on('input blur', function() {
+                setTimeout(checkValidation, 50);
+            });
+        });
+        
+        function testValid() {
+            $('#phone').val('12345678').trigger('input');
+        }
+        
+        function testInvalid() {
+            $('#phone').val('123').trigger('input');
+        }
+        
+        function clearPhone() {
+            $('#phone').val('').removeClass('is-valid is-invalid').trigger('input');
+        }
+        
+        function checkValidation() {
+            const $phone = $('#phone');
+            const phoneValue = $phone.val();
+            const hasValidClass = $phone.hasClass('is-valid');
+            const hasInvalidClass = $phone.hasClass('is-invalid');
+            const ariaInvalid = $phone.attr('aria-invalid');
+            
+            // Test validation manually
+            let validationResult = 'Unknown';
+            if (typeof validateField === 'function') {
+                const isValid = validateField($phone);
+                validationResult = isValid ? 'Valid' : 'Invalid';
+            }
+            
+            const statusDiv = $('#validation-status');
+            const isCurrentlyValid = hasValidClass && !hasInvalidClass;
+            
+            statusDiv.html(`
+                <h4>Phone Validation Status</h4>
+                <table class="table table-sm">
+                    <tr><td><strong>Phone Value:</strong></td><td>"${phoneValue}"</td></tr>
+                    <tr><td><strong>Digit Count:</strong></td><td>${phoneValue.replace(/\D/g, '').length}</td></tr>
+                    <tr><td><strong>Validation Result:</strong></td><td>${validationResult}</td></tr>
+                    <tr><td><strong>Has is-valid class:</strong></td><td>${hasValidClass ? '✅ YES' : '❌ NO'}</td></tr>
+                    <tr><td><strong>Has is-invalid class:</strong></td><td>${hasInvalidClass ? '❌ YES' : '✅ NO'}</td></tr>
+                    <tr><td><strong>ARIA Invalid:</strong></td><td>${ariaInvalid}</td></tr>
+                    <tr><td><strong>Overall Status:</strong></td><td>${isCurrentlyValid ? '✅ VALID' : '❌ INVALID'}</td></tr>
+                </table>
+            `);
+            
+            statusDiv.removeClass('valid-status invalid-status');
+            statusDiv.addClass(isCurrentlyValid ? 'valid-status' : 'invalid-status');
+            
+            console.log('Validation check:', {
+                value: phoneValue,
+                validationResult,
+                hasValidClass,
+                hasInvalidClass,
+                ariaInvalid,
+                isCurrentlyValid
+            });
+        }
+    </script>
+</body>
+</html>

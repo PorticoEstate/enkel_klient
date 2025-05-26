@@ -615,9 +615,16 @@ function displayErrorSummary($form, errors) {
   html += "<ul>";
 
   errors.forEach((error) => {
+    // Check if this field has been converted to a Quill editor
+    const quillEditorId = 'quill-' + error.fieldId;
+    const hasQuillEditor = document.getElementById(quillEditorId);
+    
+    // Use the Quill editor container ID if it exists, otherwise use the original field ID
+    const targetId = hasQuillEditor ? quillEditorId : error.fieldId;
+    
     html +=
       '<li><a href="#' +
-      error.fieldId +
+      targetId +
       '">' +
       error.fieldName +
       ": " +
@@ -646,7 +653,22 @@ function displayErrorSummary($form, errors) {
   $errorSummary.find("a").on("click", function (e) {
     e.preventDefault();
     const targetId = $(this).attr("href");
-    $(targetId).focus();
+    const targetElement = $(targetId);
+    
+    if (targetElement.length) {
+      // If it's a Quill editor container, focus the editor content
+      if (targetElement.hasClass('quill-editor-container')) {
+        const editorContent = targetElement.find('.ql-editor');
+        if (editorContent.length) {
+          editorContent.focus();
+        } else {
+          targetElement.focus();
+        }
+      } else {
+        // For regular form fields, focus normally
+        targetElement.focus();
+      }
+    }
   });
 }
 

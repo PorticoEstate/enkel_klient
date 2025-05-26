@@ -211,4 +211,36 @@ return [
         'part_of_alarm_system' => 'Inngår i brannvarslingsanlegg',
         'need_extended_inspection' => 'Behov for utvidet tilsyn',
     ],
+    // WCAG 3.3.4 Error Prevention translations
+    'form_confirmation' => [
+        'review_title' => 'Gjennomgå informasjonen din',
+        'review_intro' => 'Vennligst gjennomgå informasjonen din før innsending. Du kan redigere ethvert felt ved å klikke på "Rediger"-knappen ved siden av det.',
+        'confirm_title' => 'Bekreft innsending',
+        'edit_button' => 'Rediger',
+        'edit_all_button' => 'Rediger skjema',
+        'submit_button' => 'Send inn skjema',
+        'cancel_button' => 'Avbryt',
+        'yes_submit_button' => 'Ja, send inn',
+        'close_summary' => 'Lukk sammendrag',
+        'uploaded_files' => 'Opplastede filer',
+
+        // Form-specific confirmation messages
+        'helpdesk_confirm' => 'Er du sikker på at du vil sende inn denne støtteforespørselen? Når den er sendt, vil den bli overført til vårt supportteam.',
+        'nokkelbestilling_confirm' => 'Er du sikker på at du vil sende inn denne nøkkelbestillingen? Når den er sendt, vil bestillingen din bli behandlet.',
+        'inspection_confirm' => 'Er du sikker på at du vil sende inn denne inspeksjonsrapporten? Når den er sendt, kan den ikke endres.',
+        'invoicerequest_confirm' => 'Er du sikker på at du vil sende inn denne fakturaforespørselen? Når den er sendt, vil den bli behandlet for betaling.',
+        'default_confirm' => 'Er du sikker på at du vil sende inn dette skjemaet? Når det er sendt inn, kan det ikke endres.',
+
+        // Screen reader announcements
+        'summary_opened' => 'Skjemasammendrag vises. Gjennomgå informasjonen din før du sender inn.',
+        'summary_closed' => 'Skjemasammendrag lukket. Du er tilbake til skjemaet.',
+        'confirmation_opened' => 'Bekreftelsesdialog vist. Vennligst bekreft innsendingen din.',
+        'confirmation_closed' => 'Bekreftelsesdialog lukket.',
+        'field_focused' => 'Fokusert på {field}-feltet for redigering.',
+        'form_being_submitted' => 'Skjemaet sendes inn, vennligst vent...',
+        'draft_saved' => 'Skjemautkast lagret automatisk.',
+        'draft_restored' => 'Tidligere skjemautkast gjenopprettet.',
+        'changes_detected' => 'Du har ulagrede endringer. Er du sikker på at du vil forlate siden?',
+    ],
+
 ];

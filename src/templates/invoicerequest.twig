@@ -13,7 +13,37 @@
 		var translations = {
 			form_validation_errors: "{{ __('form_validation_errors', 'form') }}",
 			uploading_files: "{{ __('uploading_files', 'form') }}",
-			form_submitted: "{{ __('form_submitted', 'form') }}"
+			form_submitted: "{{ __('form_submitted', 'form') }}",
+			form_confirmation: {
+				review_title: "{{ __('review_title', 'form_confirmation') }}",
+				review_intro: "{{ __('review_intro', 'form_confirmation') }}",
+				confirm_title: "{{ __('confirm_title', 'form_confirmation') }}",
+				edit_button: "{{ __('edit_button', 'form_confirmation') }}",
+				edit_all_button: "{{ __('edit_all_button', 'form_confirmation') }}",
+				submit_button: "{{ __('submit_button', 'form_confirmation') }}",
+				cancel_button: "{{ __('cancel_button', 'form_confirmation') }}",
+				yes_submit_button: "{{ __('yes_submit_button', 'form_confirmation') }}",
+				close_summary: "{{ __('close_summary', 'form_confirmation') }}",
+				uploaded_files: "{{ __('uploaded_files', 'form_confirmation') }}",
+				invoicerequest_confirm: "{{ __('invoicerequest_confirm', 'form_confirmation') }}",
+				summary_opened: "{{ __('summary_opened', 'form_confirmation') }}",
+				summary_closed: "{{ __('summary_closed', 'form_confirmation') }}",
+				confirmation_opened: "{{ __('confirmation_opened', 'form_confirmation') }}",
+				confirmation_closed: "{{ __('confirmation_closed', 'form_confirmation') }}",
+				field_focused: "{{ __('field_focused', 'form_confirmation') }}",
+				form_being_submitted: "{{ __('form_being_submitted', 'form_confirmation') }}",
+				draft_saved: "{{ __('draft_saved', 'form_confirmation') }}",
+				draft_restored: "{{ __('draft_restored', 'form_confirmation') }}",
+				changes_detected: "{{ __('changes_detected', 'form_confirmation') }}"
+			}
+		};
+		
+		// Form configuration for WCAG 3.3.4 Error Prevention
+		var formConfiguration = {
+			form_summary_on_submit: {{ config.invoicerequest.form_summary_on_submit|default(false) ? 'true' : 'false' }},
+			confirmation_dialog_enabled: {{ config.invoicerequest.confirmation_dialog_enabled|default(false) ? 'true' : 'false' }},
+			auto_save_enabled: {{ config.invoicerequest.auto_save_enabled|default(true) ? 'true' : 'false' }},
+			change_tracking_enabled: {{ config.invoicerequest.change_tracking_enabled|default(true) ? 'true' : 'false' }}
 		};
 	</script>
 

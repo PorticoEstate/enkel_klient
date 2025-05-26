@@ -212,4 +212,36 @@ return [
         'open_date_picker' => 'Open date picker',
         'select_date' => 'Select date',
     ],
+    
+    // WCAG 3.3.4 Error Prevention translations
+    'form_confirmation' => [
+        'review_title' => 'Review Your Information',
+        'review_intro' => 'Please review your information before submitting. You can edit any field by clicking the "Edit" button next to it.',
+        'confirm_title' => 'Confirm Submission',
+        'edit_button' => 'Edit',
+        'edit_all_button' => 'Edit Form',
+        'submit_button' => 'Submit Form',
+        'cancel_button' => 'Cancel',
+        'yes_submit_button' => 'Yes, Submit',
+        'close_summary' => 'Close summary',
+        'uploaded_files' => 'Uploaded Files',
+        
+        // Form-specific confirmation messages
+        'helpdesk_confirm' => 'Are you sure you want to submit this support request? Once submitted, it will be sent to our support team.',
+        'nokkelbestilling_confirm' => 'Are you sure you want to submit this key order? Once submitted, your order will be processed.',
+        'inspection_confirm' => 'Are you sure you want to submit this inspection report? Once submitted, it cannot be modified.',
+        'invoicerequest_confirm' => 'Are you sure you want to submit this invoice request? Once submitted, it will be processed for payment.',
+        'default_confirm' => 'Are you sure you want to submit this form? Once submitted, it cannot be modified.',
+        
+        // Screen reader announcements
+        'summary_opened' => 'Form summary displayed. Review your information before submitting.',
+        'summary_closed' => 'Form summary closed. You are back to the form.',
+        'confirmation_opened' => 'Confirmation dialog displayed. Please confirm your submission.',
+        'confirmation_closed' => 'Confirmation dialog closed.',
+        'field_focused' => 'Focused on {field} field for editing.',
+        'form_being_submitted' => 'Form is being submitted, please wait...',
+        'draft_saved' => 'Form draft saved automatically.',
+        'draft_restored' => 'Previous form draft restored.',
+        'changes_detected' => 'You have unsaved changes. Are you sure you want to leave?',
+    ],
 ];

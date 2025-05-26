@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormHandler Migration Examples</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>FormHandler Migration Examples</h1>
+        <p class="lead">Compare bloated version vs. clean core + extensions</p>
+
+        <!-- Example 1: Simple Contact Form -->
+        <div class="row mt-5">
+            <div class="col-md-6">
+                <h3 class="text-danger">❌ Old Bloated Way</h3>
+                <pre><code>// 1,950+ lines of complexity for simple form
+const formHandler = new FormHandler({
+  formId: 'contact-form',
+  fileRequired: false,
+  // Loads entire bloated class even for simple form
+  redirectUrl: '/contact/success'
+});
+
+// All features loaded whether needed or not:
+// - File upload system
+// - WCAG compliance 
+// - Auto-save
+// - Real-time validation
+// - Modal handling
+// - CSS injection
+// - Translation system
+// - And much more...
+</code></pre>
+            </div>
+            <div class="col-md-6">
+                <h3 class="text-success">✅ New Clean Way</h3>
+                <pre><code>// Only 112 lines of focused core functionality
+const formHandler = new FormHandler({
+  formId: 'contact-form',
+  redirectUrl: '/contact/success'
+  // That's it! No bloat, just form submission
+});
+
+// Benefits:
+// - 94% smaller codebase
+// - Faster loading
+// - Easier debugging  
+// - Single responsibility
+// - No unused features
+</code></pre>
+            </div>
+        </div>
+
+        <!-- Example 2: Advanced Form with Extensions -->
+        <div class="row mt-5">
+            <div class="col-md-6">
+                <h3 class="text-danger">❌ Old Bloated Way</h3>
+                <pre><code>// Same 1,950+ lines for complex form
+const formHandler = new FormHandler({
+  formId: 'helpdesk-form',
+  fileRequired: true,
+  allowedFileTypes: ['.pdf', '.doc'],
+  maxFileSizeMB: 10,
+  realTimeValidation: true,
+  autoSave: true,
+  wcagCompliant: true,
+  redirectUrl: '/helpdesk/success'
+});
+
+// Problems:
+// - All features tightly coupled
+// - Hard to customize
+// - Difficult to test
+// - Performance overhead
+// - Maintenance nightmare
+</code></pre>
+            </div>
+            <div class="col-md-6">
+                <h3 class="text-success">✅ New Clean Way</h3>
+                <pre><code>// Core + only needed extensions
+const formHandler = new FormHandler({
+  formId: 'helpdesk-form',
+  redirectUrl: '/helpdesk/success',
+  extensions: {
+    fileUpload: {
+      required: true,
+      allowedFileTypes: ['.pdf', '.doc'],
+      maxFileSizeMB: 10
+    },
+    validation: {
+      realTimeValidation: true,
+      wcagCompliant: true
+    },
+    autoSave: {
+      interval: 30000
+    },
+    accessibility: {
+      announceErrors: true
+    }
+  }
+});
+
+// Benefits:
+// - Modular architecture
+// - Load only needed features  
+// - Easy to test each extension
+// - Clear separation of concerns
+// - Customizable per form
+</code></pre>
+            </div>
+        </div>
+
+        <!-- Live Demo Forms -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3>Live Demonstration</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Simple Form (Core Only)</h5>
+                        <form id="simple-form" action="/demo/simple" method="post">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Advanced Form (Core + Extensions)</h5>
+                        <form id="advanced-form" action="/demo/advanced" method="post">
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject</label>
+                                <input type="text" class="form-control" id="subject" name="subject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Message</label>
+                                <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="attachment" class="form-label">Attachment</label>
+                                <input type="file" class="form-control" id="attachment" name="attachment">
+                                <div class="upload-area"></div>
+                                <div class="uploaded-files"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Mock global variables for demo
+        window.strBaseURL = '/demo';
+    </script>
+    
+    <!-- Core FormHandler -->
+    <script src="../src/js/form-handler-core.js"></script>
+    
+    <!-- Extensions -->
+    <script src="../src/js/extensions/form-validation.js"></script>
+    <script src="../src/js/extensions/form-autosave.js"></script>
+    <script src="../src/js/extensions/file-upload.js"></script>
+    <script src="../src/js/extensions/form-accessibility.js"></script>
+
+    <script>
+        // Simple form demonstration
+        const simpleForm = new FormHandler({
+            formId: 'simple-form',
+            redirectUrl: '/demo/simple/success'
+        });
+
+        // Advanced form demonstration  
+        const advancedForm = new FormHandler({
+            formId: 'advanced-form',
+            redirectUrl: '/demo/advanced/success',
+            extensions: {
+                validation: {
+                    realTimeValidation: true,
+                    wcagCompliant: true
+                },
+                autoSave: {
+                    interval: 30000,
+                    storageKey: 'demo_autosave'
+                },
+                fileUpload: {
+                    required: false,
+                    allowedFileTypes: ['.pdf', '.doc', '.jpg', '.png'],
+                    maxFileSizeMB: 5
+                },
+                accessibility: {
+                    announceErrors: true,
+                    markRequired: true
+                }
+            }
+        });
+
+        console.log('✅ Forms initialized with clean architecture!');
+        console.log('📊 Core size: 112 lines vs 1,950+ lines (94% reduction)');
+        console.log('🚀 Performance: Faster loading, smaller bundle size');
+        console.log('🛠️ Maintenance: Easier debugging and testing');
+    </script>
+</body>
+</html>

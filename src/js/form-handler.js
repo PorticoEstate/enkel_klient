@@ -1,16 +1,16 @@
 /**
  * FormHandler - Common form handling functionality
- * Centralizes validation, submission, file uploads, and accessibility
  * 
- * Created: May 23, 2025
- * Provides consistent form handling across all forms in the application
- * WCAG 2.1 compliant with improved keyboard accessibility and screen reader support
+ * ⚠️  DEPRECATED - DO NOT USE FOR NEW FORMS ⚠️
  * 
- * Updated: Dec 2024 - Added WCAG 3.3.4 Error Prevention compliance features:
- * - Confirmation dialogs for critical forms
- * - Form summary with edit capability
- * - Enhanced real-time validation
- * - Configuration-driven form summary display
+ * This bloated version (1,950+ lines) is being replaced by:
+ * - form-handler-core.js (112 lines) + modular extensions
+ * 
+ * For new forms, use: FormHandler from form-handler-core.js
+ * Migration guide: /docs/form-handler-conversion-guide.md
+ * 
+ * This file will be removed in a future version.
+ * Last updated: May 26, 2025
  */
 
 class FormHandler {
@@ -25,6 +25,11 @@ class FormHandler {
    * @param {number} options.maxFileSizeMB Maximum file size in megabytes
    */
   constructor(options) {
+    // DEPRECATION WARNING
+    console.warn('⚠️  DEPRECATED: form-handler.js is bloated and will be removed.');
+    console.warn('📖 Use form-handler-core.js + extensions instead.');
+    console.warn('📚 Migration guide: /docs/form-handler-conversion-guide.md');
+    
     // Required options
     this.formId = options.formId;
     

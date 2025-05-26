@@ -188,8 +188,49 @@ class FormExtensionLoader {
       extensions: this.getRecommendedExtensions(formType)
     };
 
+    // Apply WCAG 3.3.4 configuration from window.formConfigs
+    this.applyFormConfiguration(formId, baseConfig);
+
     const config = this.deepMerge(baseConfig, overrides);
     return this.createFormHandler(config);
+  }
+
+  /**
+   * Apply form configuration from window.formConfigs for WCAG 3.3.4 compliance
+   * @param {string} formId - Form ID to check configuration for
+   * @param {Object} config - Base configuration to modify
+   */
+  applyFormConfiguration(formId, config) {
+    if (typeof window.formConfigs !== 'undefined' && window.formConfigs[formId]) {
+      const formConfig = window.formConfigs[formId];
+      console.log(`📋 Applying form configuration for ${formId}:`, formConfig);
+
+      // WCAG 3.3.4 Error Prevention: Form Summary
+      if (formConfig.form_summary_on_submit === true) {
+        console.log(`✅ Enabling form summary for ${formId} (WCAG 3.3.4)`);
+        config.extensions.confirmation = config.extensions.confirmation || {};
+        config.extensions.confirmation.showSummary = true;
+      }
+
+      // WCAG 3.3.4 Error Prevention: Confirmation Dialog
+      if (formConfig.confirmation_dialog_enabled === true) {
+        console.log(`✅ Enabling confirmation dialog for ${formId} (WCAG 3.3.4)`);
+        config.extensions.confirmation = config.extensions.confirmation || {};
+        config.extensions.confirmation.showDialog = true;
+      }
+
+      // Auto-save configuration
+      if (formConfig.auto_save_enabled === true) {
+        console.log(`✅ Enabling auto-save for ${formId}`);
+        config.extensions.autoSave = config.extensions.autoSave || {};
+        config.extensions.autoSave.interval = 30000;
+        config.extensions.autoSave.storageKey = `${formId}_autosave`;
+      }
+
+      console.log(`📋 Final extension configuration for ${formId}:`, config.extensions);
+    } else {
+      console.log(`⚠️ No form configuration found for ${formId} in window.formConfigs`);
+    }
   }
 
   /**

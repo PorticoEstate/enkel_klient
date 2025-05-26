@@ -6,17 +6,20 @@
 // Prevent multiple declarations
 if (typeof FormConfirmationExtension === 'undefined') {
   class FormConfirmationExtension {
-  constructor(options = {}) {
+  constructor(formHandler, options = {}) {
+    this.formHandler = formHandler;
+    this.$form = formHandler.getForm();
     this.options = {
       showSummary: false,
       showDialog: false,
       ...options
     };
+    
+    // Initialize immediately since we have formHandler
+    this.init();
   }
   
-  init(formHandler) {
-    this.formHandler = formHandler;
-    this.$form = formHandler.getForm();
+  init() {
     
     if (this.options.showSummary || this.options.showDialog) {
       this.setupConfirmationFlow();
@@ -58,19 +61,39 @@ if (typeof FormConfirmationExtension === 'undefined') {
   
   collectFormData() {
     const data = {};
+    
+    // Fields to exclude from summary (system/hidden fields)
+    const excludeFields = [
+      'randcheck',           // CSRF token
+      'csrf_token',          // Alternative CSRF token name
+      '_token',              // Common token name
+      'authenticity_token',  // Rails-style token
+      'form_id',             // Form identifier
+      'action',              // Form action override
+      'redirect_url'         // Redirect URL override
+    ];
+    
     this.$form.find('input, select, textarea').each(function() {
       const $field = $(this);
       const name = $field.attr('name') || $field.attr('id');
       const type = $field.attr('type');
       
+      // Skip fields without names or system field types
       if (!name || type === 'file' || type === 'submit' || type === 'button') return;
+      
+      // Skip hidden fields and excluded system fields
+      if (type === 'hidden' || excludeFields.includes(name)) return;
+      
+      // Skip empty values
+      const value = $field.val();
+      if (!value || (typeof value === 'string' && value.trim() === '')) return;
       
       if (type === 'checkbox' || type === 'radio') {
         if ($field.is(':checked')) {
-          data[name] = $field.val();
+          data[name] = value;
         }
       } else {
-        data[name] = $field.val();
+        data[name] = value;
       }
     });
     return data;
@@ -203,6 +226,12 @@ if (typeof FormConfirmationExtension === 'undefined') {
     
     return messages[formName] || 'Are you sure you want to submit this form?';
   }
+}
+
+// Register extension with FormHandler
+if (typeof FormHandler !== 'undefined') {
+  FormHandler.extensions = FormHandler.extensions || {};
+  FormHandler.extensions.confirmation = FormConfirmationExtension;
 }
 
 window.FormConfirmationExtension = FormConfirmationExtension;

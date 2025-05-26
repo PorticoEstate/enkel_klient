@@ -1,0 +1,88 @@
+/* Enhanced File Uploader Styles */
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: #e9ecef;
+}
+
+.file-item span {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-item .delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    transition: background-color 0.2s;
+}
+
+.file-item .delete:hover {
+    background-color: #bd2130;
+}
+
+.file-item .delete:focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+.fileupload-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    max-width: 300px;
+}
+
+.progress-container {
+    height: 4px;
+    background: #e9ecef;
+    margin-top: 5px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+    transition: width 0.3s ease;
+}
+
+.done {
+    border-left: 4px solid #198754;
+}
+
+.error {
+    border-left: 4px solid #dc3545;
+}

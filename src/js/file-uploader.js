@@ -31,13 +31,50 @@ function FileUploader(config) {
 		return b >= GB ? (b/GB).toFixed(2)+' GB' : 
 			   b >= MB ? (b/MB).toFixed(2)+' MB' : 
 			   (b/KB).toFixed(2)+' KB';
-	};
-	
-	const announce = (msg, prio = 'polite') =>
+	};    const announce = (msg, prio = 'polite') =>
 	{
         let $el = $('#file-upload-status');
         if (!$el.length) $el = $('<div>',{id:'file-upload-status','class':'sr-only','aria-live':prio}).appendTo('body');
         $el.text(msg);
+    };
+    
+    // Function to show a toast notification with undo option
+    function showUndoToast(fileName) {
+        // Remove any existing toasts
+        $('.fileupload-toast').remove();
+        
+        // Create the toast element
+        const $toast = $('<div>', {
+            'class': 'fileupload-toast',
+            'role': 'status',
+            'aria-live': 'polite'
+        }).css({
+            'position': 'fixed',
+            'bottom': '20px',
+            'right': '20px',
+            'background-color': '#333',
+            'color': 'white',
+            'padding': '10px 15px',
+            'border-radius': '4px',
+            'box-shadow': '0 2px 5px rgba(0,0,0,0.3)',
+            'z-index': '9999',
+            'display': 'flex',
+            'align-items': 'center',
+            'max-width': '300px'
+        });
+        
+        // Add message and button
+        $toast.html(`<span>File "${fileName}" removed</span>`);
+        
+        // Add to document
+        $toast.appendTo('body');
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            $toast.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 3000);
     };
 	const updateCounter = () => {
 		// First find directly by ID
@@ -81,21 +118,86 @@ function FileUploader(config) {
 
     // --- UI & Accessibility ---
     function addFileItem(file, data) {
-        const $item = $('<p class="file file-item" tabindex="0" role="listitem">')
-            .append($('<span>').text(file.name+' '+formatSize(file.size)))
+        // Create the main file item container
+        const $item = $('<div class="file file-item" tabindex="0" role="listitem">')
+            .attr({
+                'aria-label': `File: ${file.name}, Size: ${formatSize(file.size)}`,
+                'data-filename': file.name,
+                'data-size': file.size
+            })
             .appendTo($(`.${settings.uploadContainerId}`));
+        
+        // Create file info container
+        const $fileInfo = $('<div class="file-info">')
+            .appendTo($item);
+        
+        // Add file name and size
+        $fileInfo.append($('<span class="file-name">').text(file.name))
+            .append($('<span class="file-size">').text(formatSize(file.size)));
+        
+        // Add progress bar container (initially hidden)
+        const $progressContainer = $('<div class="progress-container" style="display: none;">')
+            .append($('<div class="progress-bar">'))
+            .appendTo($item);
+        
+        // Add hidden upload button
         const $btn = $('<button type="button" class="start_file_upload" style="display:none">start</button>')
-            .on('click', () => { data.url = currentUrl; data.submit(); });
-        $item.append($btn);
+            .on('click', () => { 
+                data.url = currentUrl; 
+                // Show progress bar when upload starts
+                $progressContainer.show();
+                $item.find('.delete').prop('disabled', true);
+                data.submit(); 
+            });
+            
+        // Add delete button with proper accessibility attributes
+        const $deleteBtn = $('<button type="button" class="delete">&times;</button>')
+            .attr({
+                'aria-label': `Delete file ${file.name}`,
+                'title': `Delete ${file.name}`,
+                'role': 'button'
+            });
+        
+        $item.append($deleteBtn).append($btn);
         data.context = $item;
         return $item;
     }
     function markError($ctx, msg) {
-        $ctx.removeClass('file').addClass('error').append($('<span>').text(' Error: '+msg)).attr({'aria-invalid':'true','aria-errormessage':msg});
+        // Remove existing error message if any
+        $ctx.find('.error-message').remove();
+        
+        // Add error styling and message
+        $ctx.removeClass('file').addClass('error')
+            .append($('<div class="error-message">').text('Error: ' + msg))
+            .attr({
+                'aria-invalid': 'true',
+                'aria-errormessage': msg
+            });
+        
+        // Announce error to screen readers
         announce(msg, 'assertive');
     }
+    
     function markSuccess($ctx, name) {
-        $ctx.addClass('done').attr({'aria-label':`${name} uploaded successfully`,'aria-invalid':'false'});
+        // Add success styling and icon
+        $ctx.addClass('done')
+            .attr({
+                'aria-label': `${name} uploaded successfully`,
+                'aria-invalid': 'false'
+            });
+        
+        // Add success icon
+        const $checkmark = $('<span class="success-icon">✓</span>')
+            .css({
+                'color': '#198754',
+                'font-weight': 'bold',
+                'margin-left': '10px'
+            });
+        
+        // Add to file info section
+        $ctx.find('.file-info').append($checkmark);
+        
+        // Announce success to screen readers
         announce(`${name} uploaded successfully`);
     }
 
@@ -149,7 +251,6 @@ function setupDropZone() {
 	function initialize()
 	{
 		// Check if jQuery File Upload is available
-		// Check if jQuery File Upload is available
 		if (!$.fn.fileupload) {
 		    console.error('jQuery File Upload plugin not found or not properly loaded');
 		    return false;
@@ -158,6 +259,15 @@ function setupDropZone() {
 		if (!$fileInput.length) {
 		    console.error(`File input #${settings.fileInputId} not found in the document`);
 		    return false;
+		}
+		
+		// Add enhanced styles for file items if not already added
+		if (!$('#file-uploader-enhanced-css').length) {
+		    $('<link>', {
+		        id: 'file-uploader-enhanced-css',
+		        rel: 'stylesheet',
+		        href: `${strBaseURL}/src/css/file-uploader-enhanced.css`
+		    }).appendTo('head');
 		}
 		
 		// First, clean up any existing instance properly
@@ -235,25 +345,71 @@ function setupDropZone() {
             submit: (e, data) => { data.url = currentUrl; return true; },
             progress: (e, data) => {
                 const p = parseInt((data.loaded/data.total)*100,10);
-                data.context.css('background-position-x', 100-p+'%').attr({'aria-valuenow':p,'aria-valuetext':`${p}% complete`});
+                
+                // Update progress bar
+                const $progressBar = data.context.find('.progress-bar');
+                if ($progressBar.length) {
+                    $progressBar.css('width', p + '%');
+                    $progressBar.parent().show();
+                }
+                
+                // Set ARIA attributes for accessibility
+                data.context.attr({
+                    'aria-valuenow': p,
+                    'aria-valuetext': `${p}% complete`
+                });
+                
+                // Announce progress at 25% intervals
                 if (p%25===0) announce(`Upload ${p}% complete`);
+                
                 settings.onProgress && settings.onProgress(p);
             },
             done: (e, data) => {
                 uploaded++;
                 let r = data.result, err = false, msg = '', name = data.files[0]?.name||'File';
+                
+                // Check for various error conditions
                 if (!r) { err = true; msg = 'No response from server'; }
                 else if (typeof r==='string' && r.includes('error')) { err = true; msg = r; }
                 else if (r.error) { err = true; msg = r.error; }
                 else if (r.status==='error') { err = true; msg = r.message||'Server error'; }
                 else if (r.files?.some(f=>f.error)) { err = true; msg = r.files.find(f=>f.error).error; }
-                if (err) { markError(data.context, msg); errors = true; pending--; setRequired(settings.required && pending===0); }
-                else { markSuccess(data.context, name); }
+                
+                // Hide progress bar when complete
+                data.context.find('.progress-container').fadeOut(300);
+                
+                if (err) { 
+                    // Mark as error
+                    markError(data.context, msg); 
+                    errors = true; 
+                    pending--; 
+                    setRequired(settings.required && pending===0); 
+                    
+                    // Enable delete button again
+                    data.context.find('.delete').prop('disabled', false);
+                }
+                else { 
+                    // Mark as success
+                    markSuccess(data.context, name); 
+                    
+                    // Remove delete button since file is already uploaded
+                    data.context.find('.delete').remove();
+                }
+                
                 if (queue.length) setTimeout(processNext, 100); else checkComplete();
             },
             fail: (e, data) => {
                 uploaded++; pending--; errors = true;
+                
+                // Hide progress bar
+                data.context.find('.progress-container').fadeOut(300);
+                
+                // Show error message
                 markError(data.context, data.errorThrown||'Upload failed');
+                
+                // Re-enable delete button
+                data.context.find('.delete').prop('disabled', false);
+                
                 setRequired(settings.required && pending===0);
                 if (queue.length) setTimeout(processNext, 100); else checkComplete();
             },
@@ -336,17 +492,25 @@ function setupDropZone() {
             e.preventDefault();
             const $item = $(this).closest('.file-item');
             const name = $item.data('filename') || $item.find('span').text().split(' ')[0] || 'File';
-            if (confirm(`Delete file "${name}"?`)) {
-                $item.fadeOut(300, function() {
-                    // Also remove from our persistent file list
-                    const fileName = name.trim();
-                    allFiles = allFiles.filter(f => f.name !== fileName);
-                    $(this).remove();
-                    pending--; updateCounter(); setRequired(settings.required && pending===0);
-                    announce(`File ${name} removed`);
-                    settings.onDelete && settings.onDelete({name});
-                });
-            }
+            
+            // Remove file directly without confirmation for better UX
+            // Files aren't actually uploaded yet, so deletion is reversible
+            $item.fadeOut(300, function() {
+                // Also remove from our persistent file list
+                const fileName = name.trim();
+                allFiles = allFiles.filter(f => f.name !== fileName);
+                $(this).remove();
+                pending--; updateCounter(); setRequired(settings.required && pending===0);
+                
+                // Announce deletion to screen readers
+                announce(`File ${name} removed`);
+                
+                // Show a brief undo toast notification
+                showUndoToast(name);
+                
+                // Call onDelete callback if provided
+                settings.onDelete && settings.onDelete({name});
+            });
         });
     }
     function setupValidation() {

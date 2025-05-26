@@ -1,3 +1,13 @@
+// Define toolbar options
+var toolbarOptions = [
+	['bold', 'italic', 'underline', 'strike'], // toggled buttons
+	[{ 'list': 'ordered' }, { 'list': 'bullet' }],
+	[{ 'indent': '-1' }, { 'indent': '+1' }], // outdent/indent
+	[{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+	[{ 'align': [] }],
+	['clean']  // remove formatting button
+];
+
 /**
  * Quill Editor initialization for textareas
  * Enhanced for WCAG 2.0 compliance with improved accessibility
@@ -142,13 +152,8 @@ function quilljs_textarea(elem = null, options = null)
 					tab: {
 					  key: 9,
 					  handler: function(range, context) {
-						// If shift isn't pressed and we're not in a code block
-						if (!context.event.shiftKey && !context.format.code-block) {
-						  // Don't handle tab within the editor - let it move to the next element
-						  return true;
-						}
-						// For shift+tab or tabs in code blocks, let Quill handle it normally
-						return false;
+						// Always let Tab key bubble out of Quill to enable proper navigation
+						return true;
 					  }
 					}
 				  }
@@ -184,6 +189,11 @@ function quilljs_textarea(elem = null, options = null)
 				e.preventDefault();
 				// Focus on the editor area
 				editor.focus();
+				
+				// Announce shortcut for accessing formatting toolbar
+				setTimeout(() => {
+					announceToScreenReader('Editor focused. Press Alt+F to access formatting toolbar if needed.');
+				}, 1000);
 			});
 
 			// Update textarea when content changes
@@ -275,6 +285,21 @@ function quilljs_textarea(elem = null, options = null)
             white-space: nowrap;
         }
         
+        /* Hide focus styles when tabbing through interface */
+        .ql-toolbar [tabindex="-1"]:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Ensure ALL toolbar elements are non-tabbable */
+        .ql-toolbar *, 
+        .ql-toolbar button,
+        .ql-toolbar .ql-picker,
+        .ql-toolbar .ql-picker-label,
+        .ql-toolbar .ql-picker-item {
+            tabindex: -1 !important;
+        }
+        
         /* Hide screen reader announcement visually but keep it accessible */
         .sr-only {
             position: absolute;
@@ -302,19 +327,55 @@ function quilljs_textarea(elem = null, options = null)
 
 	// Add button tooltips
 	addAccessibleButtonLabels();
+	
+	// Ensure all toolbar elements are skipped during tab navigation
+	ensureToolbarIsSkippedOnTab();
 
 	return editors;
 }
 
-// Define toolbar options
-var toolbarOptions = [
-	['bold', 'italic', 'underline', 'strike'], // toggled buttons
-	[{ 'list': 'ordered' }, { 'list': 'bullet' }],
-	[{ 'indent': '-1' }, { 'indent': '+1' }], // outdent/indent
-	[{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-	[{ 'align': [] }],
-	['clean']  // remove formatting button
-];
+/**
+ * Make sure all toolbar elements are removed from tab order
+ * This helps when dynamically added elements might be missed
+ */
+function ensureToolbarIsSkippedOnTab()
+{
+	// Give Quill time to fully render before applying
+	setTimeout(() => {
+		// Target everything inside toolbars with comprehensive selectors
+		const toolbarSelectors = [
+			'.ql-toolbar *',
+			'.ql-toolbar button',
+			'.ql-toolbar .ql-picker',
+			'.ql-toolbar .ql-picker-label',
+			'.ql-toolbar .ql-picker-item',
+			'.ql-toolbar .ql-formats *',
+			'.ql-header',
+			'.ql-align',
+			'.ql-bold',
+			'.ql-italic',
+			'.ql-underline',
+			'.ql-strike',
+			'.ql-list',
+			'.ql-indent',
+			'.ql-clean'
+		];
+		
+		toolbarSelectors.forEach(selector => {
+			document.querySelectorAll(selector).forEach(element => {
+				// Make sure no toolbar elements can be tabbed to
+				element.setAttribute('tabindex', '-1');
+			});
+		});
+	}, 100);
+	
+	// Also apply after a longer delay to catch any dynamically added elements
+	setTimeout(() => {
+		document.querySelectorAll('.ql-toolbar, .ql-toolbar *').forEach(element => {
+			element.setAttribute('tabindex', '-1');
+		});
+	}, 1000);
+}
 
 /**
  * Announce text to screen readers using ARIA live region
@@ -415,11 +476,9 @@ function addAccessibleButtonLabels()
 				button.setAttribute('aria-label', buttonLabels[selector]);
 				button.setAttribute('title', buttonLabels[selector]);
 
-				// Make sure button is keyboard accessible
-				if (!button.hasAttribute('tabindex'))
-				{
-					button.setAttribute('tabindex', '0');
-				}
+				// Make toolbar buttons non-tabbable to skip them in tab order
+				// They can still be accessed with arrow keys if needed
+				button.setAttribute('tabindex', '-1');
 
 				// Add keyboard event to activate buttons with Enter/Space
 				button.addEventListener('keydown', function (e)
@@ -444,6 +503,8 @@ function addAccessibleButtonLabels()
 				label.setAttribute('aria-label', pickerName);
 				label.setAttribute('aria-haspopup', 'true');
 				label.setAttribute('aria-expanded', 'false');
+				// Make picker labels non-tabbable to remove from tab order
+				label.setAttribute('tabindex', '-1');
 
 				// Add keyboard support for opening/closing dropdown
 				label.addEventListener('keydown', function (e)
@@ -463,10 +524,10 @@ function addAccessibleButtonLabels()
 					}
 				});
 
-				// Make items in dropdown focusable
+				// Make dropdown items non-tabbable (still accessible via arrow keys)
 				picker.querySelectorAll('.ql-picker-item').forEach((item, index) =>
 				{
-					item.setAttribute('tabindex', '0');
+					item.setAttribute('tabindex', '-1');
 					const itemLabel = item.getAttribute('data-value') || item.textContent || `Option ${index + 1}`;
 					item.setAttribute('aria-label', itemLabel);
 
@@ -610,6 +671,34 @@ $(document).ready(function ()
 	  }
 	});
 
+	// When TAB key focuses the editor container, skip toolbar and jump directly to edit area
+	$(document).on('focus', '.quill-editor-container', function(e) {
+		// When the container is focused (by Tab key), focus its editor area directly
+		// This effectively skips the toolbar buttons
+		const editor = $(this).find('.ql-editor');
+		if (editor.length) {
+			// Only if we're coming from Tab navigation, not from clicks
+			if (e.originalEvent && e.originalEvent.keyCode === 9) {
+				editor.focus();
+			}
+		}
+	});
+
+	// Add keyboard shortcut (Alt+F) to access the formatting toolbar if needed
+	$(document).on('keydown', '.ql-editor', function(e) {
+		// Alt+F to focus the first toolbar button (for users who want to access toolbar)
+		if (e.altKey && e.key.toLowerCase() === 'f') {
+			e.preventDefault();
+			const toolbar = $(this).closest('.quill-editor-container').find('.ql-toolbar');
+			const firstButton = toolbar.find('button').first();
+			if (firstButton.length) {
+				firstButton.focus();
+				announceToScreenReader('Toolbar navigation activated. Use Tab or arrow keys to navigate toolbar buttons.');
+			}
+			return false;
+		}
+	});
+	
 	// Add form validation support
 	$(document).on('submit', 'form', function (e)
 	{
@@ -638,8 +727,20 @@ $(document).ready(function ()
 		return formValid;
 	});
 
-	// For better keyboard accessibility, ensure toolbar buttons receive focus
-	$('.ql-toolbar button').attr('tabindex', '0');
+	// Make ALL toolbar elements non-tabbable to skip them when tabbing
+	// Use multiple attempts to catch all possible toolbar elements
+	setTimeout(() => {
+		$('.ql-toolbar, .ql-toolbar *, .ql-picker, .ql-picker-label, .ql-header, .ql-align').attr('tabindex', '-1');
+	}, 100);
+	
+	setTimeout(() => {
+		$('.ql-toolbar button, .ql-toolbar .ql-picker, .ql-toolbar .ql-picker-label, .ql-toolbar .ql-formats *').attr('tabindex', '-1');
+	}, 500);
+	
+	setTimeout(() => {
+		// Final sweep to ensure everything is non-tabbable
+		$('.ql-toolbar').find('*').attr('tabindex', '-1');
+	}, 1000);
 
 	// Add ARIA labels for each button group in the toolbar
 	$('.ql-toolbar .ql-formats').each(function (index)

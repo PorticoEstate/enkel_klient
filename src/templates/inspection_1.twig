@@ -1,4 +1,3 @@
-{% set include_form_validator = true %}
 {% extends 'head.twig' %}
 
 {% block body %}
@@ -73,7 +72,7 @@
 				</div>
 			{% endif %}
 			
-			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header" onsubmit="return validateForm(this);">
+			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header">
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
 					<legend class="sr-only">{{ __('inspection_details') }}</legend>

@@ -3,7 +3,9 @@
  * Handles all accessibility-related functionality
  */
 
-class FormAccessibilityExtension {
+// Prevent multiple declarations
+if (typeof FormAccessibilityExtension === 'undefined') {
+  class FormAccessibilityExtension {
   constructor(formHandler, options = {}) {
     this.formHandler = formHandler;
     this.options = {
@@ -76,10 +78,13 @@ class FormAccessibilityExtension {
     if (statusEl) {
       statusEl.textContent = message;
     }
-  }
+    }
 }
 
-// Register the extension
-FormHandler.registerExtension('accessibility', FormAccessibilityExtension);
+// Register the extension (only if not already registered)
+if (FormHandler && typeof FormHandler.registerExtension === 'function') {
+  FormHandler.registerExtension('accessibility', FormAccessibilityExtension);
+}
 
 window.FormAccessibilityExtension = FormAccessibilityExtension;
+}

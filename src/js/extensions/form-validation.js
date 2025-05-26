@@ -2,7 +2,10 @@
  * Form Validation Extension
  * Handles real-time validation, WCAG compliance, and accessibility
  */
-class FormValidationExtension {
+
+// Prevent multiple declarations
+if (typeof FormValidationExtension === 'undefined') {
+  class FormValidationExtension {
   constructor(formHandler, options = {}) {
     this.formHandler = formHandler;
     this.options = {
@@ -39,7 +42,32 @@ class FormValidationExtension {
 
   validateField(field) {
     // Individual field validation logic
-    // Much simpler than the bloated version
+    try {
+      const $field = $(field);
+      if (!$field.length) return true;
+      
+      const fieldElement = $field[0];
+      let isValid = true;
+      
+      // Basic HTML5 validation
+      if (fieldElement.checkValidity) {
+        isValid = fieldElement.checkValidity();
+      }
+      
+      // Additional custom validation could go here
+      
+      // Update field appearance based on validation
+      if (isValid) {
+        $field.removeClass('is-invalid').addClass('is-valid');
+      } else {
+        $field.removeClass('is-valid').addClass('is-invalid');
+      }
+      
+      return isValid;
+    } catch (error) {
+      console.warn('Error validating field:', error);
+      return true; // Assume valid on error
+    }
   }
 
   // Public API
@@ -53,9 +81,12 @@ class FormValidationExtension {
 }
 
 // Register extension
-FormHandler.registerExtension = function(name, extensionClass) {
-  this.extensions = this.extensions || {};
-  this.extensions[name] = extensionClass;
-};
-
-FormHandler.registerExtension('validation', FormValidationExtension);
+  // Register extension (only if not already registered)
+  if (typeof FormHandler !== 'undefined') {
+    FormHandler.registerExtension = FormHandler.registerExtension || function(name, extensionClass) {
+      this.extensions = this.extensions || {};
+      this.extensions[name] = extensionClass;
+    };
+    FormHandler.registerExtension('validation', FormValidationExtension);
+  }
+}

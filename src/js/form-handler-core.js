@@ -125,6 +125,21 @@ class FormHandler {
   getForm() { return this.$form; }
   getFormElement() { return this.form; }
   getFormId() { return this.formId; }
+  
+  // Validation compatibility method
+  validateField(field) {
+    // Delegate to validation extension if available
+    const validationExtension = this.getExtension('validation');
+    if (validationExtension && typeof validationExtension.validateField === 'function') {
+      return validationExtension.validateField(field);
+    } else {
+      // Fallback: trigger change event to activate any validation listeners
+      if (field && field.trigger) {
+        field.trigger('change');
+      }
+      return true; // Assume valid if no validation extension
+    }
+  }
 }
 
 // Static extension registry

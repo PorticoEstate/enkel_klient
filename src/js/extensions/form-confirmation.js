@@ -3,7 +3,9 @@
  * Handles WCAG 3.3.4 confirmation features (summary and dialogs)
  */
 
-class FormConfirmationExtension {
+// Prevent multiple declarations
+if (typeof FormConfirmationExtension === 'undefined') {
+  class FormConfirmationExtension {
   constructor(options = {}) {
     this.options = {
       showSummary: false,
@@ -196,7 +198,7 @@ class FormConfirmationExtension {
       'helpdesk': 'Are you sure you want to submit this support request?',
       'nokkelbestilling': 'Are you sure you want to submit this key order?',
       'inspection': 'Are you sure you want to submit this inspection report?',
-      'invoicerequest': 'Are you sure you want to submit this invoice request?'
+          'invoicerequest': 'Are you sure you want to submit this invoice request?'
     };
     
     return messages[formName] || 'Are you sure you want to submit this form?';
@@ -204,3 +206,4 @@ class FormConfirmationExtension {
 }
 
 window.FormConfirmationExtension = FormConfirmationExtension;
+}

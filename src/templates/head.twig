@@ -39,10 +39,7 @@
 	<!-- Core form handler for clean architecture (loaded conditionally per form) -->
 	<!-- Deprecated form-handler.js removed - all forms now use clean architecture -->
 	
-	{% if include_form_validator is defined and include_form_validator %}
-	<!-- Common form validation framework -->
-	<script src="{{ base_path }}/src/js/form-validator.js?n={{ cache_refresh_token }}"></script>
-	{% endif %}
+	<!-- Legacy form-validator.js removed - validation now handled by form-validation.js extension per form -->
 
 	<script src="{{ base_path }}/src/js/base.js?n={{ cache_refresh_token }}"></script>
 

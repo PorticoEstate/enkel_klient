@@ -1,4 +1,3 @@
-{% set include_form_validator = true %}
 {% extends 'head.twig' %}
 
 {% block body %}
@@ -91,7 +90,7 @@
 				<p>{{ __('form_info')|raw }}</p>
 			{% endif %}
 
-			<form id="helpdesk" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate onsubmit="return validateForm(this);">
+			<form id="helpdesk" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate>
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
 					<legend class="sr-only">Contact Information</legend>

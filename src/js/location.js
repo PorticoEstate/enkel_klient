@@ -126,7 +126,13 @@ const autoCompleteJS = new autoComplete({
 				if ($locationField.length)
 				{
 					// Validate the field now that we have a location_code
-					validateField($locationField);
+					// Check if validateField function exists (legacy system)
+					if (typeof validateField === 'function') {
+						validateField($locationField);
+					} else {
+						// For clean architecture, trigger a change event to let extensions handle validation
+						$locationField.trigger('change');
+					}
 				}
 			},
 			focus: () =>

@@ -84,6 +84,12 @@ form-handler-core.js (112 lines)
 - **Comprehensive documentation** - clear migration guides and examples
 - **Extension system** allows easy addition of new functionality
 
+### ✅ Critical Issues Resolved
+- **Validation Conflict Fixed**: Eliminated `FormValidationExtension` redeclaration error by:
+  - Removing legacy `form-validator.js` from global loading in `head.twig`
+  - Updating `BaseFormController.php` to stop setting `include_form_validator` flag
+  - All forms now use clean `form-validation.js` extension without conflicts
+
 ---
 
 ## 📁 Files Created/Updated

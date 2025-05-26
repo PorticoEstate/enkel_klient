@@ -3,7 +3,9 @@
  * Handles file upload functionality with validation and accessibility
  */
 
-class FileUploadExtension {
+// Prevent multiple declarations
+if (typeof FileUploadExtension === 'undefined') {
+  class FileUploadExtension {
   constructor(formHandler, options = {}) {
     this.formHandler = formHandler;
     this.options = {
@@ -101,9 +103,12 @@ class FileUploadExtension {
       $fileInput.removeAttr('required').attr('aria-required', 'false');
     }
   }
+  }
+
+  // Register the extension (only if not already registered)
+  if (FormHandler && typeof FormHandler.registerExtension === 'function') {
+    FormHandler.registerExtension('fileUpload', FileUploadExtension);
+  }
+
+  window.FileUploadExtension = FileUploadExtension;
 }
-
-// Register the extension
-FormHandler.registerExtension('fileUpload', FileUploadExtension);
-
-window.FileUploadExtension = FileUploadExtension;

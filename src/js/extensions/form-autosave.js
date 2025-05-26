@@ -83,6 +83,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         if (field && (field.type === 'file' || key.includes('files[') || key.startsWith('files'))) {
           continue;
         }
+        
+        // Skip CSRF tokens - they should not be restored as they become stale
+        if (key === 'randcheck' || key.includes('csrf') || key.includes('token')) {
+          continue;
+        }
+        
         data[key] = value;
       }
       return data;

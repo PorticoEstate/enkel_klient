@@ -65,7 +65,7 @@ class InvoicerequestController extends BaseFormController
             $post = $request->getParsedBody();
 
             // Verify CSRF token
-            if (!isset($post['randcheck']) || $post['randcheck'] != $_SESSION['rand'])
+            if (!isset($post['randcheck']) || !$this->validateCsrfToken('invoicerequest', $post['randcheck']))
             {
                 $error[] = 'Invalid security token';
                 return $this->handleFormResponse($request, $response, false, $error, null);
@@ -145,6 +145,8 @@ class InvoicerequestController extends BaseFormController
             if (isset($ret['status']) && $ret['status'] === 'saved')
             {
                 $saved = true;
+                // Clear CSRF token after successful submission to generate new one
+                $this->clearCsrfToken('invoicerequest');
             }
             else
             {
@@ -206,9 +208,8 @@ class InvoicerequestController extends BaseFormController
         $config = $this->twig->getEnvironment()->getGlobals()['config'];
         $enable_fileupload = $config['invoicerequest']['enable_fileupload'] ?? 0;
 
-        // Generate and set CSRF token
-        $rand = rand();
-        $_SESSION['rand'] = $rand;
+        // Generate and set CSRF token (reuse existing if available)
+        $rand = $this->getCsrfToken('invoicerequest');
 
         try
         {

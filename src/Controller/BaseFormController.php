@@ -27,6 +27,49 @@ abstract class BaseFormController
         return $this->twig->render($response, $template, $data);
     }
 
+    /**
+     * Generate or retrieve existing CSRF token for the form
+     * Only generates a new token if one doesn't exist for this form
+     */
+    protected function getCsrfToken(string $formName): string
+    {
+        $sessionKey = "csrf_token_{$formName}";
+        
+        // Check if we already have a valid token for this form
+        if (isset($_SESSION[$sessionKey]) && !empty($_SESSION[$sessionKey])) {
+            return $_SESSION[$sessionKey];
+        }
+        
+        // Generate new token
+        $token = bin2hex(random_bytes(32));
+        $_SESSION[$sessionKey] = $token;
+        
+        return $token;
+    }
+    
+    /**
+     * Validate CSRF token for the form
+     */
+    protected function validateCsrfToken(string $formName, string $submittedToken): bool
+    {
+        $sessionKey = "csrf_token_{$formName}";
+        
+        if (!isset($_SESSION[$sessionKey])) {
+            return false;
+        }
+        
+        return hash_equals($_SESSION[$sessionKey], $submittedToken);
+    }
+    
+    /**
+     * Clear CSRF token after successful form submission
+     */
+    protected function clearCsrfToken(string $formName): void
+    {
+        $sessionKey = "csrf_token_{$formName}";
+        unset($_SESSION[$sessionKey]);
+    }
+
     // Common form validation (to be overridden)
     protected function validate(array $data): array
     {

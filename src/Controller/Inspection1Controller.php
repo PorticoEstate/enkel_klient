@@ -103,7 +103,7 @@ class Inspection1Controller extends BaseFormController
             $session_info = $this->apiClient->get_session_info();
 
             // Verify CSRF token
-            if ($post['randcheck'] != $_SESSION['rand'])
+            if (!isset($post['randcheck']) || !$this->validateCsrfToken('inspection_1', $post['randcheck']))
             {
                 $error[] = 'Invalid security token';
                 return $this->handleFormResponse($request, $response, false, $error, null);
@@ -145,6 +145,8 @@ class Inspection1Controller extends BaseFormController
             if (isset($ret['status']) && $ret['status'] == 'saved')
             {
                 $saved = true;
+                // Clear CSRF token after successful submission to generate new one
+                $this->clearCsrfToken('inspection_1');
             }
             else
             {
@@ -194,9 +196,8 @@ class Inspection1Controller extends BaseFormController
         $config = $this->twig->getEnvironment()->getGlobals()['config'];
         $enable_fileupload = $config['inspection_1']['enable_fileupload'] ?? 0;
 
-        // Generate and set CSRF token
-        $rand = rand();
-        $_SESSION['rand'] = $rand;
+        // Generate and set CSRF token (reuse existing if available)
+        $rand = $this->getCsrfToken('inspection_1');
 
         try
         {

@@ -76,9 +76,8 @@ class NokkelbestillingController extends BaseFormController
 		$config = $this->twig->getEnvironment()->getGlobals()['config'];
 		$enable_fileupload = $config['nokkelbestilling']['enable_fileupload'] ?? 0;
 
-		// Generate and set CSRF token
-		$rand = rand();
-		$_SESSION['rand'] = $rand;
+		// Generate and set CSRF token (reuse existing if available)
+		$rand = $this->getCsrfToken('nokkelbestilling');
 
 		try
 		{
@@ -141,7 +140,7 @@ class NokkelbestillingController extends BaseFormController
 			$post = $request->getParsedBody();
 
 			// Verify CSRF token
-			if (!isset($post['randcheck']) || $post['randcheck'] != $_SESSION['rand'])
+			if (!isset($post['randcheck']) || !$this->validateCsrfToken('nokkelbestilling', $post['randcheck']))
 			{
 				$error[] = 'Invalid security token';
 				return $this->handleFormResponse($request, $response, false, $error, null);
@@ -207,6 +206,8 @@ class NokkelbestillingController extends BaseFormController
 			if (isset($ret['status']) && $ret['status'] === 'saved')
 			{
 				$saved = true;
+				// Clear CSRF token after successful submission to generate new one
+				$this->clearCsrfToken('nokkelbestilling');
 			}
 			else
 			{

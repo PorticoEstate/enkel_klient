@@ -63,13 +63,12 @@ class HelpdeskController extends BaseFormController
 		if ($request->getMethod() === 'POST')
 		{
 			$post = $request->getParsedBody();
-
-			// Verify CSRF token
-			if (!isset($post['randcheck']) || $post['randcheck'] != $_SESSION['rand'])
-			{
-				$error[] = 'Invalid security token';
-				return $this->handleFormResponse($request, $response, false, $error, null);
-			}
+		// Verify CSRF token
+		if (!isset($post['randcheck']) || !$this->validateCsrfToken('helpdesk', $post['randcheck']))
+		{
+			$error[] = 'Invalid security token';
+			return $this->handleFormResponse($request, $response, false, $error, null);
+		}
 
 			$session_info = $this->apiClient->get_session_info();
 			$url = $this->apiClient->get_backend_url() . "/?";
@@ -131,6 +130,8 @@ class HelpdeskController extends BaseFormController
 			if (isset($ret['status']) && $ret['status'] === 'saved')
 			{
 				$saved = true;
+				// Clear CSRF token after successful submission to generate new one
+				$this->clearCsrfToken('helpdesk');
 			}
 			else
 			{
@@ -192,9 +193,8 @@ class HelpdeskController extends BaseFormController
 		$config = $this->twig->getEnvironment()->getGlobals()['config'];
 		$enable_fileupload = $config['helpdesk']['enable_fileupload'] ?? 0;
 
-		// Generate and set CSRF token
-		$rand = rand();
-		$_SESSION['rand'] = $rand;
+		// Generate and set CSRF token (reuse existing if available)
+		$rand = $this->getCsrfToken('helpdesk');
 
 		try
 		{

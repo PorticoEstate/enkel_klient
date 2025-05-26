@@ -152,7 +152,15 @@ function quilljs_textarea(elem = null, options = null)
 					tab: {
 					  key: 9,
 					  handler: function(range, context) {
-						// Always let Tab key bubble out of Quill to enable proper navigation
+						// Always let Tab and Shift+Tab bubble out of Quill to enable proper navigation
+						return true;
+					  }
+					},
+					'shift+tab': {
+					  key: 9,
+					  shiftKey: true,
+					  handler: function(range, context) {
+						// Always let Shift+Tab bubble out of Quill to enable proper navigation
 						return true;
 					  }
 					}
@@ -192,7 +200,7 @@ function quilljs_textarea(elem = null, options = null)
 				
 				// Announce shortcut for accessing formatting toolbar
 				setTimeout(() => {
-					announceToScreenReader('Editor focused. Press Alt+F to access formatting toolbar if needed.');
+					announceToScreenReader('Editor focused. Press Alt+F to access formatting toolbar. Use Tab or Shift+Tab to navigate between form fields.');
 				}, 1000);
 			});
 
@@ -652,19 +660,28 @@ $(document).ready(function ()
 	// Handle tab key navigation properly within the editor
 	// Replace the existing keydown handler with this improved version:
 	$(document).on('keydown', '.ql-editor', function(e) {
-	  // If Tab key is pressed without shift
-	  if (e.key === 'Tab' && !e.shiftKey) {
+	  // Handle both Tab and Shift+Tab navigation
+	  if (e.key === 'Tab') {
 		// This is the critical part - stop the editor from handling it
 		e.preventDefault();
 		
-		// Find the next focusable element and focus it
+		// Find all focusable elements in the form
 		const focusable = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 		const form = $(this).closest('form');
 		const focusableElements = form.find(focusable).filter(':visible');
 		
 		const currentIndex = focusableElements.index($(this).closest('.quill-editor-container'));
-		if (currentIndex > -1 && currentIndex < focusableElements.length - 1) {
-		  focusableElements.eq(currentIndex + 1).focus();
+		
+		if (e.shiftKey) {
+		  // Shift+Tab: Navigate backwards (previous element)
+		  if (currentIndex > 0) {
+			focusableElements.eq(currentIndex - 1).focus();
+		  }
+		} else {
+		  // Tab: Navigate forwards (next element)
+		  if (currentIndex > -1 && currentIndex < focusableElements.length - 1) {
+			focusableElements.eq(currentIndex + 1).focus();
+		  }
 		}
 		
 		return false;
@@ -677,8 +694,8 @@ $(document).ready(function ()
 		// This effectively skips the toolbar buttons
 		const editor = $(this).find('.ql-editor');
 		if (editor.length) {
-			// Only if we're coming from Tab navigation, not from clicks
-			if (e.originalEvent && e.originalEvent.keyCode === 9) {
+			// Handle both Tab and Shift+Tab navigation
+			if (e.originalEvent && (e.originalEvent.keyCode === 9 || e.originalEvent.key === 'Tab')) {
 				editor.focus();
 			}
 		}

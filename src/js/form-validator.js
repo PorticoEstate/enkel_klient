@@ -652,12 +652,12 @@ function displayErrorSummary($form, errors) {
   // Set up click handling for error links
   $errorSummary.find("a").on("click", function (e) {
     e.preventDefault();
-    const targetId = $(this).attr("href");
-    const targetElement = $(targetId);
+    const targetId = $(this).attr("href").substring(1); // Remove the # prefix
+    const targetElement = $("#" + targetId);
     
     if (targetElement.length) {
-      // If it's a Quill editor container, focus the editor content
-      if (targetElement.hasClass('quill-editor-container')) {
+      // If it's a Quill editor container (starts with 'quill-'), focus the editor content
+      if (targetId.startsWith('quill-')) {
         const editorContent = targetElement.find('.ql-editor');
         if (editorContent.length) {
           editorContent.focus();

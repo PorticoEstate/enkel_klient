@@ -630,7 +630,25 @@ function validateQuillEditor(elemId)
 	// Check if editor is empty (only contains empty paragraphs or whitespace)
 	const text = editor.getText().trim();
 	const html = editor.root.innerHTML;
-	const isEmpty = text.length === 0 || html === '<p><br></p>';
+	
+	// Improved empty content detection
+	let isEmpty = false;
+	
+	// First check: if text content is truly empty
+	if (text.length === 0) {
+		isEmpty = true;
+	} else {
+		// Second check: if HTML only contains empty formatting structures
+		// Create a temporary element to extract text content from HTML
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = html;
+		const extractedText = (tempDiv.textContent || tempDiv.innerText || '').trim();
+		
+		// If extracted text is empty, the editor only contains empty formatting
+		if (extractedText.length === 0) {
+			isEmpty = true;
+		}
+	}
 
 	// Get the editor container for validation UI
 	const editorContainer = document.getElementById(`quill-${elemId}`);

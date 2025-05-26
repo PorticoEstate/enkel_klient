@@ -136,6 +136,16 @@ function validateField(field) {
   const errorId = fieldId + "-error";
   let isValid = true;
 
+  // Check if this field has a manually-initialized Quill editor
+  if (typeof quill !== 'undefined' && quill[fieldId]) {
+    // This field has a Quill editor, use specialized validation
+    if (typeof validateQuillEditor === 'function') {
+      isValid = validateQuillEditor(fieldId);
+      updateFieldValidationStatus($field, isValid, errorId);
+      return isValid;
+    }
+  }
+
   // First check if field has a value if it's required
   if ($field.prop("required") && !$field.val().trim()) {
     isValid = false;

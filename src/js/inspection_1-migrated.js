@@ -60,7 +60,7 @@ $(document).ready(function() {
  */
 function initializeInspectionForm() {
     // Make form accessible when JavaScript is loaded
-    $('#details').attr('aria-hidden', 'true');
+ //   $('#details').attr('aria-hidden', 'true');
 
     // Initialize dynamic form sections
     initializeDynamicSections();

@@ -113,11 +113,48 @@ if (typeof FormValidationExtension === 'undefined') {
 
       let isValid = true;
       let errorCount = 0;
+      const processedRadioGroups = new Set();
 
-      // Check all required fields
-      form.find('[required]').each((index, field) => {
+      // Check required radio button groups first (special handling needed)
+      form.find('input[type="radio"][required]').each((index, field) => {
         const $field = $(field);
-        const value = $field.val();
+        const name = $field.attr('name');
+        
+        // Skip if we've already processed this radio group
+        if (processedRadioGroups.has(name)) {
+          return;
+        }
+        processedRadioGroups.add(name);
+        
+        // Check if any radio button in this group is selected
+        const $radioGroup = form.find(`input[type="radio"][name="${name}"]`);
+        const isAnySelected = $radioGroup.is(':checked');
+        
+        if (!isAnySelected) {
+          // Mark all radio buttons in group as invalid
+          $radioGroup.each((i, radio) => {
+            this.markFieldInvalid($(radio), this.getRequiredFieldMessage($(radio)));
+          });
+          isValid = false;
+          errorCount++;
+        } else {
+          // Mark all radio buttons in group as valid
+          $radioGroup.each((i, radio) => {
+            this.markFieldValid($(radio));
+          });
+        }
+      });
+
+      // Check other required fields (excluding radio buttons already processed)
+      form.find('[required]').not('input[type="radio"]').each((index, field) => {
+        const $field = $(field);
+        const fieldType = $field.attr('type');
+        let value = $field.val();
+        
+        // Handle checkboxes
+        if (fieldType === 'checkbox') {
+          value = $field.is(':checked') ? $field.val() : '';
+        }
         
         if (!value || value.trim() === '') {
           this.markFieldInvalid($field, this.getRequiredFieldMessage($field));
@@ -163,6 +200,7 @@ if (typeof FormValidationExtension === 'undefined') {
   getErrors() {
     const errors = [];
     const form = this.formHandler.getForm();
+    const processedRadioGroups = new Set();
     
     if (!form || !form.length) {
       return ['Form not found'];
@@ -171,17 +209,45 @@ if (typeof FormValidationExtension === 'undefined') {
     // Collect all validation errors with field information
     form.find('.is-invalid').each((index, field) => {
       const $field = $(field);
+      const fieldType = $field.attr('type');
       const fieldId = $field.attr('id');
       const fieldName = this.getFieldLabel($field);
       const errorMessage = $field.attr('data-validation-error') || 'is invalid';
       
-      // Create error object with field information for linking
-      errors.push({
-        fieldId: fieldId,
-        fieldName: fieldName,
-        message: errorMessage,
-        fullMessage: `${fieldName} ${errorMessage}`
-      });
+      // Handle radio button groups - only add one error per group
+      if (fieldType === 'radio') {
+        const name = $field.attr('name');
+        if (processedRadioGroups.has(name)) {
+          return; // Skip - already processed this radio group
+        }
+        processedRadioGroups.add(name);
+        
+        // Get the fieldset legend or first radio button's label for group name
+        const $fieldset = $field.closest('fieldset');
+        let groupName = fieldName;
+        if ($fieldset.length) {
+          const $legend = $fieldset.find('legend');
+          if ($legend.length) {
+            groupName = $legend.text().trim();
+          }
+        }
+        
+        // Use the first radio button's ID for linking
+        errors.push({
+          fieldId: fieldId,
+          fieldName: groupName,
+          message: errorMessage,
+          fullMessage: `${groupName} ${errorMessage}`
+        });
+      } else {
+        // Regular field error
+        errors.push({
+          fieldId: fieldId,
+          fieldName: fieldName,
+          message: errorMessage,
+          fullMessage: `${fieldName} ${errorMessage}`
+        });
+      }
     });
 
     return errors;

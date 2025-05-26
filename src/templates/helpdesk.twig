@@ -39,7 +39,8 @@
 		};
 		
 		// Form configuration for WCAG 3.3.4 Error Prevention
-		var formConfiguration = {
+		window.formConfigs = window.formConfigs || {};
+		window.formConfigs['helpdesk'] = {
 			form_summary_on_submit: {{ config.helpdesk.form_summary_on_submit|default(false) ? 'true' : 'false' }},
 			confirmation_dialog_enabled: {{ config.helpdesk.confirmation_dialog_enabled|default(false) ? 'true' : 'false' }},
 			auto_save_enabled: {{ config.helpdesk.auto_save_enabled|default(true) ? 'true' : 'false' }},

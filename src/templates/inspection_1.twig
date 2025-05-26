@@ -36,12 +36,14 @@
 		};
 		
 		// Form configuration for WCAG 3.3.4 Error Prevention
-		var formConfiguration = {
+		window.formConfigs = window.formConfigs || {};
+		window.formConfigs['inspection_1'] = {
 			form_summary_on_submit: {{ config.inspection_1.form_summary_on_submit|default(false) ? 'true' : 'false' }},
 			confirmation_dialog_enabled: {{ config.inspection_1.confirmation_dialog_enabled|default(true) ? 'true' : 'false' }},
 			auto_save_enabled: {{ config.inspection_1.auto_save_enabled|default(true) ? 'true' : 'false' }},
 			change_tracking_enabled: {{ config.inspection_1.change_tracking_enabled|default(true) ? 'true' : 'false' }}
 		};
+		console.log("Form configuration for inspection_1:", window.formConfigs['inspection_1']);
 	</script>
 
 	<link href="{{ base_path }}/src/css/jquery-ui.min.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">

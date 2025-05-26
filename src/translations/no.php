@@ -39,6 +39,7 @@ return [
         'invalid_subject' => 'Vennligst oppgi et emne',
         'invalid_message' => 'Vennligst gi mer informasjon',
         'invalid_date' => 'Vennligst velg en dato',
+        'field_required' => 'er påkrevd',
         'form_errors_heading' => 'Det var feil med innsendingen din:',
         'form_validation_errors' => 'Det er feil i skjemaet. Vennligst rett dem og prøv igjen.',
         'uploading_files' => 'Laster opp filer, vennligst vent...',

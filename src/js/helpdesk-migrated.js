@@ -15,69 +15,32 @@
 var redirect_action = `${strBaseURL}/helpdesk`;
 var formHandler = null;
 
-$(document).ready(async function() {
+$(document).ready(function() {
     try {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
         console.log('🔄 Initializing helpdesk form with clean architecture...');
         
-        // Load form handler with only needed extensions
-        if (typeof formExtensionLoader !== 'undefined') {
-            // Use extension loader for automatic loading
-            formHandler = await formExtensionLoader.quickSetup('helpdesk', 'helpdesk', {
-                redirectUrl: redirect_action,
-                extensions: {
-                    fileUpload: {
-                        required: false, // File upload is optional for helpdesk
-                        allowedFileTypes: ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'],
-                        maxFileSizeMB: 10
-                    },
-                    validation: {
-                        realTimeValidation: true,
-                        wcagCompliant: true,
-                        rules: {
-                            'location_name': 'required',
-                            'phone': 'required|phone',
-                            'email': 'required|email',
-                            'subject': 'required|min:3',
-                            'message': 'required|min:10'
-                        }
-                    },
-                    accessibility: {
-                        announceErrors: true,
-                        markRequired: true,
-                        enhanceKeyboard: true
-                    },
-                    autoSave: {
-                        interval: 30000, // Save every 30 seconds
-                        storageKey: 'helpdesk_autosave'
-                    }
-                }
-            });
-        } else {
-            // Fallback: Manual extension loading
-            formHandler = new FormHandler({
-                formId: 'helpdesk',
-                redirectUrl: redirect_action,
-                extensions: {
-                    fileUpload: {
-                        required: false,
-                        allowedFileTypes: ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'],
-                        maxFileSizeMB: 10
-                    },
-                    validation: {
-                        realTimeValidation: true,
-                        wcagCompliant: true
-                    },
-                    accessibility: {
-                        announceErrors: true,
-                        markRequired: true
-                    }
-                }
-            });
+        // Initialize FormHandler directly with extensions
+        const formElement = document.getElementById('helpdesk');
+        if (!formElement) {
+            console.error('❌ Form element with ID "helpdesk" not found');
+            return;
         }
-
+        
+        // Create core form handler
+        formHandler = new FormHandler({
+            formId: 'helpdesk',
+            redirectUrl: redirect_action,
+            extensions: {
+                validation: true,
+                autoSave: true,
+                fileUpload: true
+            }
+        });
+        
         console.log('✅ Helpdesk form initialized with clean architecture');
         console.log('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
+        console.log('📋 Registered extensions:', Object.keys(formHandler.extensions || {}));
 
         // Form-specific setup after FormHandler initialization
         setupHelpdeskSpecificFeatures();

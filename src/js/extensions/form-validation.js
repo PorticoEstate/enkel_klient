@@ -41,42 +41,286 @@ if (typeof FormValidationExtension === 'undefined') {
   }
 
   validateField(field) {
-    // Individual field validation logic
     try {
       const $field = $(field);
       if (!$field.length) return true;
       
-      const fieldElement = $field[0];
-      let isValid = true;
+      const value = $field.val();
+      const fieldType = $field.attr('type');
+      const isRequired = $field.attr('required') !== undefined;
       
-      // Basic HTML5 validation
-      if (fieldElement.checkValidity) {
-        isValid = fieldElement.checkValidity();
+      let isValid = true;
+      let errorMessage = '';
+      
+      // Check required fields
+      if (isRequired && (!value || value.trim() === '')) {
+        isValid = false;
+        errorMessage = this.getRequiredFieldMessage($field);
+      }
+      // Validate email fields
+      else if (fieldType === 'email' && value && !this.isValidEmail(value)) {
+        isValid = false;
+        errorMessage = this.getEmailValidationMessage();
+      }
+      // Validate phone fields
+      else if ((fieldType === 'tel' || $field.attr('name').includes('phone')) && value && !this.isValidPhone(value)) {
+        isValid = false;
+        errorMessage = this.getPhoneValidationMessage();
+      }
+      // Use HTML5 validation if available
+      else if (field.validity && !field.validity.valid) {
+        isValid = false;
+        errorMessage = field.validationMessage || 'Invalid input';
       }
       
-      // Additional custom validation could go here
-      
-      // Update field appearance based on validation
+      // Update field appearance
       if (isValid) {
-        $field.removeClass('is-invalid').addClass('is-valid');
+        this.markFieldValid($field);
       } else {
-        $field.removeClass('is-valid').addClass('is-invalid');
+        this.markFieldInvalid($field, errorMessage);
       }
       
       return isValid;
     } catch (error) {
       console.warn('Error validating field:', error);
-      return true; // Assume valid on error
+      return true; // Assume valid on error to avoid blocking
     }
+  }
+
+  // Critical beforeSubmit hook - required by FormHandlerCore
+  beforeSubmit() {
+    console.log('🔍 Validation extension beforeSubmit hook called');
+    const isValid = this.isValid();
+    console.log('📋 Form validation result:', isValid);
+    
+    if (!isValid) {
+      const errors = this.getErrors();
+      console.log('❌ Validation errors:', errors);
+      this.displayErrors(errors);
+    }
+    
+    return isValid;
   }
 
   // Public API
   isValid() {
-    // Return overall form validity
+    try {
+      const form = this.formHandler.getForm();
+      if (!form || !form.length) {
+        console.warn('No form found for validation');
+        return false;
+      }
+
+      let isValid = true;
+      let errorCount = 0;
+
+      // Check all required fields
+      form.find('[required]').each((index, field) => {
+        const $field = $(field);
+        const value = $field.val();
+        
+        if (!value || value.trim() === '') {
+          this.markFieldInvalid($field, this.getRequiredFieldMessage($field));
+          isValid = false;
+          errorCount++;
+        } else {
+          this.markFieldValid($field);
+        }
+      });
+
+      // Validate specific field types
+      form.find('input[type="email"]').each((index, field) => {
+        const $field = $(field);
+        const value = $field.val();
+        
+        if (value && !this.isValidEmail(value)) {
+          this.markFieldInvalid($field, this.getEmailValidationMessage());
+          isValid = false;
+          errorCount++;
+        }
+      });
+
+      form.find('input[type="tel"], input[name*="phone"]').each((index, field) => {
+        const $field = $(field);
+        const value = $field.val();
+        
+        if (value && !this.isValidPhone(value)) {
+          this.markFieldInvalid($field, this.getPhoneValidationMessage());
+          isValid = false;
+          errorCount++;
+        }
+      });
+
+      console.log(`Validation completed: ${isValid ? 'VALID' : 'INVALID'} (${errorCount} errors)`);
+      return isValid;
+
+    } catch (error) {
+      console.error('Error during form validation:', error);
+      return false; // Fail safe - don't allow submission if validation fails
+    }
   }
 
   getErrors() {
-    // Return validation errors
+    const errors = [];
+    const form = this.formHandler.getForm();
+    
+    if (!form || !form.length) {
+      return ['Form not found'];
+    }
+
+    // Collect all validation errors with field information
+    form.find('.is-invalid').each((index, field) => {
+      const $field = $(field);
+      const fieldId = $field.attr('id');
+      const fieldName = this.getFieldLabel($field);
+      const errorMessage = $field.attr('data-validation-error') || 'is invalid';
+      
+      // Create error object with field information for linking
+      errors.push({
+        fieldId: fieldId,
+        fieldName: fieldName,
+        message: errorMessage,
+        fullMessage: `${fieldName} ${errorMessage}`
+      });
+    });
+
+    return errors;
+  }
+
+  // Helper methods
+  markFieldValid($field) {
+    $field.removeClass('is-invalid').addClass('is-valid')
+          .attr('aria-invalid', 'false')
+          .removeAttr('data-validation-error');
+          
+    // Remove any existing error message
+    const fieldId = $field.attr('id');
+    if (fieldId) {
+      $(`#${fieldId}-error`).remove();
+    }
+  }
+
+  markFieldInvalid($field, message) {
+    $field.removeClass('is-valid').addClass('is-invalid')
+          .attr('aria-invalid', 'true')
+          .attr('data-validation-error', message);
+          
+    // Add error message if not exists
+    const fieldId = $field.attr('id');
+    if (fieldId && !$(`#${fieldId}-error`).length) {
+      const $errorElement = $(`<div id="${fieldId}-error" class="invalid-feedback" role="alert">${message}</div>`);
+      $field.after($errorElement);
+      $field.attr('aria-describedby', `${fieldId}-error`);
+    }
+  }
+
+  displayErrors(errors) {
+    // Remove any existing error summary
+    this.formHandler.getForm().find('.validation-error-summary').remove();
+    
+    if (errors.length === 0) {
+      return;
+    }
+
+    // Get translations if available
+    const translations = window.translations || {};
+    const errorSummaryTitle = translations.form_validation_errors || 'Please correct the following errors:';
+
+    // Create error summary with clickable links
+    const errorList = errors.map(error => {
+      if (typeof error === 'object' && error.fieldId) {
+        return `<li><a href="#${error.fieldId}" onclick="document.getElementById('${error.fieldId}').focus(); return false;">${error.fullMessage}</a></li>`;
+      } else {
+        // Fallback for string errors
+        return `<li>${error}</li>`;
+      }
+    }).join('');
+
+    const $errorSummary = $(`
+      <div class="validation-error-summary alert alert-danger" role="alert" tabindex="-1">
+        <h3 class="h6" id="error-summary-title">${errorSummaryTitle}</h3>
+        <ul class="mb-0" aria-labelledby="error-summary-title">
+          ${errorList}
+        </ul>
+      </div>
+    `);
+
+    // Insert at top of form
+    this.formHandler.getForm().prepend($errorSummary);
+    
+    // Focus on error summary for accessibility
+    $errorSummary.focus();
+
+    // Announce to screen readers
+    const errorCount = errors.length;
+    const message = `${errorCount} validation error${errorCount !== 1 ? 's' : ''} found. Please review and correct the highlighted fields.`;
+    
+    // Use FormHandler's screen reader announcement if available
+    if (typeof this.formHandler.announceToScreenReader === 'function') {
+      this.formHandler.announceToScreenReader(message);
+    } else {
+      this.announceToScreenReader(message);
+    }
+  }
+
+  getFieldLabel($field) {
+    const fieldId = $field.attr('id');
+    const fieldName = $field.attr('name');
+    
+    // Try to find label by 'for' attribute
+    if (fieldId) {
+      const $label = $(`label[for="${fieldId}"]`);
+      if ($label.length) {
+        return $label.text().trim().replace('*', '');
+      }
+    }
+    
+    // Try to find closest label
+    const $closestLabel = $field.closest('.form-group, .field-group').find('label').first();
+    if ($closestLabel.length) {
+      return $closestLabel.text().trim().replace('*', '');
+    }
+    
+    // Fallback to field name or id
+    return fieldName || fieldId || 'Field';
+  }
+
+  isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  isValidPhone(phone) {
+    // Remove all non-digit characters and check length
+    const digitsOnly = phone.replace(/\D/g, '');
+    return digitsOnly.length >= 8;
+  }
+
+  // Translation helper methods
+  getRequiredFieldMessage($field) {
+    // Try to get translated message, fallback to English
+    const translations = window.translations || {};
+    return translations.field_required || 'is required';
+  }
+
+  getEmailValidationMessage() {
+    const translations = window.translations || {};
+    return translations.invalid_email || 'Please enter a valid email address';
+  }
+
+  getPhoneValidationMessage() {
+    const translations = window.translations || {};
+    return translations.invalid_phone || 'Please enter a valid phone number (minimum 8 digits)';
+  }
+
+  announceToScreenReader(message) {
+    // Fallback screen reader announcement
+    let $status = $('#form-validation-status');
+    if (!$status.length) {
+      $status = $('<div id="form-validation-status" class="sr-only" aria-live="polite"></div>');
+      $('body').append($status);
+    }
+    $status.text(message);
   }
 }
 

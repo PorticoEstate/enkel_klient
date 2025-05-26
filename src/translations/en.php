@@ -39,6 +39,7 @@ return [
         'invalid_subject' => 'Please enter a subject',
         'invalid_message' => 'Please provide additional information',
         'invalid_date' => 'Please select a date',
+        'field_required' => 'is required',
         'form_errors_heading' => 'There were errors with your submission:',
         'form_validation_errors' => 'There are errors in the form. Please correct them and try again.',
         'uploading_files' => 'Uploading files, please wait...',

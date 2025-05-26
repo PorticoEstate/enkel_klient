@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Form Validation Submission</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .debug-container { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .console-output { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 1rem; 
+            margin-top: 1rem; 
+            font-family: monospace; 
+            white-space: pre-wrap; 
+            max-height: 400px; 
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .is-invalid { border-color: #dc3545; }
+        .validation-error-summary {
+            background-color: #f8d7da; 
+            border: 1px solid #f5c6cb; 
+            color: #721c24; 
+            padding: 1rem; 
+            margin-bottom: 1rem; 
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>Debug Form Validation</h1>
+        <p>This page debugs the exact form submission and validation process.</p>
+        
+        <div id="console-output" class="console-output">Waiting for initialization...\n</div>
+        
+        <form id="test-form" novalidate>
+            <div class="form-group mb-3">
+                <label for="name" class="form-label">Name (Required) *</label>
+                <input type="text" id="name" name="name" class="form-control" required aria-required="true" />
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="email" class="form-label">Email (Required) *</label>
+                <input type="email" id="email" name="email" class="form-control" required aria-required="true" />
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit & Test Validation</button>
+            <button type="button" id="debug-extensions" class="btn btn-info">Debug Extensions</button>
+        </form>
+        
+        <div id="form-status" class="sr-only" aria-live="assertive"></div>
+    </div>
+
+    <script src="vendor/components/jquery/jquery.min.js"></script>
+    <script>
+        // Enhanced console logging
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        const consoleOutput = document.getElementById('console-output');
+        
+        function logToPage(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            let prefix = '🔍 LOG';
+            if (type === 'error') prefix = '❌ ERROR';
+            if (type === 'warn') prefix = '⚠️ WARN';
+            consoleOutput.textContent += `[${timestamp}] ${prefix}: ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            logToPage(args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            logToPage(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            logToPage(args.join(' '), 'warn');
+        };
+        
+        console.log('🚀 Debug page initialized');
+    </script>
+    
+    <!-- Load form system -->
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 DOM ready, checking FormHandler availability...');
+            
+            // Check if FormHandler is available
+            if (typeof FormHandler === 'undefined') {
+                console.error('FormHandler class not found!');
+                return;
+            }
+            
+            console.log('✅ FormHandler class found');
+            console.log('📋 FormHandler.extensions:', FormHandler.extensions);
+            
+            // Check if validation extension is registered
+            if (FormHandler.extensions && FormHandler.extensions.validation) {
+                console.log('✅ Validation extension found in registry');
+            } else {
+                console.error('❌ Validation extension NOT found in registry');
+            }
+            
+            let formHandler;
+            try {
+                // Create form handler with validation
+                formHandler = new FormHandler({
+                    formId: 'test-form',
+                    redirectUrl: '/debug-test',
+                    uploadUrl: '/debug-upload',
+                    extensions: {
+                        validation: {
+                            realTimeValidation: true,
+                            wcagCompliant: true
+                        }
+                    }
+                });
+                
+                console.log('✅ FormHandler instance created');
+                console.log('📋 Form element found:', formHandler.$form.length);
+                console.log('📋 Extensions loaded:', formHandler.extensions.size);
+                
+                // List loaded extensions
+                formHandler.extensions.forEach((ext, name) => {
+                    console.log(`📋 Loaded extension: ${name}`, ext);
+                    if (typeof ext.beforeSubmit === 'function') {
+                        console.log(`✅ Extension ${name} has beforeSubmit hook`);
+                    } else {
+                        console.warn(`⚠️ Extension ${name} missing beforeSubmit hook`);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('❌ Failed to create FormHandler:', error);
+                return;
+            }
+            
+            // Debug button
+            document.getElementById('debug-extensions').addEventListener('click', function() {
+                console.log('🔧 DEBUGGING EXTENSIONS:');
+                console.log('Static extensions registry:', FormHandler.extensions);
+                console.log('Instance extensions map:', formHandler.extensions);
+                console.log('Extension options:', formHandler.extensionOptions);
+                
+                // Test beforeSubmit hook manually
+                console.log('🧪 Testing beforeSubmit hook manually...');
+                const result = formHandler.executeHook('beforeSubmit');
+                console.log('Hook result:', result);
+            });
+            
+            // Add manual submit handler to debug
+            document.getElementById('test-form').addEventListener('submit', function(e) {
+                console.log('🔄 Form submit event triggered');
+                console.log('Default prevented by FormHandler?', e.defaultPrevented);
+            });
+        });
+    </script>
+</body>
+</html>

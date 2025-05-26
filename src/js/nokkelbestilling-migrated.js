@@ -15,66 +15,47 @@
 var redirect_action = `${strBaseURL}/nokkelbestilling`;
 var formHandler = null;
 
-$(document).ready(async function() {
+$(document).ready(function() {
     try {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
         console.log('🔄 Initializing nokkelbestilling form with clean architecture...');
         
-        // Load form handler with only needed extensions
-        if (typeof formExtensionLoader !== 'undefined') {
-            // Use extension loader for automatic loading
-            formHandler = await formExtensionLoader.quickSetup('nokkelbestilling', 'simple', {
-                redirectUrl: redirect_action,
-                uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
-                extensions: {
-                    validation: {
-                        realTimeValidation: true,
-                        wcagCompliant: true,
-                        rules: {
-                            'location_name': 'required',
-                            'phone': 'required|phone',
-                            'email': 'required|email',
-                            'key_type': 'required',
-                            'reason': 'required|min:5'
-                        }
-                    },
-                    accessibility: {
-                        announceErrors: true,
-                        markRequired: true,
-                        enhanceKeyboard: true
-                    },
-                    autoSave: {
-                        interval: 45000, // Save every 45 seconds (longer for simple form)
-                        storageKey: 'nokkelbestilling_autosave'
-                    },
-                    fileUpload: {
-                        required: false, // Will be set dynamically based on location_code
-                        allowedTypes: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'],
-                        maxFileSize: 10 * 1024 * 1024, // 10MB
-                        multiple: true
-                    }
-                }
-            });
-        } else {
-            // Fallback: Manual extension loading
-            formHandler = new FormHandler({
-                formId: 'nokkelbestilling',
-                redirectUrl: redirect_action,
-                uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
-                extensions: {
-                    validation: true,
-                    accessibility: true,
-                    autoSave: true
-                }
-            });
-            
-            console.warn('⚠️ Extension loader not available, using manual setup');
+        // Initialize FormHandlerCore directly with extensions
+        const formElement = document.getElementById('nokkelbestilling');
+        if (!formElement) {
+            console.error('❌ Form element with ID "nokkelbestilling" not found');
+            return;
         }
+        
+        // Create core form handler with validation enabled
+        formHandler = new FormHandler({
+            formId: 'nokkelbestilling',
+            redirectUrl: redirect_action,
+            uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
+            extensions: {
+                validation: {
+                    realTimeValidation: true,
+                    wcagCompliant: true
+                },
+                autoSave: {
+                    interval: 45000,
+                    storageKey: 'nokkelbestilling_autosave'
+                },
+                fileUpload: {
+                    required: false,
+                    allowedTypes: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'],
+                    maxFileSize: 10 * 1024 * 1024,
+                    multiple: true
+                }
+            }
+        });
 
+        
         // Form-specific initialization
         initializeForm();
         
         console.log('✅ Nokkelbestilling form initialized with clean architecture');
+        console.log('📋 Registered extensions:', Object.keys(formHandler.extensions || {}));
         
     } catch (error) {
         console.error('❌ Failed to initialize nokkelbestilling form:', error);

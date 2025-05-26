@@ -107,16 +107,16 @@ if (typeof FormConfirmationExtension === 'undefined') {
         <div class="form-summary-backdrop"></div>
         <div class="form-summary-content">
           <div class="form-summary-header">
-            <h2>Review Your Information</h2>
+            <h2>${this.getTranslation('review_title')}</h2>
             <button type="button" class="form-summary-close">&times;</button>
           </div>
           <div class="form-summary-body">
-            <p>Please review your information before submitting:</p>
+            <p>${this.getTranslation('review_intro')}</p>
             ${summaryHtml}
           </div>
           <div class="form-summary-footer">
-            <button type="button" class="btn btn-secondary form-summary-edit">Edit</button>
-            <button type="button" class="btn btn-primary form-summary-submit">Submit</button>
+            <button type="button" class="btn btn-secondary form-summary-edit">${this.getTranslation('edit_button')}</button>
+            <button type="button" class="btn btn-primary form-summary-submit">${this.getTranslation('submit_button')}</button>
           </div>
         </div>
       </div>
@@ -218,13 +218,68 @@ if (typeof FormConfirmationExtension === 'undefined') {
   getConfirmationMessage() {
     const formName = this.formHandler.getFormId();
     const messages = {
-      'helpdesk': 'Are you sure you want to submit this support request?',
-      'nokkelbestilling': 'Are you sure you want to submit this key order?',
-      'inspection': 'Are you sure you want to submit this inspection report?',
-          'invoicerequest': 'Are you sure you want to submit this invoice request?'
+      'helpdesk': this.getTranslation('helpdesk_confirm'),
+      'nokkelbestilling': this.getTranslation('nokkelbestilling_confirm'),
+      'inspection': this.getTranslation('inspection_confirm'),
+      'invoicerequest': this.getTranslation('invoicerequest_confirm')
     };
     
-    return messages[formName] || 'Are you sure you want to submit this form?';
+    return messages[formName] || this.getTranslation('default_confirm');
+  }
+
+  /**
+   * Get translation from the preloaded translations
+   * @param {string} key - Translation key
+   * @param {Object} replacements - Values to replace in the translation
+   * @returns {string} Translated string
+   */
+  getTranslation(key, replacements = {}) {
+    // Check if translations are available globally
+    if (typeof window.translations !== 'undefined' && window.translations.form_confirmation) {
+      let translation = window.translations.form_confirmation[key];
+      if (translation) {
+        // Replace placeholders like {field}
+        Object.keys(replacements).forEach(placeholder => {
+          translation = translation.replace(`{${placeholder}}`, replacements[placeholder]);
+        });
+        return translation;
+      }
+    }
+    
+    // Fallback translations if global translations are not available
+    const fallbacks = {
+      'review_title': 'Review Your Information',
+      'review_intro': 'Please review your information before submitting. You can edit any field by clicking the "Edit" button next to it.',
+      'confirm_title': 'Confirm Submission',
+      'edit_button': 'Edit',
+      'edit_all_button': 'Edit Form',
+      'submit_button': 'Submit Form',
+      'cancel_button': 'Cancel',
+      'yes_submit_button': 'Yes, Submit',
+      'close_summary': 'Close summary',
+      'uploaded_files': 'Uploaded Files',
+      'helpdesk_confirm': 'Are you sure you want to submit this support request?',
+      'nokkelbestilling_confirm': 'Are you sure you want to submit this key order?',
+      'inspection_confirm': 'Are you sure you want to submit this inspection report?',
+      'invoicerequest_confirm': 'Are you sure you want to submit this invoice request?',
+      'default_confirm': 'Are you sure you want to submit this form?',
+      'summary_opened': 'Form summary displayed. Review your information before submitting.',
+      'summary_closed': 'Form summary closed. You are back to the form.',
+      'confirmation_opened': 'Confirmation dialog displayed. Please confirm your submission.',
+      'confirmation_closed': 'Confirmation dialog closed.',
+      'field_focused': 'Focused on {field} field for editing.',
+      'form_being_submitted': 'Form is being submitted, please wait...',
+      'draft_saved': 'Form draft saved automatically.',
+      'draft_restored': 'Previous form draft restored.',
+      'changes_detected': 'You have unsaved changes. Are you sure you want to leave?'
+    };
+    
+    let translation = fallbacks[key] || key;
+    // Replace placeholders in fallback
+    Object.keys(replacements).forEach(placeholder => {
+      translation = translation.replace(`{${placeholder}}`, replacements[placeholder]);
+    });
+    return translation;
   }
 }
 

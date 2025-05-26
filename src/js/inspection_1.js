@@ -1,5 +1,20 @@
 /**
- * Inspection form handler
+ * Inspe$(document).ready(async function ()
+{
+	// Initialize form handler with extension-based architecture
+	formHandler = await formExtensionLoader.createFormHandler({
+		formId: 'inspection_1',
+		redirectUrl: redirect_action,
+		uploadUrl: `${strBaseURL}/inspection_1/upload`,
+		extensions: {
+			fileUpload: {
+				required: true, // Inspection forms typically require file uploads
+				allowedTypes: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'],
+				maxFileSize: 15 * 1024 * 1024,
+				multiple: true
+			}
+		}
+	});
  * 
  * Handles form validation, submission and file uploads for inspection form
  * Enhanced for WCAG 2.0 compliance with improved accessibility

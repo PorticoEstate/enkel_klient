@@ -10,19 +10,19 @@
 var redirect_action = `${strBaseURL}/nokkelbestilling`;
 var formHandler = null;
 
-$(document).ready(function ()
+$(document).ready(async function ()
 {
-	// Initialize form handler with form-specific options
-	formHandler = new FormHandler({
+	// Initialize form handler with extension-based architecture
+	formHandler = await formExtensionLoader.createFormHandler({
 		formId: 'nokkelbestilling',
 		redirectUrl: redirect_action,
 		uploadUrl: `${strBaseURL}/nokkelbestilling/upload`,
-		fileRequired: false, // Initial value, updated based on location code
-		customHandlers: {
-			// Form-specific pre-validation logic
-			preValidate: function() {
-				// No special pre-validation needed for this form
-				return true;
+		extensions: {
+			fileUpload: {
+				required: false, // Initial value, updated based on location code
+				allowedTypes: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
+				maxFileSize: 15 * 1024 * 1024,
+				multiple: true
 			}
 		}
 	});
@@ -31,7 +31,10 @@ $(document).ready(function ()
 	$('#location_code').on('change', function ()
 	{
 		const fileRequired = !$(this).val();
-		formHandler.setFileRequired(fileRequired);
+		const fileUploadExtension = formHandler.getExtension('fileUpload');
+		if (fileUploadExtension) {
+			fileUploadExtension.setRequired(fileRequired);
+		}
 	});
 
 	// Ensure real-time validation is working for phone and email fields

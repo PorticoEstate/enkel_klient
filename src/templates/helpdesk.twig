@@ -223,8 +223,6 @@ var schema = 'helpdesk';
 		{% endif %}
 		
 		<!-- MIGRATED: Clean helpdesk form handler -->
-		<script src="{{ base_path }}/src/js/helpdesk-migrated.js?n={{ cache_refresh_token }}"></script>
-		<!-- Fix for drop area functionality -->
-		<script src="{{ base_path }}/src/js/drop-fix.js?n={{ cache_refresh_token }}"></script>
+		<script src="{{ base_path }}/src/js/helpdesk.js?n={{ cache_refresh_token }}"></script>
 	{% endif %}
 {% endblock %}

@@ -17,17 +17,35 @@ class FormFileUploadExtension {
 
   init() {
     this.setupFileInputs();
+    this.setupDropZone();
   }
 
   setupFileInputs() {
     const form = this.formHandler.getForm();
     const fileInputs = form.find('input[type="file"]');
     
+    // Setup change handlers for each file input
     fileInputs.each((index, input) => {
       $(input).on('change', (e) => {
         this.handleFileSelect(e.target);
       });
     });
+    
+    // Setup click handler for file select button (once, outside the loop)
+    const fileSelectBtn = form.find('.file-select-btn, #file-select-btn');
+    if (fileSelectBtn.length > 0 && fileInputs.length > 0) {
+      console.log('FormFileUploadExtension: Setting up file select button handler');
+      fileSelectBtn.off('click.fileUpload keydown.fileUpload').on('click.fileUpload keydown.fileUpload', (e) => {
+        console.log('File select button clicked/keyed:', e.type);
+        if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
+          e.preventDefault();
+          console.log('Triggering file input click...');
+          $(fileInputs[0]).trigger('click'); // Trigger the first file input
+        }
+      });
+    } else {
+      console.warn('FormFileUploadExtension: File select button or file input not found');
+    }
   }
 
   handleFileSelect(input) {
@@ -149,6 +167,111 @@ class FormFileUploadExtension {
 
   getUploadedFiles() {
     return this.uploadedFiles;
+  }
+
+  /**
+   * Set whether file upload is required
+   * @param {boolean} required - Whether file upload is required
+   */
+  setRequired(required) {
+    this.options.required = required;
+    const form = this.formHandler.getForm();
+    const fileInputs = form.find('input[type="file"]');
+    
+    fileInputs.each((index, input) => {
+      if (required) {
+        $(input).attr('required', 'required');
+        $(input).attr('aria-required', 'true');
+      } else {
+        $(input).removeAttr('required');
+        $(input).attr('aria-required', 'false');
+      }
+    });
+
+    // Update visual indicators
+    const fileUploadContainer = form.find('.file-upload-container, .upload-area');
+    if (fileUploadContainer.length) {
+      const label = fileUploadContainer.find('label');
+      if (required) {
+        if (!label.find('.required-indicator').length) {
+          label.append('<span class="required-indicator text-danger" aria-hidden="true"> *</span>');
+        }
+      } else {
+        label.find('.required-indicator').remove();
+      }
+    }
+  }
+
+  /**
+   * Check if file upload is required
+   * @returns {boolean}
+   */
+  isRequired() {
+    return this.options.required || false;
+  }
+
+  /**
+   * Validate if required files are present
+   * @returns {boolean}
+   */
+  validateRequired() {
+    if (this.isRequired() && this.uploadedFiles.length === 0) {
+      this.showError('File upload is required');
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Clear all uploaded files
+   */
+  clearFiles() {
+    this.uploadedFiles = [];
+    const form = this.formHandler.getForm();
+    form.find('.uploaded-files').empty();
+    form.find('input[type="file"]').val('');
+  }
+
+  /**
+   * Set up drop zone functionality
+   */
+  setupDropZone() {
+    const form = this.formHandler.getForm();
+    const uploadArea = form.find('.upload-area, .file-upload-container');
+    
+    if (uploadArea.length) {
+      uploadArea.on('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.addClass('drag-over');
+      });
+
+      uploadArea.on('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.removeClass('drag-over');
+      });
+
+      uploadArea.on('drop', (e) => {
+        e.preventDefault();
+        uploadArea.removeClass('drag-over');
+        
+        const files = Array.from(e.originalEvent.dataTransfer.files);
+        const fileInput = form.find('input[type="file"]')[0];
+        
+        if (fileInput) {
+          // Create a new FileList-like object
+          Object.defineProperty(fileInput, 'files', {
+            value: files,
+            writable: false
+          });
+          
+          files.forEach(file => {
+            if (this.validateFile(file)) {
+              this.uploadFile(file, fileInput);
+            }
+          });
+        }
+      });
+    }
   }
 }
 

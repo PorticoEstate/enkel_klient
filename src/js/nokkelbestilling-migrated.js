@@ -46,8 +46,13 @@ $(document).ready(async function() {
                     autoSave: {
                         interval: 45000, // Save every 45 seconds (longer for simple form)
                         storageKey: 'nokkelbestilling_autosave'
+                    },
+                    fileUpload: {
+                        required: false, // Will be set dynamically based on location_code
+                        allowedTypes: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'],
+                        maxFileSize: 10 * 1024 * 1024, // 10MB
+                        multiple: true
                     }
-                    // Note: File upload is conditional based on location_code
                 }
             });
         } else {
@@ -87,9 +92,12 @@ function initializeForm() {
         const hasLocationCode = $(this).val();
         const fileRequired = !hasLocationCode;
         
-        // Update file upload requirement dynamically
-        if (formHandler && formHandler.setFileRequired) {
-            formHandler.setFileRequired(fileRequired);
+        // Update file upload requirement dynamically using extension
+        if (formHandler && formHandler.getExtension) {
+            const fileUploadExt = formHandler.getExtension('fileUpload');
+            if (fileUploadExt && fileUploadExt.setRequired) {
+                fileUploadExt.setRequired(fileRequired);
+            }
         }
         
         // Update UI to reflect requirement change

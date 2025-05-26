@@ -269,6 +269,104 @@ function setupInteractiveRegions()
 }
 
 /**
+ * Makes form inputs accessible by adding proper ARIA attributes and labels
+ * Enhances form elements with accessibility features according to WCAG guidelines
+ * 
+ * @param {HTMLFormElement} form - The form element containing inputs to enhance
+ * @returns {void}
+ */
+function makeInputsAccessible(form)
+{
+	if (!form || form.dataset.inputsA11yEnhanced) return;
+
+	// Process all form inputs
+	const inputs = form.querySelectorAll('input, select, textarea');
+	
+	inputs.forEach(input =>
+	{
+		if (input.dataset.a11yEnhanced) return;
+
+		// Add aria-required for required fields
+		if (input.hasAttribute('required') && !input.hasAttribute('aria-required'))
+		{
+			input.setAttribute('aria-required', 'true');
+		}
+
+		// Ensure proper labeling
+		const inputId = input.id || `input-${Math.random().toString(36).substring(2, 9)}`;
+		if (!input.id)
+		{
+			input.id = inputId;
+		}
+
+		// Find associated label
+		let label = form.querySelector(`label[for="${input.id}"]`);
+		
+		// If no label found, look for a label containing the input
+		if (!label)
+		{
+			label = input.closest('label');
+		}
+
+		// If still no label, try to find one by proximity (previous sibling or parent)
+		if (!label)
+		{
+			const prevElement = input.previousElementSibling;
+			if (prevElement && (prevElement.tagName === 'LABEL' || prevElement.textContent.trim()))
+			{
+				if (prevElement.tagName === 'LABEL')
+				{
+					label = prevElement;
+					label.setAttribute('for', input.id);
+				}
+			}
+		}
+
+		// Add aria-describedby for error containers
+		const errorContainer = form.querySelector(`#${input.id}-error, .${input.id}-error, [data-error-for="${input.id}"]`);
+		if (errorContainer && !input.hasAttribute('aria-describedby'))
+		{
+			if (!errorContainer.id)
+			{
+				errorContainer.id = `${input.id}-error`;
+			}
+			input.setAttribute('aria-describedby', errorContainer.id);
+		}
+
+		// Add aria-invalid attribute for validation
+		if (!input.hasAttribute('aria-invalid'))
+		{
+			input.setAttribute('aria-invalid', 'false');
+		}
+
+		// Enhance file inputs specifically
+		if (input.type === 'file')
+		{
+			// Add accept attribute description
+			if (input.accept && !input.hasAttribute('aria-description'))
+			{
+				const acceptedTypes = input.accept.split(',').map(type => type.trim()).join(', ');
+				input.setAttribute('aria-description', `Accepted file types: ${acceptedTypes}`);
+			}
+
+			// Add multiple files description
+			if (input.multiple && !input.getAttribute('aria-description'))
+			{
+				const currentDesc = input.getAttribute('aria-description') || '';
+				const multipleDesc = 'Multiple files can be selected';
+				input.setAttribute('aria-description', currentDesc ? `${currentDesc}. ${multipleDesc}` : multipleDesc);
+			}
+		}
+
+		// Mark as enhanced
+		input.dataset.a11yEnhanced = 'true';
+	});
+
+	// Mark form as enhanced
+	form.dataset.inputsA11yEnhanced = 'true';
+}
+
+/**
  * Makes common UI elements accessible according to WCAG guidelines
  * Enhances buttons, links, form controls, and other interactive elements
  */

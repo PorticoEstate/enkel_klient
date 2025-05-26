@@ -9,19 +9,19 @@
 var redirect_action = `${strBaseURL}/helpdesk`;
 var formHandler = null;
 
-$(document).ready(function ()
+$(document).ready(async function ()
 {
-	// Initialize form handler with form-specific options
-	formHandler = new FormHandler({
+	// Initialize form handler with extension-based architecture
+	formHandler = await formExtensionLoader.createFormHandler({
 		formId: 'helpdesk',
 		redirectUrl: redirect_action,
 		uploadUrl: `${strBaseURL}/helpdesk/upload`,
-		fileRequired: false, // File upload is optional for helpdesk
-		customHandlers: {
-			// Form-specific pre-validation logic
-			preValidate: function() {
-				// No special pre-validation needed for this form
-				return true;
+		extensions: {
+			fileUpload: {
+				required: false, // File upload is optional for helpdesk
+				allowedTypes: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'txt'],
+				maxFileSize: 15 * 1024 * 1024,
+				multiple: true
 			}
 		}
 	});

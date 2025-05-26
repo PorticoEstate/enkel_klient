@@ -12,19 +12,19 @@ var redirect_action = `${strBaseURL}/invoicerequest`;
 var formHandler = null;
 var datepicker = null;
 
-$(document).ready(function ()
+$(document).ready(async function ()
 {
-	// Initialize form handler with form-specific options
-	formHandler = new FormHandler({
+	// Initialize form handler with extension-based architecture
+	formHandler = await formExtensionLoader.createFormHandler({
 		formId: 'invoicerequest',
 		redirectUrl: redirect_action,
 		uploadUrl: `${strBaseURL}/invoicerequest/upload`,
-		fileRequired: true, // Assuming file is required based on original code
-		customHandlers: {
-			// Form-specific pre-validation logic
-			preValidate: function() {
-				// No special pre-validation needed for this form
-				return true;
+		extensions: {
+			fileUpload: {
+				required: true, // Assuming file is required based on original code
+				allowedTypes: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'],
+				maxFileSize: 15 * 1024 * 1024,
+				multiple: true
 			}
 		}
 	});

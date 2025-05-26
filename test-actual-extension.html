@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Extension Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>File Upload Extension Test</h1>
+        <p>Testing the actual file upload extension as loaded by templates.</p>
+        
+        <form id="helpdesk" class="form-container">
+            <!-- Include the actual file upload component from the template -->
+            <div class="form-group mt-4">
+                <label for="fileupload" id="fileupload-label">Upload File</label>
+                <small id="fileuploadHelp" class="form-text text-muted d-block mb-2">Select files to upload</small>
+                <div id="drop-area" aria-live="polite">
+                    <div style="border: 2px dashed #ccc; padding: 20px;">
+                        <p id="upload-instructions">Click the button below to select files</p>
+                        <div class="fileupload-buttonbar" role="group" aria-labelledby="upload-instructions">
+                            <div class="fileupload-buttons">
+                                <!-- Accessible file upload button -->
+                                <button type="button" class="btn btn-success file-select-btn" id="file-select-btn">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                    <span>Add Files</span>
+                                </button>
+                                <input id="fileupload" tabindex="-1" type="file" name="files[]" multiple data-droparea="drop-area">
+                                <small id="fileupload-keyboard-hint" class="form-text text-muted d-block mt-1">
+                                    Press enter to select files 
+                                </small>
+                            </div>
+                            <div class="fileupload-count">
+                                Number of files:
+                                <span id="files-count" aria-live="polite">0</span>
+                            </div>
+                        </div>
+                        <div class="content_upload_download">
+                            <div class="presentation files" style="display: inline-table;" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="mt-4">
+            <h3>Debug Information:</h3>
+            <div id="debug-log" style="max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6;">
+                <!-- Debug messages will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the scripts in the same order as the templates -->
+    <script>
+        // Mock global variables that would be set by the backend
+        window.strBaseURL = '';
+        
+        // Mock FormHandler core (simplified version)
+        class MockFormHandlerCore {
+            constructor(formId) {
+                this.formId = formId;
+                this.form = $(`#${formId}`);
+                this.extensions = {};
+            }
+            
+            getFormId() {
+                return this.formId;
+            }
+            
+            getForm() {
+                return this.form;
+            }
+            
+            addExtension(name, extension) {
+                this.extensions[name] = extension;
+                return this;
+            }
+            
+            getExtension(name) {
+                return this.extensions[name];
+            }
+        }
+        
+        function debugLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            $('#debug-log').append(`<div><strong>${timestamp}:</strong> ${message}</div>`);
+            $('#debug-log').scrollTop($('#debug-log')[0].scrollHeight);
+            console.log(message);
+        }
+        
+        $(document).ready(function() {
+            debugLog('Document ready - starting file upload extension test');
+            
+            // Load the actual file upload extension
+            $.getScript('src/js/extensions/file-upload.js')
+                .done(function() {
+                    debugLog('✅ file-upload.js loaded successfully');
+                    
+                    if (typeof FileUploadExtension !== 'undefined') {
+                        debugLog('✅ FileUploadExtension class found');
+                        
+                        try {
+                            // Create mock form handler
+                            const formHandler = new MockFormHandlerCore('helpdesk');
+                            debugLog('✅ Mock form handler created');
+                            
+                            // Create file upload extension
+                            const fileUploadExt = new FileUploadExtension(formHandler, {
+                                required: false,
+                                allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'],
+                                maxFileSizeMB: 15
+                            });
+                            debugLog('✅ FileUploadExtension instance created');
+                            
+                            // Add to form handler
+                            formHandler.addExtension('fileUpload', fileUploadExt);
+                            debugLog('✅ Extension added to form handler');
+                            
+                        } catch (error) {
+                            debugLog(`❌ Error creating extension: ${error.message}`);
+                        }
+                    } else {
+                        debugLog('❌ FileUploadExtension class not found after loading script');
+                    }
+                })
+                .fail(function() {
+                    debugLog('❌ Failed to load file-upload.js - trying direct setup');
+                    
+                    // Try manual setup if script loading fails
+                    setupManualFileSelect();
+                });
+            
+            // Manual setup function
+            function setupManualFileSelect() {
+                const fileInput = $('#fileupload');
+                const fileButton = $('#file-select-btn');
+                
+                debugLog(`Manual setup: Button found: ${fileButton.length > 0}, Input found: ${fileInput.length > 0}`);
+                
+                if (fileButton.length > 0 && fileInput.length > 0) {
+                    fileButton.off('click.manual').on('click.manual', function(e) {
+                        e.preventDefault();
+                        debugLog('Manual file button clicked');
+                        fileInput[0].click();
+                    });
+                    
+                    fileInput.on('change', function(e) {
+                        const fileCount = e.target.files.length;
+                        debugLog(`Files selected: ${fileCount}`);
+                        $('#files-count').text(fileCount);
+                    });
+                    
+                    debugLog('✅ Manual file select setup complete');
+                }
+            }
+            
+            debugLog('Test setup complete');
+        });
+    </script>
+</body>
+</html>

@@ -239,20 +239,20 @@ legend {
 }
 
 #fileupload {
-    /* This makes it invisible but still accessible */
-    opacity: 0 !important;
+    /* Position the file input off-screen but keep it focusable and clickable */
     position: absolute !important;
+    left: -9999px !important;
+    top: auto !important;
     width: 1px !important;
     height: 1px !important;
-    padding: 0 !important;
-    margin: -1px !important;
-    overflow: hidden !important;
-    /* DO NOT use display: none as it breaks file upload functionality */
+    /* Keep minimal opacity to ensure it can receive clicks in some browsers */
+    opacity: 0.01 !important;
+    /* Keep it in the tab order but invisible */
     overflow: hidden !important;
     clip: rect(0,0,0,0) !important;
     white-space: nowrap !important;
     border: 0 !important;
-    opacity: 0 !important;
+    /* DO NOT set pointer-events: none as it breaks file upload functionality */
 }
 
 .fileupload-count {
@@ -773,4 +773,29 @@ footer p {
     .accessibility-controls button {
         margin-top: 0.25rem;
     }
+}
+
+/* File upload fallback message animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.file-upload-fallback {
+    animation: fadeIn 0.3s ease-in;
+}
+
+.file-upload-fallback ul {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.file-upload-fallback .btn {
+    font-size: 0.8rem;
 }

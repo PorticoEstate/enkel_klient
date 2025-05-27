@@ -141,7 +141,10 @@ if (typeof FileUploadExtension === 'undefined') {
     }
     
     // Ensure file-select-btn works (fallback if neither method handles it)
-    this.setupFileSelectButton();
+    // Use a small delay to ensure DOM is fully ready and fileupload plugin is initialized
+    setTimeout(() => {
+      this.setupFileSelectButton();
+    }, 100);
   }
   
   handleFilesAdded(data) {
@@ -354,24 +357,98 @@ if (typeof FileUploadExtension === 'undefined') {
   }
   
   setupFileSelectButton() {
+    console.log('FileUploadExtension: Setting up file select button');
+    
     const fileInput = this.$form.find('input[type="file"]').first();
     const fileSelectBtn = this.$form.find('.file-select-btn, #file-select-btn');
     
-    if (fileSelectBtn.length > 0 && fileInput.length > 0) {
-      console.log('FileUploadExtension: Setting up file select button handler');
-      fileSelectBtn.off('click.fileUploadExt keydown.fileUploadExt').on('click.fileUploadExt keydown.fileUploadExt', (e) => {
-        console.log('File select button clicked/keyed:', e.type);
-        if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
-          e.preventDefault();
-          console.log('Triggering file input click...');
-          fileInput[0].click();
+    console.log('FileUploadExtension: File input found:', fileInput.length);
+    console.log('FileUploadExtension: File select button found:', fileSelectBtn.length);
+    
+    if (fileInput.length === 0 || fileSelectBtn.length === 0) {
+      console.warn('FileUploadExtension: File select button or file input not found');
+      return;
+    }
+    
+    // Check if the button is already a label (preferred approach)
+    if (fileSelectBtn.is('label')) {
+      console.log('FileUploadExtension: ✅ Using label approach - direct file selection enabled');
+      
+      // For label-based approach, we just need to ensure the change event works
+      fileInput.on('change.fileUploadExt', (e) => {
+        console.log('FileUploadExtension: File input change event triggered');
+        console.log('FileUploadExtension: Number of files selected:', e.target.files.length);
+        
+        if (e.target.files.length > 0) {
+          console.log('FileUploadExtension: ✅ File selection successful!');
+          for (let i = 0; i < e.target.files.length; i++) {
+            console.log(`FileUploadExtension: File ${i + 1}:`, e.target.files[i].name);
+          }
         }
       });
+      
+      // Add keyboard support for the label (Enter/Space)
+      fileSelectBtn.on('keydown.fileUploadExt', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          console.log('FileUploadExtension: Label activated via keyboard');
+          e.preventDefault();
+          // For label elements, clicking the label will automatically trigger the input
+          fileSelectBtn[0].click();
+        }
+      });
+      
     } else {
-      console.warn('FileUploadExtension: File select button or file input not found');
+      // Legacy button approach (fallback for templates not yet updated to use labels)
+      console.log('FileUploadExtension: Using legacy button approach');
+      
+      // Remove any existing handlers first
+      fileSelectBtn.off('click.fileUploadExt keydown.fileUploadExt');
+      
+      // Add the click handler
+      fileSelectBtn.on('click.fileUploadExt', (e) => {
+        console.log('FileUploadExtension: File select button clicked');
+        e.preventDefault();
+        
+        try {
+          fileInput[0].click();
+          console.log('FileUploadExtension: Direct click triggered');
+        } catch (error) {
+          console.error('FileUploadExtension: Error triggering file input click:', error);
+        }
+      });
+      
+      // Add keyboard handler
+      fileSelectBtn.on('keydown.fileUploadExt', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          console.log('FileUploadExtension: File select button activated via keyboard');
+          e.preventDefault();
+          
+          try {
+            fileInput[0].click();
+            console.log('FileUploadExtension: File input click triggered via keyboard');
+          } catch (error) {
+            console.error('FileUploadExtension: Error triggering file input click via keyboard:', error);
+          }
+        }
+      });
+      
+      // File input change event
+      fileInput.on('change.fileUploadExt', (e) => {
+        console.log('FileUploadExtension: File input change event triggered');
+        console.log('FileUploadExtension: Number of files selected:', e.target.files.length);
+        
+        if (e.target.files.length > 0) {
+          console.log('FileUploadExtension: ✅ File selection successful!');
+          for (let i = 0; i < e.target.files.length; i++) {
+            console.log(`FileUploadExtension: File ${i + 1}:`, e.target.files[i].name);
+          }
+        }
+      });
     }
+    
+    console.log('FileUploadExtension: File select button setup complete');
   }
-
+  
   setupDropZoneEvents() {
     const dropArea = this.$form.find('#drop-area');
     const fileInput = this.$form.find('input[type="file"]').first();
@@ -450,13 +527,19 @@ if (typeof FileUploadExtension === 'undefined') {
     });
     
     // Handle click and keyboard activation on drop area
-    dropArea.on('click.fileUploadExt keydown.fileUploadExt', (e) => {
-      if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
-        e.preventDefault();
-        console.log('FileUploadExtension: Drop area activated, triggering file select');
-        fileInput[0].click();
-      }
-    });
+    // Only add click handler if we're not using a label-based file selection
+    const fileSelectBtn = this.$form.find('.file-select-btn, #file-select-btn');
+    if (!fileSelectBtn.is('label')) {
+      dropArea.on('click.fileUploadExt keydown.fileUploadExt', (e) => {
+        if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
+          e.preventDefault();
+          console.log('FileUploadExtension: Drop area activated, triggering file select');
+          fileInput[0].click();
+        }
+      });
+    } else {
+      console.log('FileUploadExtension: Skipping drop area click handler (using label approach)');
+    }
   }
   
   setupValidation() {

@@ -289,60 +289,41 @@ if (typeof FileUploadExtension === 'undefined') {
   }
   
   showError(message) {
-    // Remove any existing error messages first
-    this.$form.find('.file-error').remove();
+    // Remove any existing flash errors first
+    this.$form.find('.flash-error').remove();
     
-    const alert = $(`
-      <div class="alert alert-danger file-error" role="alert" style="margin-bottom: 15px; border-left: 4px solid #dc3545; position: relative; z-index: 1050;">
-        <div style="display: flex; align-items: center;">
-          <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-right: 10px; font-size: 1.2em;" aria-hidden="true"></i>
-          <div style="flex: 1;">
-            <strong>File Upload Error:</strong> ${message}
-          </div>
-          <button type="button" class="btn-close" aria-label="Close error message" style="background: none; border: none; font-size: 1.2em; color: #dc3545; cursor: pointer;">
-            ×
-          </button>
-        </div>
-      </div>
-    `);
-    
-    // Add close button functionality
-    alert.find('.btn-close').on('click', () => {
-      alert.fadeOut(() => alert.remove());
-    });
-    
-    // Add to the form at the top
-    this.$form.prepend(alert);
-    
-    // Show a quick flash error above the drop area (3 seconds) - using single dropArea variable
+    // Show flash error above the drop area only (3 seconds)
     const dropArea = this.$form.find('#drop-area');
     if (dropArea.length) {
-      // Remove any existing flash errors
-      dropArea.parent().find('.flash-error').remove();
-      
       const flashError = $(`
-        <div class="flash-error alert alert-danger" style="margin-bottom: 10px; animation: slideInDown 0.3s ease-out;">
-          <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
-          <strong>Error:</strong> ${message.replace(/<[^>]*>/g, '')}
+        <div class="flash-error alert alert-danger" style="margin-bottom: 10px; animation: slideInDown 0.3s ease-out; border-left: 4px solid #dc3545;">
+          <div style="display: flex; align-items: center;">
+            <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-right: 10px; font-size: 1.2em;" aria-hidden="true"></i>
+            <div style="flex: 1;">
+              <strong>File Upload Error:</strong> ${message}
+            </div>
+          </div>
         </div>
       `);
       
       // Insert above the drop area
       dropArea.before(flashError);
       
+      // Scroll to the error message to make it visible
+      flashError[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Focus the error for screen readers with a slight delay
+      setTimeout(() => {
+        flashError.attr('tabindex', '-1').focus();
+      }, 300);
+      
       // Auto-remove after 3 seconds
       setTimeout(() => {
         flashError.fadeOut(300, () => flashError.remove());
       }, 3000);
+    } else {
+      console.warn('FileUploadExtension: Drop area not found for error display');
     }
-    
-    // Also scroll to the error message to make it visible
-    alert[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    // Focus the error for screen readers with a slight delay
-    setTimeout(() => {
-      alert.attr('tabindex', '-1').focus();
-    }, 300);
     
     console.error('FileUploadExtension Error:', message);
     console.error('Error details:', {
@@ -351,11 +332,6 @@ if (typeof FileUploadExtension === 'undefined') {
       allowedTypes: this.options.allowedFileTypes,
       maxSize: this.options.maxFileSizeMB + 'MB'
     });
-    
-    // Auto-remove main error after 10 seconds (increased time for better readability)
-    setTimeout(() => {
-      alert.fadeOut(() => alert.remove());
-    }, 10000);
   }
   
   setupFileSelectButton() {

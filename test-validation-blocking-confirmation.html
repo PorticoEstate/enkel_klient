@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Validation Blocks Confirmation</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .error { border-color: #dc3545; background-color: #f8d7da; }
+        .error-message { color: #dc3545; font-size: 14px; margin-top: 5px; }
+        .submit-btn { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .confirmation-summary { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        .debug-log { background-color: #f4f4f4; border: 1px solid #ccc; padding: 10px; margin: 20px 0; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test: Validation Should Block Confirmation</h1>
+    <p>This test ensures that validation errors prevent the confirmation summary from appearing.</p>
+    
+    <form id="testForm" data-form-type="inspection_1">
+        <div class="form-group">
+            <label for="navn">Name (Required):</label>
+            <input type="text" id="navn" name="navn" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="epost">Email (Required):</label>
+            <input type="email" id="epost" name="epost" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="telefon">Phone:</label>
+            <input type="tel" id="telefon" name="telefon">
+        </div>
+        
+        <div class="form-group">
+            <label for="merknad">Remark:</label>
+            <textarea id="merknad" name="merknad" rows="4"></textarea>
+        </div>
+        
+        <button type="submit" class="submit-btn">Submit Form</button>
+    </form>
+    
+    <div id="debugLog" class="debug-log">
+        <strong>Debug Log:</strong><br>
+    </div>
+    
+    <script src="/src/js/form-handler-core.js"></script>
+    <script src="/src/js/form-extension-loader.js"></script>
+    
+    <script>
+        // Capture console logs for debugging
+        const originalLog = console.log;
+        const originalError = console.error;
+        const debugLog = document.getElementById('debugLog');
+        
+        function addToDebugLog(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logEntry.style.color = type === 'error' ? 'red' : (type === 'warn' ? 'orange' : 'black');
+            debugLog.appendChild(logEntry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            addToDebugLog(args.join(' '), 'log');
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            addToDebugLog(args.join(' '), 'error');
+            originalError.apply(console, args);
+        };
+        
+        // Initialize the form with validation and confirmation
+        $(document).ready(function() {
+            console.log('🚀 Initializing test form...');
+            
+            const form = $('#testForm');
+            const formHandler = new FormHandlerCore(form[0]);
+            
+            // Load extensions based on form type
+            const loader = new FormExtensionLoader();
+            const formType = form.data('form-type') || 'simple';
+            
+            console.log('📋 Form type:', formType);
+            
+            loader.loadExtensionsForForm(formHandler, formType)
+                .then(() => {
+                    console.log('✅ All extensions loaded successfully');
+                    console.log('🎯 Form is ready for testing');
+                    console.log('💡 Try submitting without filling required fields to test validation');
+                })
+                .catch(error => {
+                    console.error('❌ Error loading extensions:', error);
+                });
+        });
+    </script>
+</body>
+</html>

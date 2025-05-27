@@ -66,8 +66,26 @@ class FormExtensionLoader {
     const extensionNames = Object.keys(config.extensions || {});
     
     if (extensionNames.length > 0) {
-      console.log(`🔄 Loading extensions: ${extensionNames.join(', ')}`);
-      await this.loadExtensions(extensionNames);
+      // Define loading order to ensure validation runs before confirmation
+      const loadOrder = ['validation', 'accessibility', 'autoSave', 'fileUpload', 'confirmation'];
+      const orderedExtensions = [];
+      
+      // Add extensions in the predefined order
+      loadOrder.forEach(name => {
+        if (extensionNames.includes(name)) {
+          orderedExtensions.push(name);
+        }
+      });
+      
+      // Add any remaining extensions not in the predefined order
+      extensionNames.forEach(name => {
+        if (!orderedExtensions.includes(name)) {
+          orderedExtensions.push(name);
+        }
+      });
+      
+      console.log(`🔄 Loading extensions: ${orderedExtensions.join(', ')}`);
+      await this.loadExtensions(orderedExtensions);
     }
 
     const formHandler = new FormHandler(config);
@@ -187,6 +205,10 @@ class FormExtensionLoader {
         accessibility: {
           announceErrors: true,
           markRequired: true
+        },
+        confirmation: {
+          showSummary: true,
+          requireConfirmation: true
         }
       },
 

@@ -17,6 +17,11 @@ if (typeof FormValidationExtension === 'undefined') {
   }
 
   init() {
+    // Register beforeSubmit hook for validation
+    this.formHandler.addHook('beforeSubmit', (formData) => {
+      return this.beforeSubmit(formData);
+    });
+
     if (this.options.realTimeValidation) {
       this.setupRealTimeValidation();
     }

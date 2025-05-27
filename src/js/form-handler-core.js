@@ -21,6 +21,9 @@ class FormHandler {
     this.extensions = new Map();
     this.extensionOptions = options.extensions || {};
     
+    // Hook system
+    this.hooks = new Map();
+    
     // Initialize
     this.init();
   }
@@ -56,26 +59,99 @@ class FormHandler {
   setupFormSubmission() {
     this.$form.on('submit', (e) => {
       e.preventDefault();
+      console.log('🚀 Form submission initiated');
+      
+      // Create form data for hooks
+      const formData = new FormData(this.form);
+      console.log('📝 Form data created:', formData);
       
       // Pre-submit hooks
-      if (!this.executeHook('beforeSubmit')) {
+      console.log('🔍 Executing beforeSubmit hooks...');
+      const hookResult = this.executeHook('beforeSubmit', formData);
+      console.log('📋 beforeSubmit hooks result:', hookResult);
+      
+      if (!hookResult) {
+        console.log('❌ Form submission blocked by beforeSubmit hooks');
         return false;
       }
       
+      console.log('✅ All beforeSubmit hooks passed, proceeding with submission');
       this.submitForm();
     });
   }
 
+  // Hook system
+  addHook(hookName, callback) {
+    if (!this.hooks.has(hookName)) {
+      this.hooks.set(hookName, []);
+    }
+    this.hooks.get(hookName).push(callback);
+  }
+
+  removeHook(hookName, callback) {
+    if (this.hooks.has(hookName)) {
+      const callbacks = this.hooks.get(hookName);
+      const index = callbacks.indexOf(callback);
+      if (index > -1) {
+        callbacks.splice(index, 1);
+      }
+    }
+  }
+
   executeHook(hookName, ...args) {
+    console.log(`🎯 Executing hook: ${hookName}`);
     let result = true;
-    this.extensions.forEach((extension) => {
-      if (typeof extension[hookName] === 'function') {
-        const hookResult = extension[hookName](...args);
-        if (hookResult === false) {
+    
+    // Execute registered hook callbacks
+    if (this.hooks.has(hookName)) {
+      const callbacks = this.hooks.get(hookName);
+      console.log(`📋 Found ${callbacks.length} registered callbacks for ${hookName}`);
+      
+      for (let i = 0; i < callbacks.length; i++) {
+        const callback = callbacks[i];
+        try {
+          console.log(`🔄 Executing callback ${i + 1}/${callbacks.length} for ${hookName}`);
+          const hookResult = callback(...args);
+          console.log(`✅ Callback ${i + 1} result:`, hookResult);
+          
+          if (hookResult === false) {
+            console.log(`❌ Callback ${i + 1} returned false, stopping execution`);
+            result = false;
+            break; // Stop executing remaining callbacks
+          }
+        } catch (error) {
+          console.error(`Error in hook ${hookName} callback ${i + 1}:`, error);
           result = false;
+          break; // Stop on error too
         }
       }
-    });
+    }
+    
+    // Also execute extension hook methods (for backward compatibility)
+    // Only if registered callbacks haven't already failed
+    if (result !== false) {
+      this.extensions.forEach((extension, name) => {
+        if (typeof extension[hookName] === 'function') {
+          try {
+            console.log(`🔧 Executing extension method ${hookName} on ${name}`);
+            const hookResult = extension[hookName](...args);
+            console.log(`✅ Extension ${name} ${hookName} result:`, hookResult);
+            
+            if (hookResult === false) {
+              console.log(`❌ Extension ${name} ${hookName} returned false, blocking execution`);
+              result = false;
+              return false; // Stop forEach iteration
+            }
+          } catch (error) {
+            console.error(`Error in extension hook ${hookName} on ${name}:`, error);
+            result = false;
+            return false; // Stop forEach iteration
+          }
+        }
+      });
+    }
+    
+    console.log(`🏁 Hook ${hookName} final result:`, result);
     return result;
   }
   

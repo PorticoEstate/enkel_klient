@@ -145,10 +145,46 @@ if (typeof FormConfirmationExtension === 'undefined') {
   }
   
   getFieldLabel(fieldName) {
-    const $field = this.$form.find(`[name="${fieldName}"], #${fieldName}`);
-    const fieldId = $field.attr('id');
-    const $label = $(`label[for="${fieldId}"]`);
-    return $label.length ? $label.text().replace(/\*\s*$/, '').trim() : fieldName;
+    // Escape special characters in fieldName for CSS selector
+    const escapedFieldName = fieldName.replace(/([[\]().])/g, '\\$1');
+    const escapedFieldId = fieldName.replace(/([[\]().])/g, '\\$1');
+    
+    // Try to find the field by name attribute (escaped)
+    let $field = this.$form.find(`[name="${escapedFieldName}"]`);
+    
+    // If not found by name, try by ID (escaped)
+    if (!$field.length) {
+      $field = this.$form.find(`#${escapedFieldId}`);
+    }
+    
+    if ($field.length) {
+      const fieldId = $field.attr('id');
+      if (fieldId) {
+        // Escape the field ID for the label selector
+        const escapedId = fieldId.replace(/([[\]().])/g, '\\$1');
+        const $label = this.$form.find(`label[for="${escapedId}"]`);
+        if ($label.length) {
+          return $label.text().replace(/\*\s*$/, '').trim();
+        }
+      }
+      
+      // Try to find a parent label or nearby label
+      const $parentLabel = $field.closest('label');
+      if ($parentLabel.length) {
+        return $parentLabel.text().replace(/\*\s*$/, '').trim();
+      }
+      
+      // Look for a label that contains this field
+      const $containingLabel = this.$form.find('label').filter(function() {
+        return $(this).find($field).length > 0;
+      });
+      if ($containingLabel.length) {
+        return $containingLabel.text().replace(/\*\s*$/, '').trim();
+      }
+    }
+    
+    // Fallback: return a cleaned version of the field name
+    return fieldName.replace(/([[\]()._])/g, ' ').replace(/\s+/g, ' ').trim();
   }
   
   getTranslation(key, fallback) {

@@ -379,6 +379,56 @@ function announceToScreenReader(message) {
 }
 
 /**
+ * Handle changes to fire extinguishing equipment selection
+ * This function shows/hides the date field based on the selected option
+ */
+function handleChangeSlukkeutstyr(src) {
+    // datestamp
+    const input = document.getElementById('datestamp');
+    const dateblock = document.getElementById('dateblock');
+
+    if (src.value == 2) {
+        input.removeAttribute('required');
+        input.removeAttribute('aria-required');
+        dateblock.style.display = 'none';
+        dateblock.setAttribute('aria-hidden', 'true');
+        announceChange('Date field is no longer required');
+    } else {
+        input.setAttribute('required', '');
+        input.setAttribute('aria-required', 'true');
+        dateblock.style.display = 'block';
+        dateblock.setAttribute('aria-hidden', 'false');
+        announceChange('Date field is now required');
+    }
+}
+
+/**
+ * Helper function to announce changes to screen readers
+ */
+function announceChange(message) {
+    if (formHandler && formHandler.announceToScreenReader) {
+        formHandler.announceToScreenReader(message);
+    } else {
+        // Fallback implementation
+        let liveRegion = document.getElementById('form-submission-status');
+        if (!liveRegion) {
+            // Create the live region if it doesn't exist
+            liveRegion = document.createElement('div');
+            liveRegion.id = 'form-submission-status';
+            liveRegion.className = 'sr-only';
+            liveRegion.setAttribute('aria-live', 'assertive');
+            document.body.appendChild(liveRegion);
+        }
+        liveRegion.textContent = message;
+
+        // Clear the announcement after screen readers have time to read it
+        setTimeout(() => {
+            liveRegion.textContent = '';
+        }, 3000);
+    }
+}
+
+/**
  * Fallback initialization if clean architecture fails
  */
 function initializeFallback() {

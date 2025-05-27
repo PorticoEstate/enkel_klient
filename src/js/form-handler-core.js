@@ -35,19 +35,26 @@ class FormHandler {
 
   // Extension management
   loadExtensions() {
+    console.log('🔍 Loading extensions. extensionOptions:', this.extensionOptions);
+    console.log('🔍 Available extensions:', Object.keys(FormHandler.extensions || {}));
     Object.keys(this.extensionOptions).forEach(extensionName => {
+      console.log(`🔍 Loading extension: ${extensionName} with options:`, this.extensionOptions[extensionName]);
       this.loadExtension(extensionName, this.extensionOptions[extensionName]);
     });
   }
 
   loadExtension(name, options = {}) {
+    console.log(`🔍 loadExtension called for: ${name} with options:`, options);
     const ExtensionClass = FormHandler.extensions?.[name];
+    console.log(`🔍 ExtensionClass found for ${name}:`, !!ExtensionClass);
     if (ExtensionClass) {
+      console.log(`🔍 Creating new ${name} extension instance...`);
       const extension = new ExtensionClass(this, options);
       this.extensions.set(name, extension);
-      console.log(`Loaded extension: ${name}`);
+      console.log(`✅ Loaded extension: ${name}`);
     } else {
-      console.warn(`Extension not found: ${name}`);
+      console.warn(`❌ Extension not found: ${name}`);
+      console.warn(`Available extensions:`, Object.keys(FormHandler.extensions || {}));
     }
   }
 

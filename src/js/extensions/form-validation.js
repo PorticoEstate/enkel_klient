@@ -13,6 +13,7 @@ if (typeof FormValidationExtension === 'undefined') {
       wcagCompliant: options.wcagCompliant || true,
       ...options
     };
+    console.log('🔍 FormValidationExtension initialized with options:', this.options);
     this.init();
   }
 
@@ -33,9 +34,35 @@ if (typeof FormValidationExtension === 'undefined') {
   setupRealTimeValidation() {
     // Extract validation logic from bloated version
     const form = this.formHandler.getForm();
-    form.find('input, textarea, select').on('blur change', (e) => {
+    console.log('🔍 Setting up real-time validation for form:', form.attr('id'));
+    
+    // Real-time validation on input (as user types)
+    form.find('input, textarea').on('input.realTimeValidation', (e) => {
+      console.log('📝 Input event triggered for:', e.target.id || e.target.name);
+      // Add slight delay to avoid excessive validation while typing
+      clearTimeout($(e.target).data('validation-timeout'));
+      const timeout = setTimeout(() => {
+        console.log('⏱️ Validating field after delay:', e.target.id || e.target.name);
+        this.validateField(e.target);
+      }, 300); // 300ms delay
+      $(e.target).data('validation-timeout', timeout);
+    });
+    
+    // Immediate validation on blur and change for all form elements
+    form.find('input, textarea, select').on('blur.realTimeValidation change.realTimeValidation', (e) => {
+      console.log('🎯 Blur/change event triggered for:', e.target.id || e.target.name);
+      // Clear any pending input validation timeout
+      clearTimeout($(e.target).data('validation-timeout'));
       this.validateField(e.target);
     });
+    
+    // Special handling for radio buttons and checkboxes
+    form.find('input[type="radio"], input[type="checkbox"]').on('change.realTimeValidation', (e) => {
+      console.log('☑️ Radio/checkbox change event triggered for:', e.target.id || e.target.name);
+      this.validateField(e.target);
+    });
+    
+    console.log('✅ Real-time validation setup complete');
   }
 
   setupAccessibility() {
@@ -48,6 +75,8 @@ if (typeof FormValidationExtension === 'undefined') {
   validateField(field) {
     try {
       const $field = $(field);
+      console.log('🔍 validateField called for:', $field.attr('id') || $field.attr('name'));
+      
       if (!$field.length) return true;
       
       const value = $field.val();

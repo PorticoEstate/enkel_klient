@@ -59,7 +59,10 @@ function fallbackToDirectInitialization() {
             formId: 'helpdesk',
             redirectUrl: redirect_action,
             extensions: {
-                validation: true,
+                validation: {
+                    realTimeValidation: true,
+                    wcagCompliant: true
+                },
                 autoSave: true,
                 fileUpload: true
             }

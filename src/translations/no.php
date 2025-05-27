@@ -244,4 +244,21 @@ return [
         'changes_detected' => 'Du har ulagrede endringer. Er du sikker på at du vil forlate siden?',
     ],
 
+    // File upload error messages
+    'file_upload' => [
+        'file_too_large' => 'Filen "{filename}" er for stor ({actualSize}MB). Maksimal tillatt størrelse er {maxSize}MB. Vennligst velg en mindre fil eller komprimer den.',
+        'file_empty' => 'Filen "{filename}" er tom (0 bytes). Vennligst velg en gyldig fil med innhold.',
+        'file_too_small' => 'Filen "{filename}" virker uvanlig liten ({size} bytes). Vennligst kontroller at dette er en gyldig fil.',
+        'file_no_extension' => 'Filen "{filename}" har ingen filutvidelse. Vennligst sørg for at filen har en gyldig utvidelse som: {allowedTypes}',
+        'file_type_not_supported' => 'Filtypen "{fileType}" støttes ikke for "{filename}". Vennligst velg en fil med en av disse utvidelsene: {allowedTypes}',
+        'file_dangerous_type' => 'Filen "{filename}" har en potensielt farlig filtype ({fileType}) og kan ikke lastes opp av sikkerhetshensyn.',
+        'file_invalid_name' => 'Filen "{filename}" har et ugyldig navn. Vennligst gi filen et nytt navn og prøv igjen.',
+        'file_name_too_long' => 'Filnavnet "{filename}" er for langt. Vennligst gi filen et kortere navn.',
+        'file_upload_failed' => 'Opplasting feilet for filen "{filename}". Vennligst prøv igjen eller kontakt support hvis problemet vedvarer.',
+        'file_validation_error' => 'Valideringsfeil for filen "{filename}". Vennligst kontroller filen og prøv igjen.',
+        'upload_in_progress' => 'Filopplasting pågår. Vennligst vent til den er ferdig før du sender inn skjemaet.',
+        'max_files_exceeded' => 'Maksimalt antall filer ({maxFiles}) overskredet. Vennligst fjern noen filer før du legger til flere.',
+        'drag_drop_here' => 'Dra og slipp filer her eller klikk for å velge filer',
+    ],
+
 ];

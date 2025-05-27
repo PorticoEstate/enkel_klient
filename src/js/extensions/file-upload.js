@@ -170,21 +170,30 @@ if (typeof FileUploadExtension === 'undefined') {
     if (file.size > this.options.maxFileSizeMB * 1024 * 1024) {
       const actualSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       console.error(`FileUploadExtension: File ${file.name} is too large`);
-      this.showError(`❌ File "<strong>${file.name}</strong>" is too large (<strong>${actualSizeMB}MB</strong>). Maximum allowed size is <strong>${this.options.maxFileSizeMB}MB</strong>. Please choose a smaller file or compress it.`);
+      const message = this.getTranslation('file_upload.file_too_large', 'File "{filename}" is too large ({actualSize}MB). Maximum allowed size is {maxSize}MB. Please choose a smaller file or compress it.')
+        .replace('{filename}', `<strong>${file.name}</strong>`)
+        .replace('{actualSize}', `<strong>${actualSizeMB}</strong>`)
+        .replace('{maxSize}', `<strong>${this.options.maxFileSizeMB}</strong>`);
+      this.showError(`❌ ${message}`);
       return false;
     }
     
     // Check if file is empty
     if (file.size === 0) {
       console.error(`FileUploadExtension: File ${file.name} is empty`);
-      this.showError(`❌ File "<strong>${file.name}</strong>" is empty (0 bytes). Please select a valid file with content.`);
+      const message = this.getTranslation('file_upload.file_empty', 'File "{filename}" is empty (0 bytes). Please select a valid file with content.')
+        .replace('{filename}', `<strong>${file.name}</strong>`);
+      this.showError(`❌ ${message}`);
       return false;
     }
     
     // Check if file is suspiciously small (less than 10 bytes)
     if (file.size < 10) {
       console.warn(`FileUploadExtension: File ${file.name} is very small`);
-      this.showError(`⚠️ File "<strong>${file.name}</strong>" seems unusually small (${file.size} bytes). Please verify this is a valid file.`);
+      const message = this.getTranslation('file_upload.file_too_small', 'File "{filename}" seems unusually small ({size} bytes). Please verify this is a valid file.')
+        .replace('{filename}', `<strong>${file.name}</strong>`)
+        .replace('{size}', file.size);
+      this.showError(`⚠️ ${message}`);
       return false;
     }
     
@@ -201,14 +210,21 @@ if (typeof FileUploadExtension === 'undefined') {
     // Check if file has an extension
     if (!fileExt || fileExt === fileName || !fileName.includes('.')) {
       console.error(`FileUploadExtension: File ${file.name} has no extension`);
-      this.showError(`❌ File "<strong>${file.name}</strong>" has no file extension. Please ensure your file has a valid extension like: <strong>${this.options.allowedFileTypes.join(', ')}</strong>`);
+      const message = this.getTranslation('file_upload.file_no_extension', 'File "{filename}" has no file extension. Please ensure your file has a valid extension like: {allowedTypes}')
+        .replace('{filename}', `<strong>${file.name}</strong>`)
+        .replace('{allowedTypes}', `<strong>${this.options.allowedFileTypes.join(', ')}</strong>`);
+      this.showError(`❌ ${message}`);
       return false;
     }
     
     // Check if extension is allowed
     if (allowedTypes.length && !allowedTypes.includes(fileExt)) {
       console.error(`FileUploadExtension: File type .${fileExt} is not allowed`);
-      this.showError(`❌ File type "<strong>.${fileExt}</strong>" is not supported for "<strong>${file.name}</strong>". Please choose a file with one of these extensions: <strong>${this.options.allowedFileTypes.join(', ')}</strong>`);
+      const message = this.getTranslation('file_upload.file_type_not_supported', 'File type "{fileType}" is not supported for "{filename}". Please choose a file with one of these extensions: {allowedTypes}')
+        .replace('{fileType}', `<strong>.${fileExt}</strong>`)
+        .replace('{filename}', `<strong>${file.name}</strong>`)
+        .replace('{allowedTypes}', `<strong>${this.options.allowedFileTypes.join(', ')}</strong>`);
+      this.showError(`❌ ${message}`);
       return false;
     }
     
@@ -216,7 +232,10 @@ if (typeof FileUploadExtension === 'undefined') {
     const dangerousExtensions = ['exe', 'bat', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar', 'ps1'];
     if (dangerousExtensions.includes(fileExt)) {
       console.error(`FileUploadExtension: File ${file.name} has dangerous extension`);
-      this.showError(`🚫 File "<strong>${file.name}</strong>" has a potentially dangerous file type (<strong>.${fileExt}</strong>) and cannot be uploaded for security reasons.`);
+      const message = this.getTranslation('file_upload.file_dangerous_type', 'File "{filename}" has a potentially dangerous file type ({fileType}) and cannot be uploaded for security reasons.')
+        .replace('{filename}', `<strong>${file.name}</strong>`)
+        .replace('{fileType}', `<strong>.${fileExt}</strong>`);
+      this.showError(`🚫 ${message}`);
       return false;
     }
     
@@ -507,6 +526,41 @@ if (typeof FileUploadExtension === 'undefined') {
       $fileInput.attr('required', 'required').attr('aria-required', 'true');
     } else {
       $fileInput.removeAttr('required').attr('aria-required', 'false');
+    }
+  }
+
+  /**
+   * Get a translation from the preloaded translations object
+   * @param {string} key - The translation key (e.g., 'file_upload.file_too_large')
+   * @param {string} fallback - Fallback text if translation is not found
+   * @returns {string} The translated text or fallback
+   */
+  getTranslation(key, fallback) {
+    try {
+      // Check if translations object exists
+      if (typeof window.translations === 'undefined') {
+        console.warn('FileUploadExtension: No translations object found, using fallback');
+        return fallback;
+      }
+
+      // Split the key to navigate nested object (e.g., 'file_upload.file_too_large')
+      const keys = key.split('.');
+      let current = window.translations;
+
+      for (const keyPart of keys) {
+        if (current && current.hasOwnProperty(keyPart)) {
+          current = current[keyPart];
+        } else {
+          console.warn(`FileUploadExtension: Translation key '${key}' not found, using fallback`);
+          return fallback;
+        }
+      }
+
+      // Return the found translation or fallback if it's not a string
+      return (typeof current === 'string' && current.trim() !== '') ? current : fallback;
+    } catch (error) {
+      console.error('FileUploadExtension: Error getting translation for key:', key, error);
+      return fallback;
     }
   }
   }

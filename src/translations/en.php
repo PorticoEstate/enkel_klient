@@ -245,4 +245,21 @@ return [
         'draft_restored' => 'Previous form draft restored.',
         'changes_detected' => 'You have unsaved changes. Are you sure you want to leave?',
     ],
+
+    // File upload error messages
+    'file_upload' => [
+        'file_too_large' => 'File "{filename}" is too large ({actualSize}MB). Maximum allowed size is {maxSize}MB. Please choose a smaller file or compress it.',
+        'file_empty' => 'File "{filename}" is empty (0 bytes). Please select a valid file with content.',
+        'file_too_small' => 'File "{filename}" seems unusually small ({size} bytes). Please verify this is a valid file.',
+        'file_no_extension' => 'File "{filename}" has no file extension. Please ensure your file has a valid extension like: {allowedTypes}',
+        'file_type_not_supported' => 'File type "{fileType}" is not supported for "{filename}". Please choose a file with one of these extensions: {allowedTypes}',
+        'file_dangerous_type' => 'File "{filename}" has a potentially dangerous file type ({fileType}) and cannot be uploaded for security reasons.',
+        'file_invalid_name' => 'File "{filename}" has an invalid name. Please rename the file and try again.',
+        'file_name_too_long' => 'File name "{filename}" is too long. Please rename the file to a shorter name.',
+        'file_upload_failed' => 'Upload failed for file "{filename}". Please try again or contact support if the problem persists.',
+        'file_validation_error' => 'Validation error for file "{filename}". Please check the file and try again.',
+        'upload_in_progress' => 'File upload is in progress. Please wait for completion before submitting the form.',
+        'max_files_exceeded' => 'Maximum number of files ({maxFiles}) exceeded. Please remove some files before adding more.',
+        'drag_drop_here' => 'Drag and drop files here or click to select files',
+    ],
 ];

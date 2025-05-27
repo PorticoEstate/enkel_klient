@@ -20,14 +20,41 @@ $(document).ready(function() {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
         console.log('🔄 Initializing nokkelbestilling form with clean architecture...');
         
-        // Initialize FormHandlerCore directly with extensions
+        // Initialize FormHandler using extension loader for WCAG 3.3.4 compliance
         const formElement = document.getElementById('nokkelbestilling');
         if (!formElement) {
             console.error('❌ Form element with ID "nokkelbestilling" not found');
             return;
         }
         
-        // Create core form handler with validation enabled
+        // Use FormExtensionLoader for automatic WCAG 3.3.4 configuration
+        if (typeof formExtensionLoader !== 'undefined') {
+            formExtensionLoader.quickSetup('nokkelbestilling', 'nokkelbestilling').then(handler => {
+                formHandler = handler;
+                console.log('✅ Nokkelbestilling form initialized with clean architecture');
+                console.log('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
+                console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+                
+                // Form-specific setup after FormHandler initialization
+                initializeForm();
+            }).catch(error => {
+                console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+                fallbackToDirectInitialization();
+            });
+        } else {
+            console.warn('⚠️ FormExtensionLoader not available, using direct initialization');
+            fallbackToDirectInitialization();
+        }
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize clean FormHandler:', error);
+        fallbackToDirectInitialization();
+    }
+});
+
+function fallbackToDirectInitialization() {
+    try {
+        // Fallback: Create core form handler directly
         formHandler = new FormHandler({
             formId: 'nokkelbestilling',
             redirectUrl: redirect_action,
@@ -62,7 +89,7 @@ $(document).ready(function() {
         // Fallback to basic form handling
         initializeFallback();
     }
-});
+}
 
 /**
  * Initialize form-specific functionality

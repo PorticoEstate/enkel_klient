@@ -20,33 +20,11 @@ $(document).ready(function() {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
         console.log('🔄 Initializing inspection form with clean architecture...');
         
-        // Initialize FormHandler directly with extensions
-        const formElement = document.getElementById('inspection_1');
-        if (!formElement) {
-            console.error('❌ Form element with ID "inspection_1" not found');
-            return;
-        }
-        
-        // Create core form handler
-        formHandler = new FormHandler({
-            formId: 'inspection_1',
-            redirectUrl: redirect_action,
-            uploadUrl: `${strBaseURL}/inspection_1/upload`,
-            extensions: {
-                validation: true,
-                autoSave: true,
-                fileUpload: true
-            }
-        });
+        // Initialize using formExtensionLoader.quickSetup for automatic WCAG 3.3.4 support
+        formHandler = formExtensionLoader.quickSetup('inspection_1', initializeForm);
         
         console.log('✅ Inspection form initialized with clean architecture');
         console.log('📊 Performance: ~580 lines total vs 1,950+ lines (77% reduction)');
-        console.log('📋 Registered extensions:', Object.keys(formHandler.extensions || {}));
-
-        // Form-specific initialization
-        initializeInspectionForm();
-        
-        console.log('✅ Inspection form initialized with clean architecture');
         
     } catch (error) {
         console.error('❌ Failed to initialize inspection form:', error);
@@ -57,8 +35,9 @@ $(document).ready(function() {
 
 /**
  * Initialize inspection form-specific functionality
+ * Called by formExtensionLoader.quickSetup() after form initialization
  */
-function initializeInspectionForm() {
+function initializeForm() {
     // Make form accessible when JavaScript is loaded
  //   $('#details').attr('aria-hidden', 'true');
 

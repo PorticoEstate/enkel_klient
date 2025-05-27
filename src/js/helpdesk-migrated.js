@@ -20,14 +20,41 @@ $(document).ready(function() {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
         console.log('🔄 Initializing helpdesk form with clean architecture...');
         
-        // Initialize FormHandler directly with extensions
+        // Initialize FormHandler using extension loader for WCAG 3.3.4 compliance
         const formElement = document.getElementById('helpdesk');
         if (!formElement) {
             console.error('❌ Form element with ID "helpdesk" not found');
             return;
         }
         
-        // Create core form handler
+        // Use FormExtensionLoader for automatic WCAG 3.3.4 configuration
+        if (typeof formExtensionLoader !== 'undefined') {
+            formExtensionLoader.quickSetup('helpdesk', 'helpdesk').then(handler => {
+                formHandler = handler;
+                console.log('✅ Helpdesk form initialized with clean architecture');
+                console.log('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
+                console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+                
+                // Form-specific setup after FormHandler initialization
+                setupHelpdeskSpecificFeatures();
+            }).catch(error => {
+                console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+                fallbackToDirectInitialization();
+            });
+        } else {
+            console.warn('⚠️ FormExtensionLoader not available, using direct initialization');
+            fallbackToDirectInitialization();
+        }
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize clean FormHandler, falling back to legacy:', error);
+        fallbackToDirectInitialization();
+    }
+});
+
+function fallbackToDirectInitialization() {
+    try {
+        // Fallback: Create core form handler directly
         formHandler = new FormHandler({
             formId: 'helpdesk',
             redirectUrl: redirect_action,
@@ -38,11 +65,7 @@ $(document).ready(function() {
             }
         });
         
-        console.log('✅ Helpdesk form initialized with clean architecture');
-        console.log('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
-        console.log('📋 Registered extensions:', Object.keys(formHandler.extensions || {}));
-
-        // Form-specific setup after FormHandler initialization
+        console.log('✅ Helpdesk form initialized with fallback method');
         setupHelpdeskSpecificFeatures();
         
     } catch (error) {
@@ -58,7 +81,7 @@ $(document).ready(function() {
             });
         }
     }
-});
+}
 
 /**
  * Setup helpdesk-specific features that aren't handled by extensions

@@ -22,33 +22,11 @@ $(document).ready(function() {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
         console.log('🔄 Initializing invoice request form with clean architecture...');
         
-        // Initialize FormHandler directly with extensions
-        const formElement = document.getElementById('invoicerequest');
-        if (!formElement) {
-            console.error('❌ Form element with ID "invoicerequest" not found');
-            return;
-        }
-        
-        // Create core form handler
-        formHandler = new FormHandler({
-            formId: 'invoicerequest',
-            redirectUrl: redirect_action,
-            uploadUrl: `${strBaseURL}/invoicerequest/upload`,
-            extensions: {
-                validation: true,
-                autoSave: true,
-                fileUpload: true
-            }
-        });
+        // Initialize using formExtensionLoader.quickSetup for automatic WCAG 3.3.4 support
+        formHandler = formExtensionLoader.quickSetup('invoicerequest', initializeForm);
         
         console.log('✅ Invoice request form initialized with clean architecture');
         console.log('📊 Performance: ~620 lines total vs 1,950+ lines (75% reduction)');
-        console.log('📋 Registered extensions:', Object.keys(formHandler.extensions || {}));
-
-        // Form-specific initialization
-        initializeInvoiceForm();
-        
-        console.log('✅ Invoice request form initialized with clean architecture');
         
     } catch (error) {
         console.error('❌ Failed to initialize invoice request form:', error);
@@ -59,8 +37,9 @@ $(document).ready(function() {
 
 /**
  * Initialize invoice form-specific functionality
+ * Called by formExtensionLoader.quickSetup() after form initialization
  */
-function initializeInvoiceForm() {
+function initializeForm() {
     // Initialize datepicker for invoice date
     initializeDatepicker();
     

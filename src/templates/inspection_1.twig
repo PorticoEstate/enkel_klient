@@ -3,6 +3,10 @@
 {% block body %}
 	<script src="{{ base_path }}/vendor/components/jquery/jquery.min.js?n={{ cache_refresh_token }}"></script>
 	
+	<!-- Main Quill library -->
+	<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+	<script src="{{ base_path }}/src/js/quill-textarea.js?n={{ cache_refresh_token }}"></script>
+	
 	<!-- JS translations -->
 	<script>
 		// Create translations object for JavaScript
@@ -52,6 +56,9 @@
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-custom.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
 	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+	<!-- Quill Editor CSS -->
+	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+	<link href="{{ base_path }}/src/css/quill-custom.css?n={{ cache_refresh_token }}" rel="stylesheet">
 	<!-- Common styles moved to src/css/common.css -->
 
 	<div class="container">
@@ -182,7 +189,7 @@
 						<div id="hidden_div" class="form-group mt-2">
 							<label for="merknad">{{ __('remark') }}</label>
 							<small id="merknadHelp" class="form-text text-muted">{{ __('remark_help') }}</small>
-							<textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp" name="values_attribute[5][value]"></textarea>
+							<textarea class="form-control" id="merknad" rows="8" aria-describedby="merknadHelp" name="values_attribute[5][value]" data-quilljs="true"></textarea>
 						</div>
 						{% include 'components/file-upload.twig' with {
 							'required': false

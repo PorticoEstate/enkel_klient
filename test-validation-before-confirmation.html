@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation Before Confirmation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="email"], textarea, select { 
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
+        }
+        textarea { height: 120px; resize: vertical; }
+        button { 
+            background: #007cba; color: white; padding: 12px 24px; 
+            border: none; border-radius: 4px; cursor: pointer; font-size: 16px; 
+        }
+        button:hover { background: #005a87; }
+        .error { color: #d32f2f; font-size: 14px; margin-top: 5px; }
+        .form-summary { 
+            background: #f5f5f5; padding: 20px; border-radius: 4px; margin: 20px 0; 
+            border-left: 4px solid #007cba; 
+        }
+        .form-summary h3 { margin-top: 0; color: #007cba; }
+        .form-summary .summary-field { margin-bottom: 10px; }
+        .form-summary .summary-label { font-weight: bold; }
+        .form-summary .summary-value { margin-left: 10px; }
+        .hidden { display: none; }
+        .test-status { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 15px 0; 
+            border-left: 4px solid #007cba; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Validation Before Confirmation Test</h1>
+    <p>This test verifies that form validation runs BEFORE the confirmation dialog appears.</p>
+
+    <div class="test-status">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Try submitting the form <strong>without</strong> filling in required fields</li>
+            <li>Validation errors should appear (NOT the confirmation dialog)</li>
+            <li>Fill in required fields and submit again</li>
+            <li>NOW the confirmation summary should appear</li>
+        </ol>
+    </div>
+
+    <form id="inspection_1" data-form-type="inspection_1" data-form-summary-on-submit="true">
+        <div class="form-group">
+            <label for="property_address">Property Address (required):</label>
+            <input type="text" id="property_address" name="property_address" required aria-describedby="property_address-error">
+            <div id="property_address-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="contact_name">Contact Name (required):</label>
+            <input type="text" id="contact_name" name="contact_name" required aria-describedby="contact_name-error">
+            <div id="contact_name-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="contact_email">Contact Email (required):</label>
+            <input type="email" id="contact_email" name="contact_email" required aria-describedby="contact_email-error">
+            <div id="contact_email-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="inspection_type">Inspection Type (required):</label>
+            <select id="inspection_type" name="inspection_type" required aria-describedby="inspection_type-error">
+                <option value="">Select inspection type...</option>
+                <option value="pre_purchase">Pre-Purchase Inspection</option>
+                <option value="pre_sale">Pre-Sale Inspection</option>
+                <option value="maintenance">Maintenance Inspection</option>
+                <option value="insurance">Insurance Inspection</option>
+            </select>
+            <div id="inspection_type-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="merknad">Remarks:</label>
+            <textarea id="merknad" name="values_attribute[5][value]" aria-describedby="merknad-error" 
+                      placeholder="Enter any special requirements or comments..."></textarea>
+            <div id="merknad-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <button id="submit" type="submit">Submit Inspection Request</button>
+    </form>
+
+    <!-- Form summary will be inserted here -->
+    <div id="form-summary-container" class="hidden"></div>
+
+    <!-- Load the required scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Mock the global variables
+        window.strBaseURL = '';
+        window.formConfigs = {
+            'inspection_1': {
+                form_summary_on_submit: true,
+                confirmation_dialog_enabled: true,
+                auto_save_enabled: false,
+                change_tracking_enabled: false
+            }
+        };
+    </script>
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/form-extension-loader.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    <script src="src/js/extensions/form-confirmation.js"></script>
+
+    <script>
+        // Debug logging
+        console.log('=== Validation Before Confirmation Test ===');
+        let testResults = [];
+        
+        // Initialize the form
+        formExtensionLoader.quickSetup('inspection_1', 'inspection_1').then(handler => {
+            console.log('✅ Form initialized with extensions:', Array.from(handler.extensions.keys()));
+            
+            // Add test logging to see the order of events
+            handler.addHook('beforeSubmit', (formData) => {
+                console.log('🔍 VALIDATION beforeSubmit hook called');
+                testResults.push('Validation hook called');
+                return true; // Allow submission for testing
+            });
+            
+            // Override form submission for testing
+            document.getElementById('inspection_1').addEventListener('submit', function(e) {
+                console.log('📝 Form submit event triggered');
+                testResults.push('Form submit event');
+                
+                // Prevent actual submission for testing
+                setTimeout(() => {
+                    e.preventDefault();
+                    console.log('🎯 Test Results Order:', testResults);
+                    alert('Test completed! Check console for event order.');
+                }, 100);
+            });
+            
+        }).catch(error => {
+            console.error('❌ Failed to initialize form:', error);
+        });
+
+        // Log when validation errors appear
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorDivs = document.querySelectorAll('.error');
+            errorDivs.forEach(div => {
+                const observer = new MutationObserver(mutations => {
+                    mutations.forEach(mutation => {
+                        if (mutation.type === 'childList' && div.textContent.trim()) {
+                            console.log('⚠️ Validation error displayed:', div.textContent);
+                            testResults.push(`Validation error: ${div.textContent}`);
+                        }
+                    });
+                });
+                observer.observe(div, { childList: true, subtree: true });
+            });
+        });
+    </script>
+</body>
+</html>

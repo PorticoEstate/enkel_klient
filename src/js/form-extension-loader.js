@@ -168,6 +168,53 @@ class FormExtensionLoader {
           announceErrors: true,
           markRequired: true
         }
+      },
+
+      inspection_1: {
+        fileUpload: {
+          required: true,
+          allowedFileTypes: ['.pdf', '.doc', '.docx', '.jpg', '.png'],
+          maxFileSizeMB: 10
+        },
+        validation: {
+          realTimeValidation: true,
+          wcagCompliant: true
+        },
+        autoSave: {
+          interval: 30000,
+          storageKey: 'inspection_1_autosave'
+        },
+        accessibility: {
+          announceErrors: true,
+          markRequired: true
+        }
+      },
+
+      invoicerequest: {
+        fileUpload: {
+          required: true,
+          allowedFileTypes: ['.pdf', '.doc', '.docx', '.xls', '.xlsx'],
+          maxFileSizeMB: 15
+        },
+        validation: {
+          realTimeValidation: true,
+          wcagCompliant: true
+        },
+        accessibility: {
+          announceErrors: true,
+          markRequired: true
+        }
+      },
+
+      nokkelbestilling: {
+        validation: {
+          realTimeValidation: true,
+          wcagCompliant: true
+        },
+        accessibility: {
+          announceErrors: true,
+          markRequired: true
+        }
       }
     };
 

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Form Validation Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-container { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .console-output { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 1rem; 
+            margin-top: 1rem; 
+            font-family: monospace; 
+            white-space: pre-wrap; 
+            max-height: 400px; 
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .is-invalid { border-left: 4px solid #dc3545; }
+        .is-valid { border-left: 4px solid #28a745; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Simple Form Validation Test</h1>
+        <p>Testing form validation step by step.</p>
+        
+        <form id="test-form" novalidate>
+            <div class="form-group mb-3">
+                <label for="name" class="form-label">Name (Required) *</label>
+                <input type="text" id="name" name="name" class="form-control" required />
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="email" class="form-label">Email (Required) *</label>
+                <input type="email" id="email" name="email" class="form-control" required />
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit Form</button>
+            <button type="button" class="btn btn-secondary" id="validate-now">Validate Now</button>
+        </form>
+        
+        <div id="console-output" class="console-output">Starting simple test...\n</div>
+    </div>
+
+    <!-- Load dependencies -->
+    <script src="vendor/components/jquery/jquery.min.js"></script>
+    <script>
+        var strBaseURL = window.location.origin;
+        var translations = {
+            form_validation_errors: "Please fix the following errors:",
+            invalid_email: "Please enter a valid email address",
+            field_required: "This field is required"
+        };
+    </script>
+    
+    <!-- Load form core -->
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    
+    <script>
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `${timestamp}: ${message}`;
+            const consoleOutput = document.getElementById('console-output');
+            consoleOutput.textContent += logMessage + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            console.log(message);
+        }
+
+        $(document).ready(function() {
+            log('🔄 Starting simple validation test...');
+            
+            // Register validation extension manually
+            FormHandler.extensions = FormHandler.extensions || {};
+            FormHandler.extensions.validation = FormValidationExtension;
+            log('✅ Validation extension registered');
+            
+            // Create form handler with validation
+            const formHandler = new FormHandler({
+                formId: 'test-form',
+                redirectUrl: '/test',
+                extensions: {
+                    validation: {
+                        realTimeValidation: true,
+                        wcagCompliant: true
+                    }
+                }
+            });
+            
+            log('✅ FormHandler created');
+            log('📋 Extensions loaded: ' + Array.from(formHandler.extensions.keys()).join(', '));
+            
+            // Test validation manually
+            document.getElementById('validate-now').addEventListener('click', function() {
+                log('🧪 Testing validation manually...');
+                
+                const validationExt = formHandler.getExtension('validation');
+                if (validationExt) {
+                    log('✅ Validation extension found');
+                    
+                    const isValid = validationExt.beforeSubmit();
+                    log('📋 Validation result: ' + (isValid ? 'VALID' : 'INVALID'));
+                    
+                    if (!isValid) {
+                        const errors = validationExt.getErrors();
+                        log('❌ Errors found: ' + JSON.stringify(errors));
+                    }
+                } else {
+                    log('❌ Validation extension not found');
+                }
+            });
+            
+            // Override the submit to see what happens
+            formHandler.$form.off('submit').on('submit', function(e) {
+                e.preventDefault();
+                log('🔄 Form submit intercepted');
+                
+                const isValid = formHandler.executeHook('beforeSubmit');
+                log('📋 Hook execution result: ' + isValid);
+                
+                if (!isValid) {
+                    log('❌ Validation failed - form submission prevented');
+                } else {
+                    log('✅ Validation passed - would submit form');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

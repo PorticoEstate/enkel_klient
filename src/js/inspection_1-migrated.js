@@ -21,10 +21,18 @@ $(document).ready(function() {
         console.log('🔄 Initializing inspection form with clean architecture...');
         
         // Initialize using formExtensionLoader.quickSetup for automatic WCAG 3.3.4 support
-        formHandler = formExtensionLoader.quickSetup('inspection_1', initializeForm);
-        
-        console.log('✅ Inspection form initialized with clean architecture');
-        console.log('📊 Performance: ~580 lines total vs 1,950+ lines (77% reduction)');
+        formExtensionLoader.quickSetup('inspection_1', 'inspection_1').then(handler => {
+            formHandler = handler;
+            console.log('✅ Inspection form initialized with clean architecture');
+            console.log('📊 Performance: ~580 lines total vs 1,950+ lines (77% reduction)');
+            console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+            
+            // Form-specific setup after FormHandler initialization
+            initializeForm();
+        }).catch(error => {
+            console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+            initializeFallback();
+        });
         
     } catch (error) {
         console.error('❌ Failed to initialize inspection form:', error);
@@ -43,6 +51,9 @@ function initializeForm() {
 
     // Initialize dynamic form sections
     initializeDynamicSections();
+
+    // Initialize rich text editor (Quill)
+    initializeQuillEditor();
 
     // Add form-specific validation hooks
     if (formHandler && formHandler.addHook) {
@@ -226,6 +237,40 @@ function updateValidationRules() {
 }
 
 /**
+ * Initialize rich text editor (Quill) if present
+ * Enhanced with accessibility features
+ */
+function initializeQuillEditor() {
+    const remarkField = document.getElementById('merknad');
+    if (!remarkField) return;
+    
+    // Check if Quill is available
+    if (typeof Quill !== 'undefined') {
+        console.log('✅ Quill library is available');
+        
+        // Wait a bit for quill-textarea.js to initialize, then check
+        setTimeout(() => {
+            const quillContainer = remarkField.parentElement.querySelector('.ql-editor');
+            if (quillContainer) {
+                console.log('✅ Quill editor initialized for merknad field');
+                
+                // Enhance accessibility for the Quill editor
+                quillContainer.setAttribute('aria-label', 'Inspection remark (rich text editor)');
+                quillContainer.setAttribute('role', 'textbox');
+                quillContainer.setAttribute('aria-multiline', 'true');
+                
+                // Set global flag to indicate Quill is ready
+                window.quillTextareaSetup = true;
+            } else {
+                console.log('⚠️ Quill editor not found, using plain textarea');
+            }
+        }, 500);
+    } else {
+        console.log('ℹ️ Quill library not available, using plain textarea');
+    }
+}
+
+/**
  * Inspection-specific validation
  * @param {FormData} formData The form data to validate
  * @returns {boolean} True if validation passes
@@ -241,10 +286,17 @@ function validateInspectionSpecific(formData) {
         isValid = false;
     }
 
-    // Validate description length
-    const description = formData.get('description');
-    if (description && description.length < 10) {
-        errors.push('Please provide a more detailed description (at least 10 characters).');
+    // Validate remark/description length (enhanced for Quill content)
+    let remarkText = formData.get('values_attribute[5][value]') || '';
+    
+    // If Quill is present, get the plain text content
+    const quillEditor = document.querySelector('#merknad + .ql-container .ql-editor');
+    if (quillEditor) {
+        remarkText = quillEditor.textContent || quillEditor.innerText || '';
+    }
+    
+    if (remarkText && remarkText.trim().length > 0 && remarkText.trim().length < 10) {
+        errors.push('Please provide a more detailed remark (at least 10 characters).');
         isValid = false;
     }
 

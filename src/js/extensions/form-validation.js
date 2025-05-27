@@ -391,12 +391,11 @@ if (typeof FormValidationExtension === 'undefined') {
 }
 
 // Register extension
-  // Register extension (only if not already registered)
-  if (typeof FormHandler !== 'undefined') {
-    FormHandler.registerExtension = FormHandler.registerExtension || function(name, extensionClass) {
-      this.extensions = this.extensions || {};
-      this.extensions[name] = extensionClass;
-    };
-    FormHandler.registerExtension('validation', FormValidationExtension);
-  }
+if (typeof FormHandler !== 'undefined') {
+  FormHandler.registerExtension = FormHandler.registerExtension || function(name, extensionClass) {
+    this.extensions = this.extensions || {};
+    this.extensions[name] = extensionClass;
+  };
+  FormHandler.registerExtension('validation', FormValidationExtension);
+}
 }

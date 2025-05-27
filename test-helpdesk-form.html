@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helpdesk Form Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="email"], textarea, select { 
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
+        }
+        textarea { height: 120px; resize: vertical; }
+        button { 
+            background: #007cba; color: white; padding: 12px 24px; 
+            border: none; border-radius: 4px; cursor: pointer; font-size: 16px; 
+        }
+        button:hover { background: #005a87; }
+        .error { color: #d32f2f; font-size: 14px; margin-top: 5px; }
+        .form-summary { 
+            background: #f5f5f5; padding: 20px; border-radius: 4px; margin: 20px 0; 
+            border-left: 4px solid #007cba; 
+        }
+        .form-summary h3 { margin-top: 0; color: #007cba; }
+        .form-summary .summary-field { margin-bottom: 10px; }
+        .form-summary .summary-label { font-weight: bold; }
+        .form-summary .summary-value { margin-left: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Helpdesk Form Test</h1>
+    <p>Testing the migrated helpdesk form with validation and confirmation summary.</p>
+
+    <form id="helpdeskForm" data-form-type="helpdesk" data-form-summary-on-submit="true">
+        <div class="form-group">
+            <label for="navn">Name (required):</label>
+            <input type="text" id="navn" name="navn" required aria-describedby="navn-error">
+            <div id="navn-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="epost">Email (required):</label>
+            <input type="email" id="epost" name="epost" required aria-describedby="epost-error">
+            <div id="epost-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="telefon">Phone:</label>
+            <input type="text" id="telefon" name="telefon" aria-describedby="telefon-error">
+            <div id="telefon-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="kategori">Category (required):</label>
+            <select id="kategori" name="kategori" required aria-describedby="kategori-error">
+                <option value="">Select a category...</option>
+                <option value="technical">Technical Support</option>
+                <option value="billing">Billing</option>
+                <option value="general">General Inquiry</option>
+            </select>
+            <div id="kategori-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="prioritet">Priority:</label>
+            <select id="prioritet" name="prioritet" aria-describedby="prioritet-error">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+            </select>
+            <div id="prioritet-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="beskrivelse">Description (required):</label>
+            <textarea id="beskrivelse" name="beskrivelse" required aria-describedby="beskrivelse-error" 
+                      placeholder="Please describe your issue in detail..."></textarea>
+            <div id="beskrivelse-error" class="error" aria-live="polite"></div>
+        </div>
+
+        <button type="submit">Submit Helpdesk Request</button>
+    </form>
+
+    <!-- Form summary will be inserted here -->
+    <div id="form-summary-container" class="hidden"></div>
+
+    <!-- Load the required scripts -->
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/form-extension-loader.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    <script src="src/js/extensions/form-confirmation.js"></script>
+    <script src="src/js/helpdesk-migrated.js"></script>
+
+    <script>
+        // Debug logging
+        console.log('=== Helpdesk Form Test Debug ===');
+        console.log('FormHandler available:', typeof FormHandler !== 'undefined');
+        console.log('FormExtensionLoader available:', typeof FormExtensionLoader !== 'undefined');
+        console.log('FormValidationExtension available:', typeof FormValidationExtension !== 'undefined');
+        console.log('FormConfirmationExtension available:', typeof FormConfirmationExtension !== 'undefined');
+        
+        // Test form submission handling
+        document.getElementById('helpdeskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Form submission intercepted for testing');
+            
+            // Simulate successful submission after validation
+            setTimeout(() => {
+                console.log('Simulating successful form submission');
+                alert('Form submitted successfully! (This is a test)');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

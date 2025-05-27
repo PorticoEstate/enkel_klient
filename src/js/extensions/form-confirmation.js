@@ -27,35 +27,26 @@ if (typeof FormConfirmationExtension === 'undefined') {
   }
   
   setupConfirmationFlow() {
-    // Override default submission
-    this.$form.off('submit');
-    this.$form.find('[type="submit"]').on('click', (e) => {
-      e.preventDefault();
-      this.handleConfirmationSubmit();
+    // Use beforeSubmit hook instead of intercepting click
+    // This allows validation to run first
+    this.formHandler.addHook('beforeSubmit', (formData) => {
+      return this.handleConfirmationBeforeSubmit(formData);
     });
   }
   
-  handleConfirmationSubmit() {
-    // Basic validation first
-    if (!this.validateForm()) {
-      return false;
-    }
-    
+  handleConfirmationBeforeSubmit(formData) {
+    // This is called AFTER validation passes
     this.formData = this.collectFormData();
     
     if (this.options.showSummary) {
       this.showFormSummary();
+      return false; // Prevent normal submission, we'll handle it in the modal
     } else if (this.options.showDialog) {
       this.showConfirmationDialog();
-    } else {
-      this.formHandler.submitForm();
+      return false; // Prevent normal submission, we'll handle it in the dialog
     }
-  }
-  
-  validateForm() {
-    if (typeof validateAllFields === 'function') {
-      return validateAllFields(this.$form);
-    }
+    
+    // If no confirmation needed, allow normal submission
     return true;
   }
   
@@ -261,4 +252,4 @@ if (typeof FormHandler !== 'undefined') {
 }
 
 window.FormConfirmationExtension = FormConfirmationExtension;
-}
+} // Close the initial if statement

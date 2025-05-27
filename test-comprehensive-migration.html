@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormHandler Migration - Comprehensive Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 1200px; 
+            margin: 20px auto; 
+            padding: 20px; 
+            background: #f5f5f5; 
+        }
+        .test-section { 
+            background: white; 
+            margin: 20px 0; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .test-header { 
+            color: #007cba; 
+            border-bottom: 2px solid #007cba; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+        }
+        .status { 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin: 10px 0; 
+            font-weight: bold; 
+        }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="email"], textarea, select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            max-width: 300px; 
+        }
+        button { 
+            background: #007cba; 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin: 5px; 
+        }
+        button:hover { background: #005a87; }
+        .error { color: #d32f2f; font-size: 14px; margin-top: 5px; }
+        .form-summary { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 15px 0; 
+            border-left: 4px solid #007cba; 
+        }
+        .form-summary h4 { margin-top: 0; color: #007cba; }
+        .hidden { display: none; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+            font-size: 12px; 
+        }
+    </style>
+</head>
+<body>
+    <h1>FormHandler Migration - Comprehensive Test</h1>
+    <p>Testing all migrated forms and validating the new extension-based architecture.</p>
+
+    <!-- System Status Section -->
+    <div class="test-section">
+        <h2 class="test-header">System Status Check</h2>
+        <div id="system-status">
+            <div class="status warning">Checking system components...</div>
+        </div>
+        <pre id="system-debug"></pre>
+    </div>
+
+    <!-- Quick Validation Test -->
+    <div class="test-section">
+        <h2 class="test-header">Quick Validation Test</h2>
+        <form id="quickTestForm" data-form-type="test" data-form-summary-on-submit="true">
+            <div class="form-group">
+                <label for="test_name">Name (required):</label>
+                <input type="text" id="test_name" name="test_name" required aria-describedby="test_name-error">
+                <div id="test_name-error" class="error" aria-live="polite"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="test_email">Email (required):</label>
+                <input type="email" id="test_email" name="test_email" required aria-describedby="test_email-error">
+                <div id="test_email-error" class="error" aria-live="polite"></div>
+            </div>
+
+            <button type="submit">Test Submit</button>
+            <button type="button" onclick="clearTestForm()">Clear</button>
+        </form>
+        
+        <div id="test-form-summary-container" class="hidden"></div>
+        <div id="test-status"></div>
+    </div>
+
+    <!-- Extension Registration Test -->
+    <div class="test-section">
+        <h2 class="test-header">Extension Registration Test</h2>
+        <button onclick="testExtensionRegistration()">Test Extension Registration</button>
+        <div id="extension-test-results"></div>
+    </div>
+
+    <!-- Form Type Tests -->
+    <div class="test-section">
+        <h2 class="test-header">Form Type Availability Test</h2>
+        <button onclick="testFormTypes()">Test All Form Types</button>
+        <div id="form-type-results"></div>
+    </div>
+
+    <!-- Load the required scripts -->
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/form-extension-loader.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    <script src="src/js/extensions/form-confirmation.js"></script>
+
+    <script>
+        // Global test state
+        let testResults = {
+            systemCheck: false,
+            validationTest: false,
+            extensionTest: false,
+            formTypeTest: false
+        };
+
+        // System status check
+        function checkSystemStatus() {
+            const statusDiv = document.getElementById('system-status');
+            const debugDiv = document.getElementById('system-debug');
+            
+            let status = [];
+            let allGood = true;
+
+            // Check core components
+            const checks = [
+                { name: 'FormHandler', obj: typeof FormHandler !== 'undefined' },
+                { name: 'FormExtensionLoader', obj: typeof FormExtensionLoader !== 'undefined' },
+                { name: 'FormValidationExtension', obj: typeof FormValidationExtension !== 'undefined' },
+                { name: 'FormConfirmationExtension', obj: typeof FormConfirmationExtension !== 'undefined' }
+            ];
+
+            checks.forEach(check => {
+                if (check.obj) {
+                    status.push(`✅ ${check.name}: Available`);
+                } else {
+                    status.push(`❌ ${check.name}: Missing`);
+                    allGood = false;
+                }
+            });
+
+            // Check extension loader instance
+            try {
+                if (typeof formExtensionLoader !== 'undefined') {
+                    status.push(`✅ formExtensionLoader: Available`);
+                    
+                    // Check registered extensions
+                    const registeredExtensions = formExtensionLoader.getRegisteredExtensions ? 
+                        formExtensionLoader.getRegisteredExtensions() : 'Method not available';
+                    status.push(`📋 Registered Extensions: ${JSON.stringify(registeredExtensions)}`);
+                } else {
+                    status.push(`❌ formExtensionLoader: Not instantiated`);
+                    allGood = false;
+                }
+            } catch (error) {
+                status.push(`❌ Extension Loader Error: ${error.message}`);
+                allGood = false;
+            }
+
+            statusDiv.innerHTML = allGood ? 
+                '<div class="status success">✅ All system components loaded successfully!</div>' :
+                '<div class="status error">❌ Some system components are missing or failed to load.</div>';
+
+            debugDiv.textContent = status.join('\n');
+            testResults.systemCheck = allGood;
+            return allGood;
+        }
+
+        // Test extension registration
+        function testExtensionRegistration() {
+            const resultsDiv = document.getElementById('extension-test-results');
+            
+            try {
+                // Test if we can access extension loader methods
+                if (!formExtensionLoader) {
+                    throw new Error('formExtensionLoader not available');
+                }
+
+                // Test quickSetup method
+                formExtensionLoader.quickSetup('test', 'test').then(handler => {
+                    resultsDiv.innerHTML = '<div class="status success">✅ Extension registration working! Handler created successfully.</div>';
+                    testResults.extensionTest = true;
+                }).catch(error => {
+                    resultsDiv.innerHTML = `<div class="status error">❌ Extension registration failed: ${error.message}</div>`;
+                    testResults.extensionTest = false;
+                });
+
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="status error">❌ Extension test failed: ${error.message}</div>`;
+                testResults.extensionTest = false;
+            }
+        }
+
+        // Test form types
+        function testFormTypes() {
+            const resultsDiv = document.getElementById('form-type-results');
+            const formTypes = ['helpdesk', 'nokkelbestilling', 'inspection_1', 'invoicerequest'];
+            let results = [];
+
+            formTypes.forEach(formType => {
+                try {
+                    // Test if quickSetup works for each form type
+                    formExtensionLoader.quickSetup(formType, formType).then(handler => {
+                        results.push(`✅ ${formType}: Available`);
+                        if (results.length === formTypes.length) {
+                            displayFormTypeResults(results);
+                        }
+                    }).catch(error => {
+                        results.push(`❌ ${formType}: ${error.message}`);
+                        if (results.length === formTypes.length) {
+                            displayFormTypeResults(results);
+                        }
+                    });
+                } catch (error) {
+                    results.push(`❌ ${formType}: ${error.message}`);
+                }
+            });
+        }
+
+        function displayFormTypeResults(results) {
+            const resultsDiv = document.getElementById('form-type-results');
+            const allGood = results.every(r => r.startsWith('✅'));
+            
+            resultsDiv.innerHTML = `
+                <div class="status ${allGood ? 'success' : 'error'}">
+                    ${allGood ? '✅ All form types available!' : '❌ Some form types have issues.'}
+                </div>
+                <pre>${results.join('\n')}</pre>
+            `;
+            testResults.formTypeTest = allGood;
+        }
+
+        // Clear test form
+        function clearTestForm() {
+            document.getElementById('quickTestForm').reset();
+            document.getElementById('test-form-summary-container').classList.add('hidden');
+            document.querySelectorAll('.error').forEach(el => el.textContent = '');
+        }
+
+        // Initialize quick test form
+        function initializeQuickTest() {
+            const form = document.getElementById('quickTestForm');
+            
+            // Set up quick test form with validation
+            formExtensionLoader.quickSetup('test', 'test').then(handler => {
+                console.log('Quick test form initialized successfully');
+                testResults.validationTest = true;
+                document.getElementById('test-status').innerHTML = 
+                    '<div class="status success">✅ Quick test form validation enabled!</div>';
+                
+                // Override form submission for testing
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    setTimeout(() => {
+                        document.getElementById('test-status').innerHTML += 
+                            '<div class="status success">✅ Form validation and submission test completed!</div>';
+                    }, 500);
+                });
+                
+            }).catch(error => {
+                console.error('Quick test form initialization failed:', error);
+                testResults.validationTest = false;
+                document.getElementById('test-status').innerHTML = 
+                    `<div class="status error">❌ Quick test form initialization failed: ${error.message}</div>`;
+            });
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== FormHandler Migration Comprehensive Test ===');
+            
+            setTimeout(() => {
+                checkSystemStatus();
+                initializeQuickTest();
+            }, 100);
+        });
+
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error caught:', e.error);
+            document.getElementById('system-status').innerHTML += 
+                `<div class="status error">❌ JavaScript Error: ${e.error.message}</div>`;
+        });
+    </script>
+</body>
+</html>

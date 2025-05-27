@@ -23,10 +23,18 @@ $(document).ready(function() {
         console.log('🔄 Initializing invoice request form with clean architecture...');
         
         // Initialize using formExtensionLoader.quickSetup for automatic WCAG 3.3.4 support
-        formHandler = formExtensionLoader.quickSetup('invoicerequest', initializeForm);
-        
-        console.log('✅ Invoice request form initialized with clean architecture');
-        console.log('📊 Performance: ~620 lines total vs 1,950+ lines (75% reduction)');
+        formExtensionLoader.quickSetup('invoicerequest', 'invoicerequest').then(handler => {
+            formHandler = handler;
+            console.log('✅ Invoice request form initialized with clean architecture');
+            console.log('📊 Performance: ~620 lines total vs 1,950+ lines (75% reduction)');
+            console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+            
+            // Form-specific setup after FormHandler initialization
+            initializeForm();
+        }).catch(error => {
+            console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+            initializeFallback();
+        });
         
     } catch (error) {
         console.error('❌ Failed to initialize invoice request form:', error);

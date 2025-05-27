@@ -206,7 +206,7 @@ class InvoicerequestController extends BaseFormController
 
         // Get config
         $config = $this->twig->getEnvironment()->getGlobals()['config'];
-        $enable_fileupload = $config['invoicerequest']['enable_fileupload'] ?? 0;
+        $enable_fileupload = (int)($config['invoicerequest']['enable_fileupload'] ?? 0);
 
         // Generate and set CSRF token (reuse existing if available)
         $rand = $this->getCsrfToken('invoicerequest');

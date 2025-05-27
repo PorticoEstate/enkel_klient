@@ -296,6 +296,12 @@ class FormExtensionLoader {
         config.extensions.autoSave.storageKey = `${formId}_autosave`;
       }
 
+      // File upload configuration
+      if (formConfig.enable_fileupload === true) {
+        console.log(`✅ Enabling file upload for ${formId}`);
+        config.extensions.fileUpload = config.extensions.fileUpload || {};
+      }
+
       console.log(`📋 Final extension configuration for ${formId}:`, config.extensions);
     } else {
       console.log(`⚠️ No form configuration found for ${formId} in window.formConfigs`);

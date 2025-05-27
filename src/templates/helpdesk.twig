@@ -217,7 +217,8 @@ var schema = 'helpdesk';
 		
 		{% if enable_fileupload == 1 %}
 			<!-- File upload dependencies for extension -->
-			<script src="{{ base_path }}/src/js/jquery-ui.min.js?n={{ cache_refresh_token }}"></script>
+			<!-- jQuery UI Core and Widget Factory - CDN version for compatibility -->
+			<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
 			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
 			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
 			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>

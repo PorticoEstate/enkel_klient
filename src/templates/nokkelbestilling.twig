@@ -44,7 +44,8 @@
 			form_summary_on_submit: {{ config.nokkelbestilling.form_summary_on_submit|default(false) ? 'true' : 'false' }},
 			confirmation_dialog_enabled: {{ config.nokkelbestilling.confirmation_dialog_enabled|default(false) ? 'true' : 'false' }},
 			auto_save_enabled: {{ config.nokkelbestilling.auto_save_enabled|default(true) ? 'true' : 'false' }},
-			change_tracking_enabled: {{ config.nokkelbestilling.change_tracking_enabled|default(true) ? 'true' : 'false' }}
+			change_tracking_enabled: {{ config.nokkelbestilling.change_tracking_enabled|default(true) ? 'true' : 'false' }},
+			enable_fileupload: {{ enable_fileupload == 1 ? 'true' : 'false' }}
 		};
 		console.log("Form configuration for nokkelbestilling:", window.formConfigs['nokkelbestilling']);
 	</script>
@@ -52,10 +53,11 @@
 	<!-- Theme included stylesheets -->
 	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 	<link href="{{ base_path }}/src/css/quill-custom.css?n={{ cache_refresh_token }}" rel="stylesheet">
-	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
-	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
-	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-custom.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
-	<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+	{% if enable_fileupload == 1 %}
+		<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+		<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-ui.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+		<link href="{{ base_path }}/src/js/file-upload/css/jquery.fileupload-custom.css?n={{ cache_refresh_token }}" type="text/css" rel="stylesheet">
+	{% endif %}
 
 
 	<!-- Common styles moved to src/css/common.css -->
@@ -252,13 +254,16 @@ function updateScreenReaderStatus(message) {
 		<script src="{{ base_path }}/src/js/extensions/form-autosave.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/extensions/form-confirmation.js?n={{ cache_refresh_token }}"></script>
 		
-		<!-- File upload dependencies (conditional) -->
-		<script src="{{ base_path }}/src/js/jquery-ui.min.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
-		<!-- File upload extension -->
-		<script src="{{ base_path }}/src/js/extensions/file-upload.js?n={{ cache_refresh_token }}"></script>
+		<!-- jQuery UI Core and Widget Factory - CDN version for compatibility -->
+		<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
+		
+		{% if enable_fileupload == 1 %}
+			<!-- File upload dependencies and extension -->
+			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
+			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
+			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
+			<script src="{{ base_path }}/src/js/extensions/file-upload.js?n={{ cache_refresh_token }}"></script>
+		{% endif %}
 		
 		<!-- Location and autocomplete functionality -->
 		<script src="{{ base_path }}/src/js/autocomplete/autoComplete.js?n={{ cache_refresh_token }}"></script>

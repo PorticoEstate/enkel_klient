@@ -74,7 +74,7 @@ class NokkelbestillingController extends BaseFormController
 
 		// Get config from Twig globals
 		$config = $this->twig->getEnvironment()->getGlobals()['config'];
-		$enable_fileupload = $config['nokkelbestilling']['enable_fileupload'] ?? 0;
+		$enable_fileupload = (int)($config['nokkelbestilling']['enable_fileupload'] ?? 0);
 
 		// Generate and set CSRF token (reuse existing if available)
 		$rand = $this->getCsrfToken('nokkelbestilling');

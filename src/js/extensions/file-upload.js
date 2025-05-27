@@ -154,6 +154,17 @@ if (typeof FileUploadExtension === 'undefined') {
     
     files.forEach((file, index) => {
       console.log(`FileUploadExtension: Validating file ${file.name} (${file.size} bytes)`);
+      
+      // Check for duplicates first
+      if (this.isDuplicateFile(file)) {
+        console.log(`FileUploadExtension: File ${file.name} is a duplicate, skipping`);
+        const message = this.getTranslation('file_upload.file_duplicate', 'File "{filename}" is already in the upload queue. Please select a different file or remove the existing one first.')
+          .replace('{filename}', `<strong>${file.name}</strong>`);
+        this.showError(`⚠️ ${message}`);
+        return; // Skip this file
+      }
+      
+      // Continue with validation
       if (this.validateFile(file)) {
         console.log(`FileUploadExtension: File ${file.name} passed validation, adding to queue`);
         this.addFileToQueue(file, data);
@@ -244,6 +255,27 @@ if (typeof FileUploadExtension === 'undefined') {
     
     console.log(`FileUploadExtension: File ${file.name} passed validation`);
     return true;
+  }
+  
+  isDuplicateFile(file) {
+    // Check if a file with the same name and size is already in the queue
+    const existingFiles = this.$form.find('.file-item');
+    
+    for (let i = 0; i < existingFiles.length; i++) {
+      const existingItem = $(existingFiles[i]);
+      const existingFileName = existingItem.find('.file-name').text().trim();
+      
+      // For more robust duplicate detection, we could also compare file sizes
+      // by extracting the size from the .file-size element, but name comparison
+      // is usually sufficient for user experience
+      if (existingFileName === file.name) {
+        console.log(`FileUploadExtension: Duplicate file detected: ${file.name}`);
+        return true;
+      }
+    }
+    
+    console.log(`FileUploadExtension: File ${file.name} is not a duplicate`);
+    return false;
   }
   
   addFileToQueue(file, data) {
@@ -339,10 +371,10 @@ if (typeof FileUploadExtension === 'undefined') {
         flashError.attr('tabindex', '-1').focus();
       }, 300);
       
-      // Auto-remove after 3 seconds
+      // Auto-remove after 5 seconds
       setTimeout(() => {
         flashError.fadeOut(300, () => flashError.remove());
-      }, 3000);
+      }, 5000);
     } else {
       console.warn('FileUploadExtension: Drop area not found for error display');
     }

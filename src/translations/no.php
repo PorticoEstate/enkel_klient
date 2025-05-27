@@ -246,6 +246,7 @@ return [
 
     // File upload error messages
     'file_upload' => [
+        'file_upload_error' => 'Filopplastingsfeil',
         'file_too_large' => 'Filen "{filename}" er for stor ({actualSize}MB). Maksimal tillatt størrelse er {maxSize}MB. Vennligst velg en mindre fil eller komprimer den.',
         'file_empty' => 'Filen "{filename}" er tom (0 bytes). Vennligst velg en gyldig fil med innhold.',
         'file_too_small' => 'Filen "{filename}" virker uvanlig liten ({size} bytes). Vennligst kontroller at dette er en gyldig fil.',
@@ -258,6 +259,7 @@ return [
         'file_validation_error' => 'Valideringsfeil for filen "{filename}". Vennligst kontroller filen og prøv igjen.',
         'upload_in_progress' => 'Filopplasting pågår. Vennligst vent til den er ferdig før du sender inn skjemaet.',
         'max_files_exceeded' => 'Maksimalt antall filer ({maxFiles}) overskredet. Vennligst fjern noen filer før du legger til flere.',
+        'file_duplicate' => 'Filen "{filename}" er allerede i opplastingskøen. Vennligst velg en annen fil eller fjern den eksisterende først.',
         'drag_drop_here' => 'Dra og slipp filer her eller klikk for å velge filer',
     ],
 

@@ -248,6 +248,7 @@ return [
 
     // File upload error messages
     'file_upload' => [
+        'file_upload_error' => 'File Upload Error',
         'file_too_large' => 'File "{filename}" is too large ({actualSize}MB). Maximum allowed size is {maxSize}MB. Please choose a smaller file or compress it.',
         'file_empty' => 'File "{filename}" is empty (0 bytes). Please select a valid file with content.',
         'file_too_small' => 'File "{filename}" seems unusually small ({size} bytes). Please verify this is a valid file.',
@@ -260,6 +261,7 @@ return [
         'file_validation_error' => 'Validation error for file "{filename}". Please check the file and try again.',
         'upload_in_progress' => 'File upload is in progress. Please wait for completion before submitting the form.',
         'max_files_exceeded' => 'Maximum number of files ({maxFiles}) exceeded. Please remove some files before adding more.',
+        'file_duplicate' => 'File "{filename}" is already in the upload queue. Please select a different file or remove the existing one first.',
         'drag_drop_here' => 'Drag and drop files here or click to select files',
     ],
 ];

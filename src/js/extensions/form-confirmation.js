@@ -252,4 +252,4 @@ if (typeof FormHandler !== 'undefined') {
 }
 
 window.FormConfirmationExtension = FormConfirmationExtension;
-} // Close the initial if statement
+}

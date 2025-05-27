@@ -39,6 +39,49 @@ if (typeof FileUploadExtension === 'undefined') {
     
     this.initFileUploader();
     this.setupValidation();
+    this.displayAllowedFileTypes();
+  }
+  
+  displayAllowedFileTypes() {
+    console.log('FileUploadExtension: Displaying allowed file types in drop area');
+    
+    // Create a debug info div to show allowed file types
+    const allowedTypesInfo = `
+      <div class="file-types-debug alert alert-info mt-2" style="font-size: 0.9em;">
+        <strong>🔍 Debug - Allowed file types:</strong> ${this.options.allowedFileTypes.join(', ')}<br>
+        <strong>📏 Max file size:</strong> ${this.options.maxFileSizeMB}MB<br>
+        <strong>📋 Form:</strong> ${this.formHandler.getFormId()}
+      </div>
+    `;
+    
+    // Add the info to the drop area
+    const dropArea = this.$form.find('#drop-area');
+    if (dropArea.length) {
+      // Remove any existing debug info first
+      dropArea.find('.file-types-debug').remove();
+      dropArea.append(allowedTypesInfo);
+      console.log('FileUploadExtension: Added file types debug info to drop area');
+      
+      // Also add it to the upload instructions
+      const uploadInstructions = dropArea.find('#upload-instructions');
+      if (uploadInstructions.length) {
+        const originalText = uploadInstructions.text();
+        if (!originalText.includes('Allowed types:')) {
+          uploadInstructions.append(`<br><small style="color: #007bff;"><strong>Allowed types:</strong> ${this.options.allowedFileTypes.join(', ')} (max ${this.options.maxFileSizeMB}MB)</small>`);
+        }
+      }
+    } else {
+      console.warn('FileUploadExtension: Drop area not found for displaying file types');
+    }
+    
+    // Also log to console for debugging
+    console.log('=== FileUploadExtension Configuration ===');
+    console.log('Form ID:', this.formHandler.getFormId());
+    console.log('Allowed file types:', this.options.allowedFileTypes);
+    console.log('Max file size:', this.options.maxFileSizeMB + 'MB');
+    console.log('Upload URL:', this.uploadUrl);
+    console.log('Required:', this.options.required);
+    console.log('========================================');
   }
   
   initFileUploader() {
@@ -121,11 +164,27 @@ if (typeof FileUploadExtension === 'undefined') {
   validateFile(file) {
     console.log(`FileUploadExtension: Validating file ${file.name}`);
     console.log(`FileUploadExtension: File size: ${file.size} bytes (max: ${this.options.maxFileSizeMB * 1024 * 1024})`);
-    console.log(`FileUploadExtension: Allowed types: ${this.options.allowedFileTypes.join(', ')}`);
+    console.log(`FileUploadExtension: Allowed types configured: ${JSON.stringify(this.options.allowedFileTypes)}`);
     
-    // Check file size
+    // Check file size first
     if (file.size > this.options.maxFileSizeMB * 1024 * 1024) {
-      this.showError(`File ${file.name} is too large. Maximum size is ${this.options.maxFileSizeMB}MB`);
+      const actualSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      console.error(`FileUploadExtension: File ${file.name} is too large`);
+      this.showError(`❌ File "<strong>${file.name}</strong>" is too large (<strong>${actualSizeMB}MB</strong>). Maximum allowed size is <strong>${this.options.maxFileSizeMB}MB</strong>. Please choose a smaller file or compress it.`);
+      return false;
+    }
+    
+    // Check if file is empty
+    if (file.size === 0) {
+      console.error(`FileUploadExtension: File ${file.name} is empty`);
+      this.showError(`❌ File "<strong>${file.name}</strong>" is empty (0 bytes). Please select a valid file with content.`);
+      return false;
+    }
+    
+    // Check if file is suspiciously small (less than 10 bytes)
+    if (file.size < 10) {
+      console.warn(`FileUploadExtension: File ${file.name} is very small`);
+      this.showError(`⚠️ File "<strong>${file.name}</strong>" seems unusually small (${file.size} bytes). Please verify this is a valid file.`);
       return false;
     }
     
@@ -134,10 +193,30 @@ if (typeof FileUploadExtension === 'undefined') {
     const allowedTypes = this.options.allowedFileTypes.map(type => type.toLowerCase().replace('.', ''));
     const fileExt = fileName.split('.').pop();
     
-    console.log(`FileUploadExtension: File extension: ${fileExt}, allowed extensions: ${allowedTypes.join(', ')}`);
+    console.log(`FileUploadExtension: File name: "${fileName}"`);
+    console.log(`FileUploadExtension: File extension extracted: "${fileExt}"`);
+    console.log(`FileUploadExtension: Processed allowed extensions: ${JSON.stringify(allowedTypes)}`);
+    console.log(`FileUploadExtension: Extension check - "${fileExt}" in [${allowedTypes.join(', ')}]: ${allowedTypes.includes(fileExt)}`);
     
+    // Check if file has an extension
+    if (!fileExt || fileExt === fileName || !fileName.includes('.')) {
+      console.error(`FileUploadExtension: File ${file.name} has no extension`);
+      this.showError(`❌ File "<strong>${file.name}</strong>" has no file extension. Please ensure your file has a valid extension like: <strong>${this.options.allowedFileTypes.join(', ')}</strong>`);
+      return false;
+    }
+    
+    // Check if extension is allowed
     if (allowedTypes.length && !allowedTypes.includes(fileExt)) {
-      this.showError(`File type .${fileExt} is not allowed. Allowed types: ${this.options.allowedFileTypes.join(', ')}`);
+      console.error(`FileUploadExtension: File type .${fileExt} is not allowed`);
+      this.showError(`❌ File type "<strong>.${fileExt}</strong>" is not supported for "<strong>${file.name}</strong>". Please choose a file with one of these extensions: <strong>${this.options.allowedFileTypes.join(', ')}</strong>`);
+      return false;
+    }
+    
+    // Additional security check for dangerous extensions
+    const dangerousExtensions = ['exe', 'bat', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar', 'ps1'];
+    if (dangerousExtensions.includes(fileExt)) {
+      console.error(`FileUploadExtension: File ${file.name} has dangerous extension`);
+      this.showError(`🚫 File "<strong>${file.name}</strong>" has a potentially dangerous file type (<strong>.${fileExt}</strong>) and cannot be uploaded for security reasons.`);
       return false;
     }
     
@@ -210,13 +289,73 @@ if (typeof FileUploadExtension === 'undefined') {
   }
   
   showError(message) {
-    const alert = $(`<div class="alert alert-danger file-error" role="alert">${message}</div>`);
+    // Remove any existing error messages first
+    this.$form.find('.file-error').remove();
+    
+    const alert = $(`
+      <div class="alert alert-danger file-error" role="alert" style="margin-bottom: 15px; border-left: 4px solid #dc3545; position: relative; z-index: 1050;">
+        <div style="display: flex; align-items: center;">
+          <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-right: 10px; font-size: 1.2em;" aria-hidden="true"></i>
+          <div style="flex: 1;">
+            <strong>File Upload Error:</strong> ${message}
+          </div>
+          <button type="button" class="btn-close" aria-label="Close error message" style="background: none; border: none; font-size: 1.2em; color: #dc3545; cursor: pointer;">
+            ×
+          </button>
+        </div>
+      </div>
+    `);
+    
+    // Add close button functionality
+    alert.find('.btn-close').on('click', () => {
+      alert.fadeOut(() => alert.remove());
+    });
+    
+    // Add to the form at the top
     this.$form.prepend(alert);
     
-    // Auto-remove after 5 seconds
+    // Show a quick flash error above the drop area (3 seconds) - using single dropArea variable
+    const dropArea = this.$form.find('#drop-area');
+    if (dropArea.length) {
+      // Remove any existing flash errors
+      dropArea.parent().find('.flash-error').remove();
+      
+      const flashError = $(`
+        <div class="flash-error alert alert-danger" style="margin-bottom: 10px; animation: slideInDown 0.3s ease-out;">
+          <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+          <strong>Error:</strong> ${message.replace(/<[^>]*>/g, '')}
+        </div>
+      `);
+      
+      // Insert above the drop area
+      dropArea.before(flashError);
+      
+      // Auto-remove after 3 seconds
+      setTimeout(() => {
+        flashError.fadeOut(300, () => flashError.remove());
+      }, 3000);
+    }
+    
+    // Also scroll to the error message to make it visible
+    alert[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Focus the error for screen readers with a slight delay
+    setTimeout(() => {
+      alert.attr('tabindex', '-1').focus();
+    }, 300);
+    
+    console.error('FileUploadExtension Error:', message);
+    console.error('Error details:', {
+      timestamp: new Date().toISOString(),
+      formId: this.formHandler.getFormId(),
+      allowedTypes: this.options.allowedFileTypes,
+      maxSize: this.options.maxFileSizeMB + 'MB'
+    });
+    
+    // Auto-remove main error after 10 seconds (increased time for better readability)
     setTimeout(() => {
       alert.fadeOut(() => alert.remove());
-    }, 5000);
+    }, 10000);
   }
   
   setupFileSelectButton() {

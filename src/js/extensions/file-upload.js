@@ -354,7 +354,7 @@ if (typeof FileUploadExtension === 'undefined') {
           <div style="display: flex; align-items: center;">
             <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-right: 10px; font-size: 1.2em;" aria-hidden="true"></i>
             <div style="flex: 1;">
-              <strong>File Upload Error:</strong> ${message}
+              <strong>${this.getTranslation('file_upload.file_upload_error', 'File Upload Error')}:</strong> ${message}
             </div>
           </div>
         </div>

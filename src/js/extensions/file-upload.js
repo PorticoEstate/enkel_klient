@@ -67,7 +67,7 @@ if (typeof FileUploadExtension === 'undefined') {
       if (uploadInstructions.length) {
         const originalText = uploadInstructions.text();
         if (!originalText.includes('Allowed types:')) {
-          uploadInstructions.append(`<br><small style="color: #007bff;"><strong>Allowed types:</strong> ${this.options.allowedFileTypes.join(', ')} (max ${this.options.maxFileSizeMB}MB)</small>`);
+          uploadInstructions.append(`<br><small style="color:rgb(5, 43, 85);"><strong>Allowed types:</strong> ${this.options.allowedFileTypes.join(', ')} (max ${this.options.maxFileSizeMB}MB)</small>`);
         }
       }
     } else {

@@ -54,15 +54,9 @@ if (typeof FormConfirmationExtension === 'undefined') {
     // Check if form has files that need two-phase submission
     const hasFiles = this.shouldUseTwoPhaseSubmission();
     
-    // Option 1: Auto two-phase submission for forms with files
-    if (hasFiles && !this.options.requireConfirmation) {
-      console.log('Using automatic two-phase submission for form with files');
-      this.automaticTwoPhaseSubmit();
-      return false; // Prevent normal submission, we'll handle it
-    }
-    // Option 2: Show confirmation with summary
-    else if (this.options.showSummary) {
-      // Show our custom summary with phased buttons if files are present
+    // Always show form summary for review when using confirmation or when there are files
+    if (this.options.showSummary || hasFiles) {
+      console.log('Showing form summary for review before submission');
       this.showFormSummary();
       return false; // Prevent normal submission, we'll handle it in the modal
     }
@@ -247,16 +241,24 @@ if (typeof FormConfirmationExtension === 'undefined') {
   }
   
   generateSummaryHtml() {
+    const editButtonText = this.getTranslation('form_confirmation.edit_field_button', 'Edit');
     let html = '<dl class="form-summary-list">';
     
     Object.keys(this.formData).forEach(name => {
       const value = this.formData[name];
       if (value && value.trim()) {
         const label = this.getFieldLabel(name);
+        const fieldId = this.getFieldId(name);
+        
         html += `
-          <div class="form-summary-item">
+          <div class="form-summary-item" data-field-name="${name}">
             <dt>${label}:</dt>
-            <dd>${this.escapeHtml(value)}</dd>
+            <dd>
+              <span class="field-value">${this.escapeHtml(value)}</span>
+              <button type="button" class="btn-edit-field" data-field="${name}" data-field-id="${fieldId}">
+                <span class="edit-icon">✎</span> ${editButtonText}
+              </button>
+            </dd>
           </div>
         `;
       }
@@ -309,6 +311,23 @@ if (typeof FormConfirmationExtension === 'undefined') {
     return fieldName.replace(/([[\]()._])/g, ' ').replace(/\s+/g, ' ').trim();
   }
   
+  // Get the field ID from a field name
+  getFieldId(fieldName) {
+    // Escape special characters in fieldName for CSS selector
+    const escapedFieldName = fieldName.replace(/([[\]().])/g, '\\$1');
+    
+    // Try to find the field by name attribute
+    let $field = this.$form.find(`[name="${escapedFieldName}"]`);
+    
+    // If not found by name, try by ID
+    if (!$field.length) {
+      $field = this.$form.find(`#${escapedFieldName}`);
+    }
+    
+    // Return the field ID if found, otherwise return the field name
+    return $field.length ? ($field.attr('id') || fieldName) : fieldName;
+  }
+  
   getTranslation(key, fallback) {
     // Try to get translation from global translations object
     if (typeof window.translations !== 'undefined') {
@@ -339,6 +358,40 @@ if (typeof FormConfirmationExtension === 'undefined') {
     // Close modal events
     $modal.find('.form-summary-close, .form-summary-backdrop, .form-summary-edit').on('click', () => {
       $modal.remove();
+    });
+    
+    // Field-specific edit buttons
+    $modal.on('click', '.btn-edit-field', (e) => {
+      const $button = $(e.currentTarget);
+      const fieldId = $button.data('field-id');
+      const fieldName = $button.data('field');
+      
+      // Close the modal
+      $modal.remove();
+      
+      // Find the field in the form
+      const $field = this.$form.find(`#${fieldId}, [name="${fieldName}"]`).first();
+      
+      if ($field.length) {
+        // Scroll to the field with some offset for better visibility
+        const offset = $field.offset().top - 100;
+        $('html, body').animate({
+          scrollTop: offset
+        }, 500);
+        
+        // Focus on the field after scrolling
+        setTimeout(() => {
+          $field.focus();
+          
+          // Add a temporary highlight effect
+          $field.addClass('field-highlight');
+          setTimeout(() => {
+            $field.removeClass('field-highlight');
+          }, 2000);
+        }, 600);
+      } else {
+        console.warn(`Field not found: ${fieldName} (ID: ${fieldId})`);
+      }
     });
     
     if (hasPhases) {
@@ -713,7 +766,25 @@ if (typeof FormConfirmationExtension === 'undefined') {
           .form-summary-list { margin: 0; }
           .form-summary-item { display: flex; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
           .form-summary-item dt { font-weight: 600; width: 150px; margin: 0; }
-          .form-summary-item dd { margin: 0 0 0 16px; flex: 1; }
+          .form-summary-item dd { margin: 0 0 0 16px; flex: 1; display: flex; justify-content: space-between; align-items: center; }
+          .form-summary-item .field-value { flex: 1; }
+          .btn-edit-field { 
+            background: transparent;
+            border: 1px solid #007bff;
+            border-radius: 3px;
+            color: #007bff;
+            padding: 2px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 10px;
+          }
+          .btn-edit-field:hover { 
+            background: rgba(0, 123, 255, 0.1);
+          }
+          .edit-icon {
+            font-size: 12px;
+            margin-right: 3px;
+          }
           .btn { 
             padding: 8px 16px; 
             border: 1px solid transparent; 
@@ -784,6 +855,17 @@ if (typeof FormConfirmationExtension === 'undefined') {
           }
           .progress-text { 
             font-size: 12px; color: #6c757d; text-align: center;
+          }
+          
+          /* Field highlight effect when navigating from summary */
+          @keyframes highlightField {
+            0%   { background-color: #fff9c4; box-shadow: 0 0 0 3px #ffeb3b; }
+            50%  { background-color: #fff9c4; box-shadow: 0 0 0 3px #ffeb3b; }
+            100% { background-color: transparent; box-shadow: none; }
+          }
+          
+          .field-highlight {
+            animation: highlightField 2s ease-out;
           }
           
           .form-submit-overlay {

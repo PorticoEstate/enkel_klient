@@ -36,6 +36,9 @@ if (typeof FormValidationExtension === 'undefined') {
     const form = this.formHandler.getForm();
     console.log('🔍 Setting up real-time validation for form:', form.attr('id'));
     
+    // Setup location validator if both fields exist
+    this.setupLocationValidator();
+    
     // Real-time validation on input (as user types)
     form.find('input, textarea').on('input.realTimeValidation', (e) => {
       console.log('📝 Input event triggered for:', e.target.id || e.target.name);
@@ -100,6 +103,11 @@ if (typeof FormValidationExtension === 'undefined') {
       else if ((fieldType === 'tel' || $field.attr('name').includes('phone')) && value && !this.isValidPhone(value)) {
         isValid = false;
         errorMessage = this.getPhoneValidationMessage();
+      }
+      // Validate location field (checks if location_code has a value)
+      else if ($field.attr('id') === 'location_name' && value && !this.isValidLocation($field)) {
+        isValid = false;
+        errorMessage = this.getLocationValidationMessage();
       }
       // Use HTML5 validation if available
       else if (field.validity && !field.validity.valid) {
@@ -395,6 +403,18 @@ if (typeof FormValidationExtension === 'undefined') {
     const digitsOnly = phone.replace(/\D/g, '');
     return digitsOnly.length >= 8;
   }
+  
+  isValidLocation($field) {
+    // Location validation requires both location_name and location_code fields
+    const locationName = $field.val();
+    const locationCode = $("#location_code").val();
+    
+    console.log('🏙️ Location validation - name:', locationName, 'code:', locationCode);
+    return locationName && 
+           locationName.trim() !== "" && 
+           locationCode && 
+           locationCode.trim() !== "";
+  }
 
   // Translation helper methods
   getRequiredFieldMessage($field) {
@@ -412,6 +432,11 @@ if (typeof FormValidationExtension === 'undefined') {
     const translations = window.translations || {};
     return translations.invalid_phone || 'Please enter a valid phone number (minimum 8 digits)';
   }
+  
+  getLocationValidationMessage() {
+    const translations = window.translations || {};
+    return translations.invalid_location || 'Please select a valid location from the list';
+  }
 
   announceToScreenReader(message) {
     // Fallback screen reader announcement
@@ -421,6 +446,40 @@ if (typeof FormValidationExtension === 'undefined') {
       $('body').append($status);
     }
     $status.text(message);
+  }
+  
+  setupLocationValidator() {
+    try {
+      const form = this.formHandler.getForm();
+      const locationCodeInput = form.find('#location_code')[0];
+      const locationNameField = form.find('#location_name')[0];
+      
+      if (locationCodeInput && locationNameField) {
+        console.log('🏙️ Setting up location validator for', locationNameField.id);
+        
+        // Monitor changes to the location_code field
+        $(locationCodeInput).on('change input', () => {
+          console.log('🏙️ Location code changed:', locationCodeInput.value);
+          this.validateField(locationNameField);
+        });
+        
+        // Use MutationObserver for programmatic changes to the location_code field
+        const observer = new MutationObserver(() => {
+          console.log('🏙️ Location code modified via DOM mutation');
+          this.validateField(locationNameField);
+        });
+        
+        // Observe the value attribute and DOM changes
+        observer.observe(locationCodeInput, {
+          attributes: true,
+          attributeFilter: ['value'],
+          childList: false,
+          subtree: false
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error setting up location validator:', error);
+    }
   }
 }
 

@@ -102,7 +102,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       }).length > 0;
       
       const isComplexRadio = key.startsWith('radio_') || 
-                            this.formHandler.getForm().find(`[data-autosave-key="${key}"]`).length > 0;
+                            this.formHandler.getForm().find(`[data-autosave-key="${key}"][type="radio"]`).length > 0;
       
       return isRegularRadio || isComplexRadio;
     });
@@ -116,6 +116,31 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       // Log any radio mappings for debugging
       if (formData._radioMappings) {
         console.log('🔄 Radio name mappings:', formData._radioMappings);
+      }
+    }
+    
+    // Debug checkboxes with complex names
+    const checkboxValues = Object.keys(formData).filter(key => {
+      // Include both standard checkboxes and our custom-mapped ones
+      const isRegularCheckbox = this.formHandler.getForm().find(`[name="${key}"]`).filter(function() {
+        return this.type === 'checkbox';
+      }).length > 0;
+      
+      const isComplexCheckbox = key.startsWith('checkbox_') || 
+                               this.formHandler.getForm().find(`[data-autosave-key="${key}"][type="checkbox"]`).length > 0;
+      
+      return isRegularCheckbox || isComplexCheckbox;
+    });
+    
+    if (checkboxValues.length > 0) {
+      console.log('☑️ Saving checkbox values:', checkboxValues.reduce((obj, key) => {
+        obj[key] = formData[key];
+        return obj;
+      }, {}));
+      
+      // Log any checkbox mappings for debugging
+      if (formData._checkboxMappings) {
+        console.log('🔄 Checkbox name mappings:', formData._checkboxMappings);
       }
     }
     
@@ -216,8 +241,9 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       const formData = new FormData(form);
       const data = {};
       
-      // Create section for file metadata (can't store file contents)
+      // Create sections for metadata
       data._fileMetadata = {};
+      data._checkboxMappings = {};
       
       // First log all form fields for debugging
       console.log('🔍 Checking form fields for file inputs...');
@@ -250,6 +276,31 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           data._fileMetadata[input.name] = fileInfo;
         }
       });
+      
+      // Special handling for checkboxes with complex names
+      const checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"]'));
+      const complexCheckboxes = checkboxes.filter(checkbox => 
+        checkbox.name.includes('[') || checkbox.hasAttribute('data-autosave-key')
+      );
+      
+      if (complexCheckboxes.length > 0) {
+        console.log(`☑️ Processing ${complexCheckboxes.length} checkboxes with complex names`);
+        
+        // Process each checkbox
+        complexCheckboxes.forEach(checkbox => {
+          // Get the safe key (either from data attribute or generate one)
+          const autosaveKey = checkbox.getAttribute('data-autosave-key') || 
+                             `checkbox_${checkbox.name.replace(/[\[\]]/g, '_')}`;
+          
+          // Store the checked state
+          data[autosaveKey] = checkbox.checked ? checkbox.value || "1" : "";
+          
+          // Store the mapping for restoration
+          data._checkboxMappings[autosaveKey] = checkbox.name;
+          
+          console.log(`☑️ Checkbox ${checkbox.name} (${autosaveKey}) is ${checkbox.checked ? 'checked' : 'unchecked'}`);
+        });
+      }
       
       // Special handling for radio buttons
       // First collect all radio buttons by name
@@ -293,6 +344,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           continue;
         }
         
+        // Skip complex checkboxes - we already processed them above
+        const isComplexCheckbox = Array.from(complexCheckboxes).some(cb => cb.name === key);
+        if (isComplexCheckbox) {
+          continue;
+        }
+        
         // Handle file inputs - we already processed them above
         const field = form.querySelector(`[name="${key}"]`);
         if (field && (field.type === 'file' || key.includes('files[') || key.startsWith('files'))) {
@@ -325,7 +382,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       // First restore normal field values
       Object.keys(data).forEach(key => {
         // Skip the metadata sections - we'll handle them separately
-        if (key === '_fileMetadata' || key === '_radioMappings') return;
+        if (key === '_fileMetadata' || key === '_radioMappings' || key === '_checkboxMappings') return;
         
         try {
           // Try multiple methods to find the field
@@ -336,6 +393,13 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             const originalName = data._radioMappings[key];
             field = form.find(`[name="${originalName}"]`);
             console.log(`🔍 Using mapped name ${originalName} for key: ${key}`);
+          }
+          
+          // If not found and it's a mapped checkbox name, look for the original named field
+          if (!field.length && data._checkboxMappings && data._checkboxMappings[key]) {
+            const originalName = data._checkboxMappings[key];
+            field = form.find(`[name="${originalName}"]`);
+            console.log(`🔍 Using mapped checkbox name ${originalName} for key: ${key}`);
           }
           
           // Try finding by data attribute
@@ -414,13 +478,56 @@ if (typeof FormAutoSaveExtension === 'undefined') {
                       // Use setTimeout to ensure the radio is checked before calling handler
                       setTimeout(() => {
                         console.log(`🔄 Executing onchange handler for radio: ${key}`);
-                        // Fix: use proper function creation syntax without reserved keyword as parameter
                         const handler = new Function(`return ${onChangeAttr}`);
                         handler.call(radioToCheck[0]);
                       }, 10);
                     } catch (e) {
                       console.warn(`⚠️ Failed to execute onchange handler for ${key}:`, e);
                     }
+                  }
+                }
+              } else if (field[0].type === 'checkbox') {
+                // Special handling for checkboxes
+                console.log(`☑️ Restoring checkbox: ${key} with value: ${data[key]}`);
+                
+                let checkboxName = key;
+                
+                // Check if this is a mapped checkbox with array notation
+                if (data._checkboxMappings && data._checkboxMappings[key]) {
+                  checkboxName = data._checkboxMappings[key];
+                  console.log(`☑️ Using mapped checkbox name: ${checkboxName} for key: ${key}`);
+                }
+                
+                // Handle both simple and array notation checkboxes
+                if (key.startsWith('checkbox_') || field.attr('data-autosave-key')) {
+                  // For complex checkboxes, set checked based on value presence
+                  const isChecked = data[key] && data[key] !== "";
+                  console.log(`☑️ Setting complex checkbox ${checkboxName} to ${isChecked ? 'checked' : 'unchecked'}`);
+                  field.prop('checked', isChecked);
+                } else {
+                  // Regular checkbox handling
+                  const isChecked = data[key] === field.val() || 
+                                    data[key] === "1" || 
+                                    data[key] === "true" || 
+                                    data[key] === true;
+                  field.prop('checked', isChecked);
+                }
+                
+                // Trigger change event for any listeners
+                field.trigger('change');
+                
+                // If field has an onchange attribute, execute that function
+                const onChangeAttr = field.attr('onchange');
+                if (onChangeAttr) {
+                  try {
+                    // Use setTimeout to ensure the checkbox is set before calling handler
+                    setTimeout(() => {
+                      console.log(`🔄 Executing onchange handler for checkbox: ${key}`);
+                      const handler = new Function(`return ${onChangeAttr}`);
+                      handler.call(field[0]);
+                    }, 10);
+                  } catch (e) {
+                    console.warn(`⚠️ Failed to execute onchange handler for ${key}:`, e);
                   }
                 }
               } else {
@@ -742,24 +849,26 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   }
 
   /**
-   * Helper method to safely handle radio button names with array notation
+   * Helper method to safely handle input names with array notation
    * This addresses issues with complex names like values_attribute[2][value][]
+   * Works for both radio buttons and checkboxes
    */
   handleComplexRadioNames() {
     try {
       const form = this.formHandler.getForm();
       
-      // Find all radio buttons with array notation in names
+      // Find all radio buttons and checkboxes with array notation in names
       const complexRadios = form.find('input[type="radio"][name*="["]');
+      const complexCheckboxes = form.find('input[type="checkbox"][name*="["]');
       
-      if (complexRadios.length === 0) {
-        console.log('No complex radio button names found, skipping special handling');
+      if (complexRadios.length === 0 && complexCheckboxes.length === 0) {
+        console.log('No complex input names found, skipping special handling');
         return;
       }
       
-      console.log(`🔍 Found ${complexRadios.length} radio buttons with complex names`);
+      console.log(`🔍 Found ${complexRadios.length} radio buttons and ${complexCheckboxes.length} checkboxes with complex names`);
       
-      // Group them by their base name (without array notation)
+      // Process radio buttons first
       const radioGroups = {};
       complexRadios.each(function() {
         const name = $(this).attr('name');
@@ -771,7 +880,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       
       console.log(`📻 Identified ${Object.keys(radioGroups).length} radio groups with complex names`);
       
-      // Add data attributes to help with serialization and restoration
+      // Add data attributes to radio buttons
       Object.keys(radioGroups).forEach(groupName => {
         // Create a safe, unique key for localStorage
         // Replace array brackets with underscores for safe serialization
@@ -789,9 +898,20 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         this.mapRadioName.set(safeKey, groupName);
       });
       
-      console.log('✅ Complex radio name handling setup complete');
+      // Now process checkboxes
+      complexCheckboxes.each(function() {
+        const name = $(this).attr('name');
+        const safeKey = `checkbox_${name.replace(/[\[\]]/g, '_')}`;
+        console.log(`☑️ Adding data attribute for complex checkbox: ${name} -> ${safeKey}`);
+        
+        // Add data attributes for serialization and restoration
+        $(this).attr('data-autosave-key', safeKey);
+        $(this).attr('data-original-name', name);
+      });
+      
+      console.log('✅ Complex input name handling setup complete');
     } catch (e) {
-      console.warn('❌ Error handling complex radio names:', e);
+      console.warn('❌ Error handling complex input names:', e);
     }
   }
 

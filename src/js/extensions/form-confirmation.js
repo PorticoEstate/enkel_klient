@@ -51,17 +51,28 @@ if (typeof FormConfirmationExtension === 'undefined') {
     // This is called AFTER validation passes
     this.formData = this.collectFormData();
     
-    // Always use our own phased submission when files are present
-    if (this.options.showSummary) {
+    // Check if form has files that need two-phase submission
+    const hasFiles = this.shouldUseTwoPhaseSubmission();
+    
+    // Option 1: Auto two-phase submission for forms with files
+    if (hasFiles && !this.options.requireConfirmation) {
+      console.log('Using automatic two-phase submission for form with files');
+      this.automaticTwoPhaseSubmit();
+      return false; // Prevent normal submission, we'll handle it
+    }
+    // Option 2: Show confirmation with summary
+    else if (this.options.showSummary) {
       // Show our custom summary with phased buttons if files are present
       this.showFormSummary();
       return false; // Prevent normal submission, we'll handle it in the modal
-    } else if (this.options.showDialog) {
+    }
+    // Option 3: Show simple confirmation dialog
+    else if (this.options.showDialog) {
       this.showConfirmationDialog();
       return false; // Prevent normal submission, we'll handle it in the dialog
     }
     
-    // If no confirmation needed, allow normal submission
+    // Option 4: Regular submission (no confirmation, no files)
     return true;
   }
   
@@ -102,16 +113,6 @@ if (typeof FormConfirmationExtension === 'undefined') {
         return window.fileUploaderInstance.getPendingCount();
       } catch (e) {
         console.warn('Error getting file count from FileUploader:', e);
-      }
-    }
-    
-    // Try to get file count from two-phase extension if available
-    const twoPhaseExt = this.formHandler.getExtension('twoPhaseSubmit');
-    if (twoPhaseExt && typeof twoPhaseExt.getFileCount === 'function') {
-      try {
-        return twoPhaseExt.getFileCount();
-      } catch (e) {
-        console.warn('Error getting file count from TwoPhaseSubmit extension:', e);
       }
     }
     
@@ -352,6 +353,125 @@ if (typeof FormConfirmationExtension === 'undefined') {
     }
   }
   
+  // Automatic two-phase submit without requiring user interaction
+  async automaticTwoPhaseSubmit() {
+    // Show a simple loading overlay
+    const $overlay = $(`
+      <div class="form-submit-overlay">
+        <div class="submit-progress">
+          <div class="spinner"></div>
+          <p>Submitting your form...</p>
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+          </div>
+          <p class="status-text">Processing...</p>
+        </div>
+      </div>
+    `);
+    
+    $('body').append($overlay);
+    
+    // Add styles for the overlay
+    if ($('#form-submit-overlay-styles').length === 0) {
+      $('head').append(`
+        <style id="form-submit-overlay-styles">
+          .form-submit-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+          }
+          .submit-progress {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            text-align: center;
+          }
+          .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #007bff;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .submit-progress .progress {
+            margin: 15px 0;
+            height: 10px;
+          }
+          .status-text {
+            margin-top: 10px;
+            font-weight: bold;
+          }
+          .error-message {
+            color: #dc3545;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+          }
+        </style>
+      `);
+    }
+    
+    try {
+      // Phase 1: Submit form data
+      $overlay.find('.status-text').text('Submitting form data...');
+      $overlay.find('.progress-bar').css('width', '30%');
+      
+      const recordId = await this.submitFormData();
+      this.recordId = recordId;
+      
+      // Phase 2: Upload files (if any)
+      const fileCount = this.getFileCount();
+      if (fileCount > 0) {
+        $overlay.find('.status-text').text(`Uploading ${fileCount} file(s)...`);
+        $overlay.find('.progress-bar').css('width', '60%');
+        
+        await this.uploadFiles();
+      }
+      
+      // Complete
+      $overlay.find('.status-text').text('Submission complete!');
+      $overlay.find('.progress-bar').css('width', '100%');
+      
+      // Redirect after a brief delay
+      setTimeout(() => {
+        window.location.href = this.formHandler.redirectUrl || window.location.href;
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Form submission failed:', error);
+      
+      // Show error in overlay
+      $overlay.find('.spinner').hide();
+      $overlay.find('.status-text').html(`
+        <div class="error-message">
+          <strong>Error:</strong> ${error.message}<br>
+          <button class="btn btn-secondary close-overlay" style="margin-top:10px;">Close</button>
+        </div>
+      `);
+      
+      // Add close handler
+      $overlay.find('.close-overlay').on('click', () => {
+        $overlay.remove();
+      });
+    }
+  }
+  
   setupPhaseHandlers($modal) {
     // Store modal reference
     this.$currentModal = $modal;
@@ -383,15 +503,9 @@ if (typeof FormConfirmationExtension === 'undefined') {
     $phase1Step.addClass('active');
     
     try {
-      // Get two-phase extension
-      const twoPhaseExt = this.formHandler.getExtension('twoPhaseSubmit');
-      if (!twoPhaseExt) {
-        throw new Error('Two-phase submission extension not available');
-      }
-      
-      // Submit form data without files
-      const recordId = await twoPhaseExt.submitFormData();
-      twoPhaseExt.recordId = recordId;
+      // Submit form data without files (using our own method)
+      const recordId = await this.submitFormData();
+      this.recordId = recordId;
       
       // Update UI to show success
       $phase1Step.removeClass('active').addClass('complete');
@@ -428,9 +542,7 @@ if (typeof FormConfirmationExtension === 'undefined') {
   }
   
   async runPhase2($modal) {
-    // Get two-phase extension
-    const twoPhaseExt = this.formHandler.getExtension('twoPhaseSubmit');
-    if (!twoPhaseExt || !twoPhaseExt.recordId) {
+    if (!this.recordId) {
       alert('No record ID available. Please run Phase 1 first.');
       return;
     }
@@ -445,7 +557,7 @@ if (typeof FormConfirmationExtension === 'undefined') {
     
     // Debug: Log file information before upload
     console.log('--- File Upload Debug Info ---');
-    console.log('Record ID:', twoPhaseExt.recordId);
+    console.log('Record ID:', this.recordId);
     
     // Check window.fileUploaderInstance
     if (window.fileUploaderInstance) {
@@ -457,25 +569,17 @@ if (typeof FormConfirmationExtension === 'undefined') {
       console.log('No global fileUploaderInstance found');
     }
     
-    // Check twoPhaseExt.fileUploader
-    if (twoPhaseExt.fileUploader) {
-      console.log('TwoPhaseExt fileUploader exists');
-      if (typeof twoPhaseExt.fileUploader.getPendingCount === 'function') {
-        console.log('TwoPhaseExt pending files count:', twoPhaseExt.fileUploader.getPendingCount());
-      }
-    } else {
-      console.log('No twoPhaseExt.fileUploader found');
-    }
-    
     // Check for file elements in the DOM
     console.log('File input elements:', $('input[type="file"]').length);
     console.log('File items in UI:', $('.file-item').length);
-    console.log('Start upload buttons:', $('.start_file_upload').length);
     console.log('------------------------');
     
     try {
-      // Run file upload
-      await twoPhaseExt.uploadFiles($modal);
+      // Store modal for progress updates
+      this.$currentModal = $modal;
+      
+      // Run file upload with our own method
+      await this.uploadFiles($modal);
       
       // Update UI for success
       $phase2Step.removeClass('active').addClass('complete');
@@ -517,6 +621,59 @@ if (typeof FormConfirmationExtension === 'undefined') {
     setTimeout(() => {
       window.location.href = this.formHandler.redirectUrl || window.location.href;
     }, 2000);
+  }
+  
+  // Phase 1: Submit form data without files
+  submitFormData() {
+    return new Promise((resolve, reject) => {
+      // Create a new FormData object without including file inputs
+      const form = this.formHandler.getFormElement();
+      const formData = new FormData();
+      
+      // Manually add all form fields except file inputs
+      const formElements = form.elements;
+      for (let i = 0; i < formElements.length; i++) {
+        const field = formElements[i];
+        const name = field.name;
+        
+        // Skip file inputs - these will be handled in phase 2
+        if (field.type === 'file') continue;
+        
+        // Skip submit buttons
+        if (field.type === 'submit') continue;
+        
+        // For checkbox/radio, only add if checked
+        if ((field.type === 'checkbox' || field.type === 'radio') && !field.checked) continue;
+        
+        // Add the field value to FormData
+        if (name) {
+          formData.append(name, field.value);
+        }
+      }
+      
+      const requestUrl = this.$form.attr("action");
+      
+      $.ajax({
+        cache: false,
+        contentType: false,
+        processData: false,
+        type: 'POST',
+        url: `${requestUrl}?phpgw_return_as=json`,
+        data: formData,
+        success: (data) => {
+          if (data && data.status === "saved" && data.id) {
+            this.recordId = data.id;
+            console.log(`✅ Form data submitted successfully, record ID: ${data.id}`);
+            resolve(data.id);
+          } else {
+            reject(new Error(`Server returned unexpected response: ${JSON.stringify(data)}`));
+          }
+        },
+        error: (xhr, status, error) => {
+          reject(new Error(`Form submission failed: ${error}`));
+        }
+      });
+    });
   }
   
   addStyles() {
@@ -628,14 +785,233 @@ if (typeof FormConfirmationExtension === 'undefined') {
           .progress-text { 
             font-size: 12px; color: #6c757d; text-align: center;
           }
+          
+          .form-submit-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+          }
+          .submit-progress {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            text-align: center;
+          }
+          .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #007bff;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .submit-progress .progress {
+            margin: 15px 0;
+            height: 10px;
+          }
+          .status-text {
+            margin-top: 10px;
+            font-weight: bold;
+          }
+          .error-message {
+            color: #dc3545;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+          }
         </style>
       `);
     }
   }
   
+  // Phase 2: Upload files
+  async uploadFiles($modal) {
+    return new Promise((resolve, reject) => {
+      // Locate file inputs with files
+      let $fileInputs = this.$form.find('input[type="file"]');
+      let fileInput = null;
+      
+      // Find the first input with files
+      $fileInputs.each(function() {
+        if (this.files && this.files.length > 0) {
+          fileInput = this;
+          return false; // break the loop
+        }
+      });
+      
+      if (!fileInput || fileInput.files.length === 0) {
+        console.log('No files to upload, skipping phase 2');
+        resolve();
+        return;
+      }
+      
+      // Update progress UI if modal exists
+      if ($modal) {
+        const $progressBar = $modal.find('.progress-bar');
+        const $progressText = $modal.find('.progress-text');
+        $modal.find('.file-progress-container').show();
+      }
+      
+      // Prepare upload URL
+      const formId = this.formHandler.getFormId();
+      const baseUrl = `${window.strBaseURL || ''}/${formId}/upload`;
+      const hasQueryParams = baseUrl.includes('?');
+      const separator = hasQueryParams ? '&' : '?';
+      const uploadUrl = `${baseUrl}${separator}id=${this.recordId}&phase2=true`;
+      
+      // Use direct upload method
+      this.directUploadFiles($(fileInput), uploadUrl)
+        .then(() => {
+          console.log('File upload completed successfully');
+          resolve();
+        })
+        .catch(err => {
+          console.error('File upload failed:', err);
+          reject(err);
+        });
+    });
+  }
+  
   // Alias for backward compatibility
   addSummaryStyles() {
     this.addStyles();
+  }
+  
+  // Direct file upload implementation
+  directUploadFiles($fileInput, uploadUrl) {
+    return new Promise((resolve, reject) => {
+      if (!$fileInput || !$fileInput.length || !$fileInput[0].files || !$fileInput[0].files.length) {
+        console.log('No files to upload in directUploadFiles');
+        resolve();
+        return;
+      }
+      
+      const files = Array.from($fileInput[0].files);
+      console.log(`Uploading ${files.length} files to ${uploadUrl}`);
+      
+      let completed = 0;
+      const errors = [];
+      
+      // Update UI progress if available
+      const updateProgress = (percent) => {
+        if (this.$currentModal) {
+          this.$currentModal.find('.progress-bar').css('width', percent + '%');
+          this.$currentModal.find('.progress-text').text(`${percent}% complete`);
+        }
+      };
+      
+      files.forEach((file) => {
+        // Create minimal FormData with only necessary fields
+        const formData = new FormData();
+        formData.append('files[]', file);
+        formData.append('id', this.recordId);
+        formData.append('phase2', 'true');
+        
+        // Find randcheck token
+        let randcheckValue = null;
+        if (this.$form && this.$form.length) {
+          randcheckValue = this.$form.find('input[name="randcheck"]').val();
+        }
+        if (!randcheckValue) {
+          randcheckValue = $('input[name="randcheck"]').val();
+        }
+        if (!randcheckValue && window.csrfToken) {
+          randcheckValue = window.csrfToken;
+        }
+        
+        if (randcheckValue) {
+          // Add it to the form data - only as POST parameter
+          formData.append('randcheck', randcheckValue);
+          console.log('✓ Including randcheck token in file upload as POST parameter');
+        } else {
+          console.warn('⚠️ No randcheck token found for file upload');
+        }
+        
+        $.ajax({
+          url: uploadUrl,
+          data: formData,
+          type: 'POST',
+          contentType: false,
+          processData: false,
+          xhr: () => {
+            const xhr = new window.XMLHttpRequest();
+            xhr.upload.addEventListener("progress", (evt) => {
+              if (evt.lengthComputable) {
+                const percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                console.log(`Upload progress: ${percentComplete}%`);
+                // Update individual file progress if we had UI for it
+              }
+            }, false);
+            return xhr;
+          },
+          success: (response) => {
+            // Check if the response indicates an error (even though HTTP status is 200)
+            if (typeof response === 'object' && response.status === 'error') {
+              console.error(`Server returned error for file ${file.name}:`, response.message);
+              errors.push(`${file.name} (${response.message || 'Server error'})`);
+            } else {
+              console.log(`File ${file.name} uploaded successfully`);
+            }
+            
+            completed++;
+            const percent = Math.round((completed / files.length) * 100);
+            updateProgress(percent);
+            
+            if (completed === files.length) {
+              if (errors.length === 0) {
+                resolve();
+              } else {
+                reject(new Error(`Failed to upload ${errors.length} files: ${errors.join(', ')}`));
+              }
+            }
+          },
+          error: (xhr, status, error) => {
+            console.error(`Failed to upload file ${file.name}:`, error);
+            
+            // Try to parse the response to get more detailed error info
+            let errorMessage = error;
+            try {
+              if (xhr.responseText) {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                if (jsonResponse.message) {
+                  errorMessage = Array.isArray(jsonResponse.message) ? jsonResponse.message.join(', ') : jsonResponse.message;
+                }
+              }
+            } catch (e) {
+              console.log('Could not parse error response as JSON');
+            }
+            
+            errors.push(`${file.name} (${errorMessage})`);
+            completed++;
+            const percent = Math.round((completed / files.length) * 100);
+            updateProgress(percent);
+            
+            if (completed === files.length) {
+              if (errors.length === files.length) {
+                reject(new Error(`All files failed to upload: ${errors.join(', ')}`));
+              } else {
+                reject(new Error(`Failed to upload some files: ${errors.join(', ')}`));
+              }
+            }
+          }
+        });
+      });
+    });
   }
   
   showConfirmationDialog() {

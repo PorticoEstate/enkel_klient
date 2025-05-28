@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Phase Submission Integration Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { padding: 20px; background: #f8f9fa; }
+        .test-container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .debug-panel { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin: 20px 0; max-height: 400px; overflow-y: auto; }
+        .log-entry { font-family: monospace; font-size: 12px; margin: 2px 0; padding: 2px 5px; border-radius: 3px; }
+        .log-info { background: #d1ecf1; }
+        .log-success { background: #d4edda; }
+        .log-warning { background: #fff3cd; }
+        .log-error { background: #f8d7da; }
+        .log-phase { background: #e2e3e5; border-left: 3px solid #6f42c1; }
+        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+        .status-loading { background: #ffc107; }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .file-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; transition: border-color 0.3s; }
+        .file-zone:hover { border-color: #007bff; }
+        .test-section { margin: 30px 0; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px; }
+        .phase-indicator { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-container">
+            <h1><i class="fas fa-rocket"></i> Two-Phase Submission Integration Test</h1>
+            
+            <div class="phase-indicator">
+                <h4><i class="fas fa-info-circle"></i> Testing Integration of Two-Phase Submission</h4>
+                <p>This test verifies that the FormConfirmationExtension properly delegates to FormTwoPhaseSubmitExtension when file uploads are detected.</p>
+            </div>
+            
+            <!-- Debug Panel -->
+            <div class="test-section">
+                <h3><i class="fas fa-bug"></i> Debug Log</h3>
+                <div id="debug-log" class="debug-panel">
+                    <div class="log-entry log-info"><strong>Ready</strong> 🔍 Debug panel initialized</div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="clearDebugLog()">Clear Log</button>
+            </div>
+            
+            <!-- Extension Status -->
+            <div class="test-section">
+                <h3><i class="fas fa-puzzle-piece"></i> Extension Status</h3>
+                <div id="extension-status">
+                    <div class="mb-2">
+                        <span class="status-indicator status-loading" id="status-confirmation"></span>
+                        FormConfirmationExtension: <span id="text-confirmation">Loading...</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="status-indicator status-loading" id="status-twophase"></span>
+                        FormTwoPhaseSubmitExtension: <span id="text-twophase">Loading...</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="status-indicator status-loading" id="status-formhandler"></span>
+                        FormHandler: <span id="text-formhandler">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Form -->
+            <div class="test-section">
+                <h3><i class="fas fa-edit"></i> Test Form</h3>
+                <form id="test-form" action="/test/submit" method="post" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject *</label>
+                                <input type="text" class="form-control" id="subject" name="subject" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="file-upload" class="form-label">Attach Files</label>
+                        <div class="file-zone">
+                            <input type="file" class="form-control" id="file-upload" name="files[]" multiple accept=".pdf,.doc,.docx,.jpg,.png">
+                            <div class="mt-2">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
+                                <p class="mt-2 mb-0">Choose files or drag and drop</p>
+                                <small class="text-muted">Supports: PDF, DOC, DOCX, JPG, PNG</small>
+                            </div>
+                        </div>
+                        <div id="file-list" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane"></i> Submit Test Form
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Test Controls -->
+            <div class="test-section">
+                <h3><i class="fas fa-play-circle"></i> Test Controls</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-info w-100" onclick="testWithoutFiles()">
+                            <i class="fas fa-file-alt"></i> Test Without Files
+                        </button>
+                        <small class="text-muted">Should use standard confirmation</small>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-warning w-100" onclick="testWithFiles()">
+                            <i class="fas fa-file-upload"></i> Test With Files
+                        </button>
+                        <small class="text-muted">Should use two-phase submission</small>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-secondary w-100" onclick="debugExtensions()">
+                            <i class="fas fa-bug"></i> Debug Extensions
+                        </button>
+                        <small class="text-muted">Check extension states</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Base setup -->
+    <script>
+        var strBaseURL = '/test';
+        
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const icons = {
+                'info': '🔍',
+                'success': '✅',
+                'warning': '⚠️',
+                'error': '❌',
+                'phase': '🚀',
+                'delegation': '🔄'
+            };
+            const icon = icons[type] || icons.info;
+            
+            const logEntry = $('<div class="log-entry">')
+                .addClass(`log-${type}`)
+                .html(`<strong>${timestamp}</strong> ${icon} ${message}`);
+            
+            $('#debug-log').append(logEntry);
+            $('#debug-log').scrollTop($('#debug-log')[0].scrollHeight);
+            console.log(`${icon} ${message}`);
+        }
+        
+        function clearDebugLog() {
+            $('#debug-log').empty();
+            debugLog('Debug log cleared', 'info');
+        }
+        
+        function updateStatus(component, status, message) {
+            $(`#status-${component}`).removeClass('status-loading status-success status-error').addClass(`status-${status}`);
+            $(`#text-${component}`).text(message);
+        }
+        
+        function mockServerResponses() {
+            const originalAjax = $.ajax;
+            $.ajax = function(options) {
+                debugLog(`AJAX request to: ${options.url}`, 'info');
+                
+                if (options.url && options.url.includes('/test/submit')) {
+                    debugLog('Mock: Form submission request detected', 'phase');
+                    setTimeout(() => {
+                        options.success({
+                            status: "saved",
+                            id: "TEST123",
+                            message: "Form data submitted successfully"
+                        });
+                    }, 1000);
+                    return;
+                } else if (options.url && options.url.includes('/test/upload')) {
+                    debugLog('Mock: File upload request detected', 'phase');
+                    setTimeout(() => {
+                        options.success({
+                            status: "uploaded",
+                            message: "Files uploaded successfully"
+                        });
+                    }, 1500);
+                    return;
+                }
+                
+                return originalAjax.apply(this, arguments);
+            };
+        }
+        
+        function testWithoutFiles() {
+            debugLog('Starting test without files', 'phase');
+            clearFileInput();
+            fillFormData();
+            debugLog('Form filled, triggering submit', 'info');
+            $('#test-form').trigger('submit');
+        }
+        
+        function testWithFiles() {
+            debugLog('Starting test with files', 'phase');
+            fillFormData();
+            simulateFileSelection();
+            debugLog('Form filled with files, triggering submit', 'info');
+            $('#test-form').trigger('submit');
+        }
+        
+        function fillFormData() {
+            $('#subject').val('Test Subject - Integration Test');
+            $('#priority').val('medium');
+            $('#description').val('This is a test description for the integration test of two-phase submission.');
+        }
+        
+        function clearFileInput() {
+            $('#file-upload')[0].value = '';
+            $('#file-list').empty();
+        }
+        
+        function simulateFileSelection() {
+            // Create a mock file for testing
+            const mockFile = new File(['test content'], 'test-document.pdf', { type: 'application/pdf' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(mockFile);
+            
+            $('#file-upload')[0].files = dataTransfer.files;
+            $('#file-upload').trigger('change');
+        }
+        
+        function debugExtensions() {
+            debugLog('=== Extension Debug Info ===', 'info');
+            
+            if (typeof FormConfirmationExtension !== 'undefined') {
+                debugLog('FormConfirmationExtension: Available', 'success');
+            } else {
+                debugLog('FormConfirmationExtension: NOT FOUND', 'error');
+            }
+            
+            if (typeof FormTwoPhaseSubmitExtension !== 'undefined') {
+                debugLog('FormTwoPhaseSubmitExtension: Available', 'success');
+            } else {
+                debugLog('FormTwoPhaseSubmitExtension: NOT FOUND', 'error');
+            }
+            
+            if (typeof formHandler !== 'undefined') {
+                debugLog(`FormHandler: Initialized for form "${formHandler.getFormId()}"`, 'success');
+                debugLog(`Extensions loaded: ${formHandler.extensions.size}`, 'info');
+                
+                formHandler.extensions.forEach((ext, name) => {
+                    debugLog(`- Extension "${name}": ${ext.constructor.name}`, 'info');
+                });
+            } else {
+                debugLog('FormHandler: NOT INITIALIZED', 'error');
+            }
+        }
+    </script>
+    
+    <!-- Core FormHandler -->
+    <script src="src/js/form-handler-core.js"></script>
+    
+    <!-- Extensions -->
+    <script src="src/js/extensions/form-confirmation.js"></script>
+    <script src="src/js/extensions/form-two-phase-submit.js"></script>
+    
+    <!-- Initialize -->
+    <script>
+        let formHandler;
+        
+        $(document).ready(function() {
+            debugLog('Document ready - starting integration test', 'phase');
+            mockServerResponses();
+            
+            // Check extension availability
+            setTimeout(() => {
+                if (typeof FormConfirmationExtension !== 'undefined') {
+                    updateStatus('confirmation', 'success', 'Loaded');
+                    debugLog('FormConfirmationExtension loaded successfully', 'success');
+                } else {
+                    updateStatus('confirmation', 'error', 'Failed to load');
+                    debugLog('FormConfirmationExtension failed to load', 'error');
+                }
+                
+                if (typeof FormTwoPhaseSubmitExtension !== 'undefined') {
+                    updateStatus('twophase', 'success', 'Loaded');
+                    debugLog('FormTwoPhaseSubmitExtension loaded successfully', 'success');
+                } else {
+                    updateStatus('twophase', 'error', 'Failed to load');
+                    debugLog('FormTwoPhaseSubmitExtension failed to load', 'error');
+                }
+            }, 100);
+            
+            // Initialize FormHandler
+            try {
+                formHandler = new FormHandler({
+                    formId: 'test-form',
+                    redirectUrl: '/test/success',
+                    uploadUrl: '/test/upload',
+                    extensions: {
+                        confirmation: {
+                            showSummary: true
+                        },
+                        twoPhaseSubmit: {
+                            showSummary: true,
+                            enableFileUpload: true
+                        }
+                    }
+                });
+                
+                updateStatus('formhandler', 'success', 'Initialized');
+                debugLog('FormHandler initialized successfully', 'success');
+                debugLog(`Form ID: ${formHandler.getFormId()}`, 'info');
+                debugLog(`Extensions loaded: ${formHandler.extensions.size}`, 'info');
+                
+                // List loaded extensions
+                formHandler.extensions.forEach((ext, name) => {
+                    debugLog(`Extension loaded: ${name} (${ext.constructor.name})`, 'success');
+                });
+                
+            } catch (error) {
+                updateStatus('formhandler', 'error', 'Failed');
+                debugLog(`FormHandler initialization failed: ${error.message}`, 'error');
+            }
+            
+            // File input monitoring
+            $('#file-upload').on('change', function() {
+                const fileCount = this.files.length;
+                debugLog(`File selection changed: ${fileCount} files`, 'info');
+                
+                if (fileCount > 0) {
+                    let fileListHtml = '<ul class="list-group list-group-flush">';
+                    Array.from(this.files).forEach((file, index) => {
+                        fileListHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-file"></i> ${file.name}</span>
+                            <span class="badge bg-secondary">${(file.size/1024).toFixed(1)} KB</span>
+                        </li>`;
+                        debugLog(`File ${index + 1}: ${file.name} (${(file.size/1024).toFixed(1)} KB)`, 'info');
+                    });
+                    fileListHtml += '</ul>';
+                    $('#file-list').html(fileListHtml);
+                } else {
+                    $('#file-list').empty();
+                }
+            });
+            
+            // Form submission monitoring
+            $('#test-form').on('submit', function(e) {
+                debugLog('Form submit event triggered - checking delegation logic', 'delegation');
+            });
+            
+            debugLog('Integration test setup complete', 'success');
+        });
+    </script>
+</body>
+</html>

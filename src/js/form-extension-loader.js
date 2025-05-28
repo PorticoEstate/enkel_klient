@@ -11,7 +11,8 @@ class FormExtensionLoader {
       autoSave: '/src/js/extensions/form-autosave.js', 
       fileUpload: '/src/js/extensions/file-upload.js',
       accessibility: '/src/js/extensions/form-accessibility.js',
-      confirmation: '/src/js/extensions/form-confirmation.js'
+      confirmation: '/src/js/extensions/form-confirmation.js',
+      twoPhaseSubmit: '/src/js/extensions/form-two-phase-submit.js'
     };
   }
 
@@ -67,7 +68,7 @@ class FormExtensionLoader {
     
     if (extensionNames.length > 0) {
       // Define loading order to ensure validation runs before confirmation
-      const loadOrder = ['validation', 'accessibility', 'autoSave', 'fileUpload', 'confirmation'];
+      const loadOrder = ['validation', 'accessibility', 'autoSave', 'fileUpload', 'confirmation', 'twoPhaseSubmit'];
       const orderedExtensions = [];
       
       // Add extensions in the predefined order
@@ -165,6 +166,13 @@ class FormExtensionLoader {
         accessibility: {
           announceErrors: true,
           markRequired: true
+        },
+        confirmation: {
+          showSummary: true
+        },
+        twoPhaseSubmit: {
+          showSummary: true,
+          enableFileUpload: true
         }
       },
 

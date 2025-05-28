@@ -59,7 +59,7 @@
 		// Form configuration for WCAG 3.3.4 Error Prevention
 		window.formConfigs = window.formConfigs || {};
 		window.formConfigs['helpdesk'] = {
-			form_summary_on_submit: {{ config.helpdesk.form_summary_on_submit|default(false) ? 'true' : 'false' }},
+			form_summary_on_submit: {{ config.helpdesk.form_summary_on_submit|default(true) ? 'true' : 'false' }},
 			confirmation_dialog_enabled: {{ config.helpdesk.confirmation_dialog_enabled|default(false) ? 'true' : 'false' }},
 			auto_save_enabled: {{ config.helpdesk.auto_save_enabled|default(true) ? 'true' : 'false' }},
 			change_tracking_enabled: {{ config.helpdesk.change_tracking_enabled|default(true) ? 'true' : 'false' }}
@@ -225,12 +225,15 @@ var schema = 'helpdesk';
 		<!-- CLEAN ARCHITECTURE: Core form handler + extension system -->
 		<script src="{{ base_path }}/src/js/form-handler-core.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/form-extension-loader.js?n={{ cache_refresh_token }}"></script>
+		<!-- Required for two-phase submission file chunking capabilities -->
+		<script src="{{ base_path }}/src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
 
 		<!-- Load only needed extensions (80% reduction in file loading) -->
 		<script src="{{ base_path }}/src/js/extensions/form-validation.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/extensions/form-accessibility.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/extensions/form-autosave.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/extensions/form-confirmation.js?n={{ cache_refresh_token }}"></script>
+		<script src="{{ base_path }}/src/js/extensions/form-two-phase-submit.js?n={{ cache_refresh_token }}"></script>
 		
 		{% if enable_fileupload == 1 %}
 			<!-- File upload dependencies for extension -->

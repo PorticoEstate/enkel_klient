@@ -125,7 +125,14 @@ class HelpdeskController extends BaseFormController
 			];
 
 			$url .= http_build_query($get_data);
-			$ret = json_decode($this->apiClient->exchange_data($url, $post_data), true);
+			
+			// Check if this is phase 1 of two-phase submission
+			$isPhaseOne = isset($request->getQueryParams()['phpgw_return_as']) &&
+				$request->getQueryParams()['phpgw_return_as'] === 'json' &&
+				!isset($request->getQueryParams()['phase2']);
+			
+			// Skip files during first phase of two-phase submission
+			$ret = json_decode($this->apiClient->exchange_data($url, $post_data, null, null, false, $isPhaseOne), true);
 
 			if (isset($ret['status']) && $ret['status'] === 'saved')
 			{

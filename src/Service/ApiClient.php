@@ -250,7 +250,7 @@ class ApiClient
 	}
 
 
-	function exchange_data($url, $post_data = array(), $content_range = null, $content_disposition = null, $is_refresh = false)
+	function exchange_data($url, $post_data = array(), $content_range = null, $content_disposition = null, $is_refresh = false, $skip_files = false)
 	{
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -268,7 +268,8 @@ class ApiClient
 			}
 		}
 
-		if (!$is_refresh && !empty($_FILES['files']['tmp_name'][0]))
+		// Only process file uploads if not explicitly skipped and not a refresh request
+		if (!$is_refresh && !$skip_files && !empty($_FILES['files']['tmp_name'][0]))
 		{
 			// Don't set Content-Type header - let cURL set it with boundary
 			$http_header = array();

@@ -38,6 +38,18 @@ if (typeof FormConfirmationExtension === 'undefined') {
     // This is called AFTER validation passes
     this.formData = this.collectFormData();
     
+    // Check if we should use two-phase submission (for file uploads)
+    if (this.options.showSummary && this.shouldUseTwoPhaseSubmission()) {
+      console.log('🔄 Delegating to two-phase submission extension');
+      // Delegate to two-phase submission extension
+      const twoPhaseExtension = this.formHandler.getExtension('twoPhaseSubmit');
+      if (twoPhaseExtension) {
+        return twoPhaseExtension.handleConfirmationBeforeSubmit(formData);
+      } else {
+        console.warn('⚠️ Two-phase submission extension not found, falling back to standard summary');
+      }
+    }
+    
     if (this.options.showSummary) {
       this.showFormSummary();
       return false; // Prevent normal submission, we'll handle it in the modal
@@ -48,6 +60,36 @@ if (typeof FormConfirmationExtension === 'undefined') {
     
     // If no confirmation needed, allow normal submission
     return true;
+  }
+  
+  shouldUseTwoPhaseSubmission() {
+    // Check if form has file uploads that need two-phase processing
+    const hasFileInputs = this.$form.find('input[type="file"]').length > 0;
+    const hasFileUploader = window.FileUploader && this.$form.find('#fileupload, .fileupload').length > 0;
+    
+    // Check if there are actually files to upload
+    let hasFilesToUpload = false;
+    if (hasFileInputs) {
+      this.$form.find('input[type="file"]').each(function() {
+        if (this.files && this.files.length > 0) {
+          hasFilesToUpload = true;
+          return false; // break
+        }
+      });
+    }
+    
+    // Check if FileUploader has pending files
+    if (hasFileUploader && window.fileUploaderInstance) {
+      try {
+        if (typeof window.fileUploaderInstance.getPendingCount === 'function') {
+          hasFilesToUpload = hasFilesToUpload || window.fileUploaderInstance.getPendingCount() > 0;
+        }
+      } catch (e) {
+        console.log('Could not check FileUploader pending count:', e);
+      }
+    }
+    
+    return (hasFileInputs || hasFileUploader) && hasFilesToUpload;
   }
   
   collectFormData() {

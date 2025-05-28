@@ -420,7 +420,12 @@ function setupDropZone() {
         return true;
     }
     function sendAllFiles(id) {
-        currentUrl = `${settings.uploadUrl}?id=${id}`;
+        // Preserve any existing query parameters and add the ID
+        const baseUrl = settings.uploadUrl;
+        const hasQueryParams = baseUrl.includes('?');
+        const separator = hasQueryParams ? '&' : '?';
+        
+        currentUrl = `${baseUrl}${separator}id=${id}&phase2=true`;
         pending = uploaded = 0; errors = false;
         if (!initialized) if (!initialize()) { settings.onComplete && settings.onComplete(false); return; }
         $fileInput.attr('data-url', currentUrl);

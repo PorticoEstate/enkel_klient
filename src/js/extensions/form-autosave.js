@@ -186,11 +186,49 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       
       const formData = new FormData(form);
       const data = {};
+      
+      // Create section for file metadata (can't store file contents)
+      data._fileMetadata = {};
+      
+      // First log all form fields for debugging
+      console.log('🔍 Checking form fields for file inputs...');
+      
+      // Track all file inputs in the form
+      const fileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
+      console.log(`📁 Found ${fileInputs.length} file input(s) in form`);
+      
+      // Log info about each file input
+      fileInputs.forEach(input => {
+        console.log(`📁 File input: name=${input.name}, id=${input.id}, files=${input.files?.length || 0}`);
+        
+        // Check if this input has files selected
+        if (input.files && input.files.length > 0) {
+          console.log(`✅ Input ${input.name} has ${input.files.length} file(s) selected`);
+          
+          const fileInfo = [];
+          for (let i = 0; i < input.files.length; i++) {
+            const file = input.files[i];
+            fileInfo.push({
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              lastModified: file.lastModified
+            });
+            console.log(`📄 File: ${file.name}, size: ${file.size} bytes`);
+          }
+          
+          // Store metadata for this input
+          data._fileMetadata[input.name] = fileInfo;
+        }
+      });
+      
+      // Now process all form fields normally
       for (let [key, value] of formData.entries()) {
-        // Skip file inputs - they cannot be restored for security reasons
+        // Handle file inputs - we already processed them above
         const field = form.querySelector(`[name="${key}"]`);
         if (field && (field.type === 'file' || key.includes('files[') || key.startsWith('files'))) {
-          continue;
+          console.log(`⏩ Skipping file field ${key} in form data`);
+          continue; // Skip storing file in data object
         }
         
         // Skip CSRF tokens - they should not be restored as they become stale
@@ -215,7 +253,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         return;
       }
       
+      // First restore normal field values
       Object.keys(data).forEach(key => {
+        // Skip the file metadata section - we'll handle it separately
+        if (key === '_fileMetadata') return;
+        
         try {
           const field = form.find(`[name="${key}"]`);
           if (field.length && field[0]) {
@@ -263,8 +305,199 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           console.warn(`Error populating field ${key}:`, error);
         }
       });
+      
+      // Then handle file metadata if present - show indicators of previously selected files
+      if (data._fileMetadata) {
+        this.restoreFileMetadata(data._fileMetadata);
+      }
     } catch (error) {
       console.error('Error populating form from autosave:', error);
+    }
+  }
+  
+  /**
+   * Create visual indicators for previously selected files
+   * File inputs can't be programmatically set, but we can show what was selected
+   * @param {Object} fileMetadata - Metadata about previously selected files
+   */
+  restoreFileMetadata(fileMetadata) {
+    try {
+      const form = this.formHandler.getForm();
+      
+      console.log('📦 File metadata to restore:', fileMetadata);
+      
+      // Check if metadata is empty
+      if (!fileMetadata || Object.keys(fileMetadata).length === 0) {
+        console.log('ℹ️ No file metadata found to restore');
+        return;
+      }
+      
+      // Find all file inputs in the form
+      const fileInputs = form.find('input[type="file"]');
+      console.log(`📁 Found ${fileInputs.length} file input(s) in form for potential metadata restoration`);
+      
+      // Process each saved metadata entry
+      Object.keys(fileMetadata).forEach(fieldName => {
+        const files = fileMetadata[fieldName];
+        if (!files || !files.length) {
+          console.log(`⚠️ No files in metadata for field: ${fieldName}`);
+          return;
+        }
+        
+        console.log(`🔄 Restoring metadata for field: ${fieldName}, ${files.length} file(s)`);
+        
+        // Find the file input - try both by name and by ID
+        let fileInput = form.find(`[name="${fieldName}"]`);
+        if (!fileInput.length) {
+          fileInput = form.find(`#${fieldName}`);
+          console.log(`🔍 Trying to find file input by ID: ${fieldName}`);
+        }
+        
+        if (!fileInput.length) {
+          console.warn(`❌ Could not find file input for: ${fieldName}`);
+          return;
+        }
+        
+        // Get field container - try multiple possible parent containers
+        let fieldContainer = fileInput.closest('.form-group, .custom-file, .file-upload-container, .file-input-container');
+        
+        // If no container found, try the parent element
+        if (!fieldContainer.length) {
+          fieldContainer = fileInput.parent();
+          console.log(`ℹ️ Using parent element as container for: ${fieldName}`);
+        }
+        
+        if (!fieldContainer.length) {
+          console.warn(`❌ Could not find container for file input: ${fieldName}`);
+          return;
+        }
+        
+        // Create or find an area to show previous file selections
+        let infoArea = fieldContainer.find('.autosave-file-info');
+        if (!infoArea.length) {
+          infoArea = $('<div class="autosave-file-info alert alert-info mt-2" role="alert" style="margin-top:10px;"></div>');
+          fieldContainer.append(infoArea);
+        }
+        
+        // Clear any existing content
+        infoArea.empty();
+        
+        // Add header with icon (fallback to text if FontAwesome not available)
+        infoArea.append('<h6><span class="fas fa-history" aria-hidden="true"></span> Previously selected files:</h6>');
+        
+        // Add file list
+        const fileList = $('<ul class="mb-1"></ul>');
+        files.forEach(file => {
+          // Format file size with proper units
+          let sizeStr;
+          if (file.size < 1024) {
+            sizeStr = `${file.size} bytes`;
+          } else if (file.size < 1024 * 1024) {
+            sizeStr = `${(file.size / 1024).toFixed(1)} KB`;
+          } else {
+            sizeStr = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+          }
+            
+          // Add file with icon based on type if possible
+          let icon = 'fas fa-file';
+          if (file.type.includes('image')) icon = 'fas fa-file-image';
+          else if (file.type.includes('pdf')) icon = 'fas fa-file-pdf';
+          else if (file.type.includes('word')) icon = 'fas fa-file-word';
+          else if (file.type.includes('excel') || file.type.includes('sheet')) icon = 'fas fa-file-excel';
+          
+          fileList.append(`<li><span class="${icon}" aria-hidden="true"></span> ${file.name} <span class="text-muted">(${sizeStr})</span></li>`);
+        });
+        
+        infoArea.append(fileList);
+        
+        // Create a button to clear the saved file data if needed
+        const clearButton = $('<button type="button" class="btn btn-sm btn-outline-secondary mt-2">Clear saved file info</button>');
+        
+        // Store reference to FormAutoSaveExtension instance and storageKey
+        const storageKey = this.options.storageKey;
+        
+        clearButton.on('click', function() {
+          // Show button is processing
+          const originalText = clearButton.text();
+          clearButton.prop('disabled', true).text('Clearing...');
+          console.log(`🔄 Clear button clicked for field: ${fieldName}`);
+          
+          // Ensure we complete the operation regardless of errors
+          // Using setTimeout to ensure the UI updates first
+          setTimeout(() => {
+            // Get current data and remove just this field's file metadata
+            try {
+              console.log(`🔍 Looking for data in localStorage with key: ${storageKey}`);
+              const savedData = localStorage.getItem(storageKey);
+              console.log(`📦 Found data: ${savedData ? 'yes' : 'no'}`);
+              
+              let cleared = false;
+              
+              if (savedData) {
+                try {
+                  const data = JSON.parse(savedData);
+                  console.log(`🔍 Data structure:`, Object.keys(data));
+                  
+                  // Check if metadata exists for this field
+                  const hasMetadata = data._fileMetadata && data._fileMetadata[fieldName];
+                  console.log(`📁 Metadata for ${fieldName} exists: ${hasMetadata ? 'yes' : 'no'}`);
+                  
+                  if (hasMetadata) {
+                    // Remove this field's metadata
+                    delete data._fileMetadata[fieldName];
+                    
+                    // Save updated data back to localStorage
+                    localStorage.setItem(storageKey, JSON.stringify(data));
+                    console.log(`🗑️ Cleared saved file metadata for: ${fieldName}`);
+                    cleared = true;
+                  }
+                } catch (parseError) {
+                  console.warn('Error parsing saved data:', parseError);
+                }
+              }
+              
+              if (cleared) {
+                console.log(`✅ Successfully cleared metadata for: ${fieldName}`);
+                // Show success briefly before removing
+                clearButton.removeClass('btn-outline-secondary').addClass('btn-success').text('Cleared!');
+                
+                // Remove the info area after a short delay
+                setTimeout(() => {
+                  infoArea.fadeOut(300, function() {
+                    $(this).remove();
+                  });
+                }, 800);
+              } else {
+                // No metadata found for this field, but not an error
+                console.log(`ℹ️ No saved file metadata found for: ${fieldName}`);
+                clearButton.removeClass('btn-outline-secondary').addClass('btn-warning').text('Nothing to clear');
+                
+                // Reset button after a delay
+                setTimeout(() => {
+                  console.log(`🔄 Resetting button for: ${fieldName}`);
+                  clearButton.removeClass('btn-warning').addClass('btn-outline-secondary').text(originalText).prop('disabled', false);
+                }, 1500);
+              }
+            } catch (e) {
+              // Show error and restore button
+              console.warn('Error clearing file metadata:', e);
+              clearButton.removeClass('btn-outline-secondary').addClass('btn-danger').text('Error!');
+              setTimeout(() => {
+                clearButton.removeClass('btn-danger').addClass('btn-outline-secondary').text(originalText).prop('disabled', false);
+              }, 1500);
+            }
+          }, 10); // Small delay to ensure UI updates
+        });
+        infoArea.append(clearButton);
+        
+        // Add note
+        infoArea.append('<p class="small mb-0 mt-2">Please select these files again if needed.</p>');
+        
+        console.log(`✅ Restored metadata for ${files.length} file(s) in field: ${fieldName}`);
+      });
+    } catch (error) {
+      console.warn('❌ Error restoring file metadata:', error);
+      console.error(error);
     }
   }
   

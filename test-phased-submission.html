@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Phased Form Submission Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="vendor/components/jquery/jquery.min.js"></script>
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/file-uploader.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    <script src="src/js/extensions/form-confirmation.js"></script>
+    <script src="src/js/extensions/form-two-phase-submit.js"></script>
+    
+    <style>
+        body {
+            padding: 40px 0;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        .test-description {
+            background: #e9f5ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .file-controls {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="mb-4">Manual Phased Form Submission</h1>
+        
+        <div class="test-description">
+            <p>This form implements a manual phased submission process:</p>
+            <ol>
+                <li><strong>Phase 1:</strong> Submit the form data without files</li>
+                <li><strong>Phase 2:</strong> Upload files with the record ID from phase 1</li>
+                <li><strong>Complete:</strong> Finish the submission process</li>
+            </ol>
+            <p>Each phase must be manually initiated by the user for full control.</p>
+        </div>
+        
+        <form id="test-form" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="fileupload" class="form-label">Attachments</label>
+                <div id="drop-area" class="file-controls">
+                    <p>Drop files here or <button type="button" id="file-select-btn" class="btn btn-sm btn-outline-secondary">browse</button></p>
+                    <input type="file" id="fileupload" name="files[]" multiple style="display:none">
+                </div>
+                <div id="content_upload_download">
+                    <div class="presentation files"></div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Debug Panel -->
+    <div class="debug-panel bg-white p-3 mt-4 mx-auto" style="max-width: 800px; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);">
+        <h4>Debug Console</h4>
+        <div id="debug-log" class="debug-log p-2" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; background: #f8f9fa; border-radius: 4px;"></div>
+    </div>
+    
+    <!-- Mock AJAX For Testing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mockjax/2.6.0/jquery.mockjax.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Debug logging to page
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+            const originalConsoleWarn = console.warn;
+            
+            function addToDebugLog(message, type) {
+                const $logContainer = $('#debug-log');
+                const timestamp = new Date().toLocaleTimeString();
+                let msgStr = message;
+                
+                if (typeof message === 'object') {
+                    try {
+                        msgStr = JSON.stringify(message);
+                    } catch(e) {
+                        msgStr = '[Object]';
+                    }
+                }
+                
+                const bgColor = type === 'error' ? '#f8d7da' : 
+                              type === 'warn' ? '#fff3cd' :
+                              type === 'success' ? '#d4edda' : '#d1ecf1';
+                              
+                $logContainer.append(`<div style="margin: 3px 0; padding: 3px 5px; background: ${bgColor}; border-radius: 3px;"><strong>${timestamp}:</strong> ${msgStr}</div>`);
+                $logContainer.scrollTop($logContainer[0].scrollHeight);
+            }
+            
+            console.log = function(message) {
+                originalConsoleLog.apply(console, arguments);
+                addToDebugLog(message, 'info');
+            };
+            
+            console.error = function(message) {
+                originalConsoleError.apply(console, arguments);
+                addToDebugLog(message, 'error');
+            };
+            
+            console.warn = function(message) {
+                originalConsoleWarn.apply(console, arguments);
+                addToDebugLog(message, 'warn');
+            };
+            
+            // Setup mock API endpoint
+            $.mockjax({
+                url: "*",
+                responseTime: 1000,
+                response: function(settings) {
+                    const hasPhase2 = settings.url.includes('phase2=true');
+                    
+                    if (hasPhase2) {
+                        console.log('Received Phase 2 request with file upload');
+                        this.responseText = JSON.stringify({
+                            status: "uploaded",
+                            message: "Files uploaded successfully"
+                        });
+                    } else {
+                        console.log('Received Phase 1 request for form data');
+                        this.responseText = JSON.stringify({
+                            status: "saved",
+                            id: "TEST-" + Math.floor(Math.random() * 10000),
+                            message: "Form data saved successfully"
+                        });
+                    }
+                }
+            });
+            
+            // Set up global variables needed for FileUploader
+            window.strBaseURL = '';
+            
+            // Initialize FileUploader
+            window.fileUploaderInstance = new FileUploader({
+                formId: 'test-form',
+                uploadUrl: '',
+                fileInputId: 'fileupload',
+                dropAreaId: 'drop-area',
+                uploadContainerId: 'content_upload_download',
+                fileSelectBtnId: 'file-select-btn',
+                required: false,
+                multiple: true
+            });
+            
+            // Initialize FormHandler
+            const formHandler = new FormHandler('#test-form', {
+                redirectUrl: '#submission-complete'
+            });
+            
+            // Register the TwoPhaseSubmitExtension (needed for internal methods)
+            const twoPhaseExt = new FormTwoPhaseSubmitExtension(formHandler, {
+                enableFileUpload: true
+            });
+            formHandler.addExtension('twoPhaseSubmit', twoPhaseExt);
+            
+            // Add confirmation extension
+            formHandler.addExtension('confirmation', new FormConfirmationExtension(formHandler, {
+                showSummary: true
+            }));
+            
+            console.log('Form setup complete. Ready to test manual phased submission.');
+        });
+    </script>
+</body>
+</html>

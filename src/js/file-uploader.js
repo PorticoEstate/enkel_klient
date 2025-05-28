@@ -368,12 +368,38 @@ function setupDropZone() {
                 uploaded++;
                 let r = data.result, err = false, msg = '', name = data.files[0]?.name||'File';
                 
+                // Log the raw response for debugging
+                console.log(`Upload response for ${name}:`, r);
+                
                 // Check for various error conditions
                 if (!r) { err = true; msg = 'No response from server'; }
                 else if (typeof r==='string' && r.includes('error')) { err = true; msg = r; }
                 else if (r.error) { err = true; msg = r.error; }
-                else if (r.status==='error') { err = true; msg = r.message||'Server error'; }
+                else if (r.status==='error') { 
+                    err = true; 
+                    // Handle array or string message format
+                    if (Array.isArray(r.message)) {
+                        // Check for CSRF token related errors
+                        if (r.message.some(m => m.includes('security token') || m.includes('randcheck'))) {
+                            console.error(`CSRF token error for ${name}:`, r.message);
+                            msg = 'Invalid security token. Please ensure the randcheck token is sent as a POST parameter.';
+                        } else {
+                            msg = r.message.join(', ');
+                        }
+                    } else {
+                        msg = r.message || 'Server error'; 
+                    }
+                    // Log error details
+                    console.error(`Server error for ${name}:`, r.message);
+                }
                 else if (r.files?.some(f=>f.error)) { err = true; msg = r.files.find(f=>f.error).error; }
+                
+                // Check for other standard errors
+                else if (r.statusText === 'Invalid security token') {
+                    err = true;
+                    msg = 'Invalid security token';
+                    console.error(`Security token error for ${name}`);
+                }
                 
                 // Hide progress bar when complete
                 data.context.find('.progress-container').fadeOut(300);
@@ -426,21 +452,255 @@ function setupDropZone() {
         const separator = hasQueryParams ? '&' : '?';
         
         currentUrl = `${baseUrl}${separator}id=${id}&phase2=true`;
+        
+        // Try to get the randcheck token to include in the form data (not in URL)
+        let randcheckValue = null;
+        try {
+            // Try multiple methods to find the randcheck token
+            randcheckValue = $('input[name="randcheck"]').val();
+            
+            if (!randcheckValue) {
+                // Try to find it in hidden fields
+                $('input[type="hidden"]').each(function() {
+                    if ($(this).attr('name') === 'randcheck') {
+                        randcheckValue = $(this).val();
+                        return false; // Break the loop
+                    }
+                });
+            }
+            
+            // Store the randcheck value for use in formData, but don't include it in the URL
+            if (randcheckValue) {
+                console.log('Found randcheck token for file upload (will send as POST parameter)');
+            }
+        } catch (e) {
+            console.warn('Error finding randcheck token:', e);
+        }
+        
         pending = uploaded = 0; errors = false;
         if (!initialized) if (!initialize()) { settings.onComplete && settings.onComplete(false); return; }
         $fileInput.attr('data-url', currentUrl);
-        try { $fileInput.fileupload('option','url',currentUrl); } catch {}
+        try { 
+            $fileInput.fileupload('option','url', currentUrl); 
+            
+            // Also include randcheck in the formData if available
+            if (randcheckValue) {
+                $fileInput.fileupload('option', 'formData', {
+                    randcheck: randcheckValue,
+                    id: id,
+                    phase2: 'true'
+                });
+            }
+        } catch {}
+        
+        // Get all start buttons
         queue = $('.start_file_upload').toArray().map(btn => $(btn));
-        if (!queue.length) { settings.onComplete && settings.onComplete(true); return; }
+        
+        console.log(`Found ${queue.length} start buttons for file upload`);
+        
+        // Check if there are files in the input element
+        let hasFilesInInput = false;
+        if ($fileInput.length) {
+            const files = $fileInput.prop('files') || [];
+            hasFilesInInput = files.length > 0;
+            if (hasFilesInInput) {
+                console.log(`Found ${files.length} files in the input element`);
+            }
+        }
+        
+        // If no queue but we have files in the UI or input, handle them
+        if (!queue.length && ($('.file-item').length > 0 || hasFilesInInput)) {
+            console.log('No start buttons but files exist, manually triggering upload...');
+            
+            // If file items exist but no start buttons, we need to handle differently
+            // by directly submitting the files that were already added
+            const fileData = $fileInput.data('blueimp-fileupload') || {};
+            if (fileData._getFilesFromQueue) {
+                const filesToSubmit = fileData._getFilesFromQueue();
+                if (filesToSubmit && filesToSubmit.length) {
+                    console.log(`Directly submitting ${filesToSubmit.length} files`);
+                    filesToSubmit.forEach(data => data.submit());
+                    return;
+                }
+            }
+            
+            // If still no files to upload, attempt to reprocess any UI file elements
+            $('.file-item').each(function() {
+                const $item = $(this);
+                if (!$item.hasClass('done')) {
+                    // Create and trigger a start button if it doesn't exist
+                    let $btn = $item.find('.start_file_upload');
+                    if (!$btn.length) {
+                        $btn = $('<button type="button" class="start_file_upload" style="display:none">start</button>');
+                        $item.append($btn);
+                    }
+                    queue.push($btn[0]);
+                }
+            });
+            
+            // If still no queue but we have files in the input, try to re-add them
+            if (!queue.length && hasFilesInInput) {
+                console.log('Attempting to re-process files from input');
+                const files = Array.from($fileInput.prop('files') || []);
+                
+                // We need to manually trigger the add callback
+                try {
+                    const addHandler = $fileInput.data('blueimp-fileupload')?.options?.add;
+                    if (addHandler && files.length) {
+                        console.log('Manually triggering add handler with files');
+                        files.forEach(file => {
+                            const data = {files: [file], fileInput: $fileInput};
+                            addHandler(null, data);
+                        });
+                        
+                        // Refresh queue after adding files
+                        queue = $('.start_file_upload').toArray().map(btn => $(btn));
+                    }
+                } catch (e) {
+                    console.error('Error re-processing files:', e);
+                }
+            }
+        }
+        
+        if (!queue.length) { 
+            console.log('No files to upload, marking as complete');
+            
+            // Check if there might be files we're not detecting
+            if (hasFilesInInput) {
+                console.warn('Files exist in input but no queue was created! Trying to force-initialize...');
+                
+                // Try to re-initialize the uploader to force file processing
+                if (!initialized) {
+                    console.log('Reinitializing file uploader to process files');
+                    initialize();
+                    
+                    // Give the initialization a moment to process files
+                    setTimeout(() => {
+                        queue = $('.start_file_upload').toArray().map(btn => $(btn));
+                        if (queue.length) {
+                            console.log('Queue created after reinitialization, processing files...');
+                            processNext();
+                        } else {
+                            console.log('Still no queue after reinitialization, marking as complete');
+                            settings.onComplete && settings.onComplete(true);
+                        }
+                    }, 100);
+                    return;
+                }
+            }
+            
+            settings.onComplete && settings.onComplete(true); 
+            return; 
+        }
+        
+        console.log(`Starting upload of ${queue.length} files`);
         processNext();
     }
     function processNext() {
-        if (!queue.length) return;
-        const $btn = queue.shift();
-        try { $btn.click(); } catch { if (queue.length) setTimeout(processNext, 100); else checkComplete(); }
+        if (!queue.length) {
+            console.log('Queue is empty, checking if upload is complete');
+            checkComplete();
+            return;
+        }
+        
+        const $btn = $(queue.shift());
+        
+        try { 
+            const filename = $btn.parent().data('filename') || 'File';
+            console.log('Triggering upload for:', filename);
+            
+            // If button click doesn't trigger file upload, directly submit the associated file data
+            const $fileItem = $btn.closest('.file-item');
+            if ($fileItem.length) {
+                if (!$fileItem.hasClass('uploading')) {
+                    $fileItem.addClass('uploading');
+                    
+                    // Show progress bar if it exists
+                    const $progressContainer = $fileItem.find('.progress-container');
+                    if ($progressContainer.length) {
+                        $progressContainer.show();
+                    }
+                    
+                    // Disable delete button during upload
+                    $fileItem.find('.delete').prop('disabled', true);
+                }
+                
+                // Attempt to trigger upload via click
+                $btn.click();
+                
+                // Check if the click actually triggered anything
+                setTimeout(() => {
+                    if (!$fileItem.hasClass('uploading-started')) {
+                        console.log('Click event did not trigger upload for:', filename);
+                        console.log('Attempting alternative upload method...');
+                        
+                        // Mark that we've tried an alternative method
+                        $fileItem.addClass('uploading-started');
+                        
+                        // Try to find the file in the input that matches
+                        const targetFilename = $fileItem.data('filename');
+                        const targetSize = parseInt($fileItem.data('size'));
+                        
+                        if (targetFilename && $fileInput.length) {
+                            // Try to submit via file uploader's data object
+                            try {
+                                const fileUploaderData = $fileInput.data('blueimp-fileupload');
+                                if (fileUploaderData && fileUploaderData.options) {
+                                    // Find matching file in the input
+                                    const inputFiles = $fileInput.prop('files') || [];
+                                    for (let i = 0; i < inputFiles.length; i++) {
+                                        const file = inputFiles[i];
+                                        if (file.name === targetFilename || (targetSize && file.size === targetSize)) {
+                                            console.log('Found matching file in input, submitting directly:', file.name);
+                                            const data = {
+                                                files: [file],
+                                                context: $fileItem,
+                                                url: currentUrl,
+                                                fileInput: $fileInput
+                                            };
+                                            fileUploaderData.options.add?.(null, data);
+                                            fileUploaderData._getFilesFromQueue?.()?.[0]?.submit?.();
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch (directErr) {
+                                console.error('Error trying alternative upload method:', directErr);
+                            }
+                        }
+                    }
+                    
+                    // Continue to next file
+                    if (queue.length) {
+                        setTimeout(processNext, 100);
+                    } else {
+                        checkComplete();
+                    }
+                }, 300);
+            }
+        } catch (e) {
+            console.error('Error processing file upload:', e);
+            if (queue.length) {
+                setTimeout(processNext, 100);
+            } else {
+                checkComplete();
+            }
+        }
     }
     function checkComplete() {
-        if (uploaded >= pending && settings.onComplete) settings.onComplete(!errors);
+        if (uploaded >= pending && settings.onComplete) {
+            if (errors) {
+                // Create an error object with details
+                const errorInfo = {
+                    message: 'One or more files failed to upload',
+                    details: 'Check the file list for specific error messages'
+                };
+                // Call with false status and error details
+                settings.onComplete(false, errorInfo);
+            } else {
+                settings.onComplete(true);
+            }
+        }
     }
 
     // --- Accessibility & UI ---
@@ -536,6 +796,19 @@ function setupDropZone() {
         announceToScreenReader: announce,
         enhanceKeyboardAccessibility: enhanceAccessibility,
         setupFileDeletion: setupDeletion,
-        setupFileValidation: setupValidation
+        setupFileValidation: setupValidation,
+        updatePendingCount: function(count) {
+            console.log(`Manually updating pending count to ${count}`);
+            pending = count;
+            updateCounter();
+            
+            // Also update global queue if needed
+            if (queue.length !== count) {
+                // Create placeholder queue items if actual files aren't in queue
+                while (queue.length < count) {
+                    queue.push({});
+                }
+            }
+        }
     };
 }

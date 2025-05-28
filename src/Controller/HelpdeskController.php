@@ -232,6 +232,17 @@ class HelpdeskController extends BaseFormController
 		$id = (int)($request->getQueryParams()['id'] ?? 0);
 		$session_info = $this->apiClient->get_session_info();
 
+		// // Verify CSRF token from POST data (not query parameters)
+		// $post = $request->getParsedBody();
+		// if (!isset($post['randcheck']) || !$this->validateCsrfToken('helpdesk', $post['randcheck'])) {
+		// 	$response = $response->withHeader('Content-Type', 'application/json');
+		// 	$response->getBody()->write(json_encode([
+		// 		'status' => 'error',
+		// 		'message' => ['Invalid security token']
+		// 	]));
+		// 	return $response;
+		// }
+
 		$url = $this->apiClient->get_backend_url() . "/?" . http_build_query([
 			'menuaction' => 'property.uitts.handle_multi_upload_file',
 			$session_info['session_name'] => $session_info['session_id'],

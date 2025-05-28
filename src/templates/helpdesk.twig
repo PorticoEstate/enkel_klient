@@ -158,7 +158,7 @@
 						</label>
 						<small id="contact_infoHelpPhone" class="form-text text-muted d-block mb-2">{{ __('phone_help') }}</small>
 						<input type="text" id="phone" name="phone" class="form-control" autocomplete="tel" required="required" aria-required="true" aria-describedby="contact_infoHelpPhone phone-error"/>
-						<div id="phone-error" class="invalid-feedback">Please enter a valid phone number</div>
+						<div id="phone-error" class="invalid-feedback">{{ __('invalid_phone') }}</div>
 					</div>
 					<div class="form-group mt-2">
 						<label for="email">
@@ -167,7 +167,7 @@
 						</label>
 						<small id="contact_infoHelpEmail" class="form-text text-muted d-block mb-2">{{ __('email_help') }}</small>
 						<input type="email" id="email" name="email" class="form-control" autocomplete="email" required="required" aria-required="true" aria-describedby="contact_infoHelpEmail email-error" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" oninvalid="this.setCustomValidity('{{ __('invalid_email') }}')" oninput="this.setCustomValidity('')"/>
-						<div id="email-error" class="invalid-feedback">Please enter a valid email address</div>
+						<div id="email-error" class="invalid-feedback">{{ __('invalid_email') }}</div>
 					</div>
 				</fieldset>
 
@@ -181,7 +181,7 @@
 							</label>
 							<small id="subjectHelp" class="form-text text-muted d-block mb-2">{{ __('subject_help') }}</small>
 							<input type="text" class="form-control" id="subject" name="subject" value="{{ subject }}" aria-describedby="subjectHelp subject-error" required="required" aria-required="true">
-							<div id="subject-error" class="invalid-feedback">Please enter a subject</div>
+							<div id="subject-error" class="invalid-feedback">{{ __('invalid_subject') }}</div>
 						</div>
 						<div class="form-group mt-4">
 							<label for="message">
@@ -192,7 +192,7 @@
 								{{ __('additional_info_help') }}
 							</small>
 							<textarea class="form-control" id="message" name="message" rows="12" required="required" aria-required="true" aria-describedby="messageHelp message-error" style="min-height: 250px;">{{ message }}</textarea>
-							<div id="message-error" class="invalid-feedback">Please provide additional information</div>
+							<div id="message-error" class="invalid-feedback">{{ __('invalid_message') }}</div>
 						</div>
 
 						{% include 'components/file-upload.twig' %}

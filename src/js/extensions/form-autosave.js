@@ -21,6 +21,9 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     this.loadTime = new Date();
     
     const setupAndRestore = () => {
+      // Handle complex radio button names first
+      this.handleComplexRadioNames();
+      
       // Setup autosave immediately
       this.setupAutoSave();
       
@@ -90,6 +93,32 @@ if (typeof FormAutoSaveExtension === 'undefined') {
 
   saveData() {
     const formData = this.serializeForm();
+    
+    // Debug radio buttons specifically since they can be problematic
+    const radioValues = Object.keys(formData).filter(key => {
+      // Include both standard radio buttons and our custom-mapped ones
+      const isRegularRadio = this.formHandler.getForm().find(`[name="${key}"]`).filter(function() {
+        return this.type === 'radio';
+      }).length > 0;
+      
+      const isComplexRadio = key.startsWith('radio_') || 
+                            this.formHandler.getForm().find(`[data-autosave-key="${key}"]`).length > 0;
+      
+      return isRegularRadio || isComplexRadio;
+    });
+    
+    if (radioValues.length > 0) {
+      console.log('📻 Saving radio button values:', radioValues.reduce((obj, key) => {
+        obj[key] = formData[key];
+        return obj;
+      }, {}));
+      
+      // Log any radio mappings for debugging
+      if (formData._radioMappings) {
+        console.log('🔄 Radio name mappings:', formData._radioMappings);
+      }
+    }
+    
     localStorage.setItem(this.options.storageKey, JSON.stringify(formData));
   }
 
@@ -222,8 +251,48 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         }
       });
       
-      // Now process all form fields normally
+      // Special handling for radio buttons
+      // First collect all radio buttons by name
+      const radioButtons = Array.from(form.querySelectorAll('input[type="radio"]'));
+      const radioGroups = {};
+      
+      // Group radio buttons by name
+      radioButtons.forEach(radio => {
+        const name = radio.name;
+        if (!radioGroups[name]) {
+          radioGroups[name] = [];
+        }
+        radioGroups[name].push(radio);
+      });
+      
+      // For each radio group, find the checked button and store its value
+      Object.keys(radioGroups).forEach(name => {
+        const checkedRadio = radioGroups[name].find(radio => radio.checked);
+        if (checkedRadio) {
+          // Check if this has a data-autosave-key (for complex array names)
+          const autosaveKey = checkedRadio.getAttribute('data-autosave-key');
+          const keyToUse = autosaveKey || name;
+          
+          console.log(`📻 Radio button group ${name} has value: ${checkedRadio.value}${
+            autosaveKey ? ` (using autosave key: ${autosaveKey})` : ''}`);
+          
+          data[keyToUse] = checkedRadio.value;
+          
+          // For array notation radio buttons, store both the original name and the safe key
+          if (autosaveKey && autosaveKey !== name) {
+            data._radioMappings = data._radioMappings || {};
+            data._radioMappings[autosaveKey] = name;
+          }
+        }
+      });
+      
+      // Now process all other form fields normally
       for (let [key, value] of formData.entries()) {
+        // Skip radio buttons - we already processed them above
+        if (radioGroups[key]) {
+          continue;
+        }
+        
         // Handle file inputs - we already processed them above
         const field = form.querySelector(`[name="${key}"]`);
         if (field && (field.type === 'file' || key.includes('files[') || key.startsWith('files'))) {
@@ -255,11 +324,30 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       
       // First restore normal field values
       Object.keys(data).forEach(key => {
-        // Skip the file metadata section - we'll handle it separately
-        if (key === '_fileMetadata') return;
+        // Skip the metadata sections - we'll handle them separately
+        if (key === '_fileMetadata' || key === '_radioMappings') return;
         
         try {
-          const field = form.find(`[name="${key}"]`);
+          // Try multiple methods to find the field
+          let field = form.find(`[name="${key}"]`);
+          
+          // If not found and it's a mapped radio name, look for the original named field
+          if (!field.length && data._radioMappings && data._radioMappings[key]) {
+            const originalName = data._radioMappings[key];
+            field = form.find(`[name="${originalName}"]`);
+            console.log(`🔍 Using mapped name ${originalName} for key: ${key}`);
+          }
+          
+          // Try finding by data attribute
+          if (!field.length) {
+            field = form.find(`[data-autosave-key="${key}"]`);
+          }
+          
+          // Try finding by ID as last resort
+          if (!field.length) {
+            field = form.find(`#${key}`);
+          }
+          
           if (field.length && field[0]) {
             // Check if the field is still in the DOM
             if (document.contains(field[0])) {
@@ -292,6 +380,49 @@ if (typeof FormAutoSaveExtension === 'undefined') {
               if (isQuillField) {
                 console.log(`🔍 Detected Quill field: ${key} with ID: ${field.attr('id')}`);
                 this.restoreQuillContent(field, data[key], isRetry);
+              } else if (field[0].type === 'radio') {
+                // Special handling for radio buttons
+                console.log(`📻 Restoring radio button: ${key} with value: ${data[key]}`);
+                
+                let radioName = key;
+                
+                // Check if this is a mapped radio button with array notation
+                if (data._radioMappings && data._radioMappings[key]) {
+                  radioName = data._radioMappings[key];
+                  console.log(`📻 Using mapped radio name: ${radioName} for key: ${key}`);
+                } 
+                // Or check if radios have data-autosave-key attribute
+                else {
+                  const radioWithDataKey = form.find(`input[data-autosave-key="${key}"]`);
+                  if (radioWithDataKey.length) {
+                    radioName = radioWithDataKey.attr('name');
+                    console.log(`📻 Found radio with data-autosave-key: ${key}, using name: ${radioName}`);
+                  }
+                }
+                
+                // Find the radio button with matching value
+                const radioToCheck = form.find(`input[name="${radioName}"][value="${data[key]}"]`);
+                if (radioToCheck.length) {
+                  radioToCheck.prop('checked', true);
+                  // Trigger change event for any listeners including custom handlers
+                  radioToCheck.trigger('change');
+                  
+                  // If field has an onchange attribute, execute that function
+                  const onChangeAttr = radioToCheck.attr('onchange');
+                  if (onChangeAttr) {
+                    try {
+                      // Use setTimeout to ensure the radio is checked before calling handler
+                      setTimeout(() => {
+                        console.log(`🔄 Executing onchange handler for radio: ${key}`);
+                        // Fix: use proper function creation syntax without reserved keyword as parameter
+                        const handler = new Function(`return ${onChangeAttr}`);
+                        handler.call(radioToCheck[0]);
+                      }, 10);
+                    } catch (e) {
+                      console.warn(`⚠️ Failed to execute onchange handler for ${key}:`, e);
+                    }
+                  }
+                }
               } else {
                 // Standard fields
                 field.val(data[key]);
@@ -607,6 +738,60 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     } catch (error) {
       console.error('❌ Error restoring Quill editor content:', error);
       return false;
+    }
+  }
+
+  /**
+   * Helper method to safely handle radio button names with array notation
+   * This addresses issues with complex names like values_attribute[2][value][]
+   */
+  handleComplexRadioNames() {
+    try {
+      const form = this.formHandler.getForm();
+      
+      // Find all radio buttons with array notation in names
+      const complexRadios = form.find('input[type="radio"][name*="["]');
+      
+      if (complexRadios.length === 0) {
+        console.log('No complex radio button names found, skipping special handling');
+        return;
+      }
+      
+      console.log(`🔍 Found ${complexRadios.length} radio buttons with complex names`);
+      
+      // Group them by their base name (without array notation)
+      const radioGroups = {};
+      complexRadios.each(function() {
+        const name = $(this).attr('name');
+        if (!radioGroups[name]) {
+          radioGroups[name] = [];
+        }
+        radioGroups[name].push($(this));
+      });
+      
+      console.log(`📻 Identified ${Object.keys(radioGroups).length} radio groups with complex names`);
+      
+      // Add data attributes to help with serialization and restoration
+      Object.keys(radioGroups).forEach(groupName => {
+        // Create a safe, unique key for localStorage
+        // Replace array brackets with underscores for safe serialization
+        const safeKey = `radio_${groupName.replace(/[\[\]]/g, '_')}`;
+        console.log(`📻 Adding data attribute for complex radio group: ${groupName} -> ${safeKey}`);
+        
+        // Add data attribute to each radio in the group
+        radioGroups[groupName].forEach(radio => {
+          radio.attr('data-autosave-key', safeKey);
+          radio.attr('data-original-name', groupName);
+        });
+        
+        // Also create a mapping function we can use during restoration
+        this.mapRadioName = this.mapRadioName || new Map();
+        this.mapRadioName.set(safeKey, groupName);
+      });
+      
+      console.log('✅ Complex radio name handling setup complete');
+    } catch (e) {
+      console.warn('❌ Error handling complex radio names:', e);
     }
   }
 

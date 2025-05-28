@@ -9,6 +9,13 @@ var toolbarOptions = [
 ];
 
 /**
+ * Global registry for Quill instances
+ * Used by the autosave extension to find and update editors
+ */
+window.quillInstances = window.quillInstances || {};
+window.quill = window.quill || {}; // For backward compatibility
+
+/**
  * Quill Editor initialization for textareas
  * Enhanced for WCAG 2.0 compliance with improved accessibility
  */
@@ -169,6 +176,19 @@ function quilljs_textarea(elem = null, options = null)
 			}
 
 			var editor = new Quill(editorDiv, default_options);
+			
+			// Store in global registry for autosave extension to use
+			// Use both quillInstances (new) and quill (legacy) to ensure compatibility
+			if (elemId) {
+				window.quillInstances[elemId] = editor;
+				window.quill[elemId] = editor; // Also store in legacy location
+				
+				// Add a data attribute to the editor element for easier selection
+				$(editorDiv).attr('data-quill-id', elemId);
+				
+				// Log that we've registered this Quill instance
+				console.log(`📝 Quill editor registered with ID: ${elemId}`);
+			}
 
 			// Set up ARIA states for accessibility
 			const editorContainer = editorDiv.querySelector('.ql-editor');

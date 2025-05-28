@@ -41,6 +41,9 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         console.log('✅ Verifying restoration success');
         this.checkRestorationSuccess();
       }, 2000);
+
+      // Setup form submission handler to clear localStorage on successful submit
+      this.setupSubmitHandler();
     };
     
     // Wait for DOM to be ready before setting up autosave
@@ -49,6 +52,25 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     } else {
       // DOM is already ready, set up immediately
       setupAndRestore();
+    }
+  }
+  
+  /**
+   * Setup handler to clear autosave data after successful form submission
+   */
+  setupSubmitHandler() {
+    // Register a hook in the form handler to execute after successful submission
+    if (this.formHandler.addHook) {
+      console.log('🔄 Registering afterSuccess hook to clear autosaved data on form submission');
+      this.formHandler.addHook('afterSuccess', (data) => {
+        // Check if submission was successful
+        if (data && data.status === "saved") {
+          console.log('✅ Form submitted successfully, clearing autosaved data');
+          this.clearSavedData();
+          return true; // Continue with other hooks
+        }
+        return true;
+      });
     }
   }
 
@@ -365,6 +387,18 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       clearTimeout(timeout);
       timeout = setTimeout(later, wait);
     };
+  }
+
+  /**
+   * Clear saved form data from localStorage
+   */
+  clearSavedData() {
+    try {
+      localStorage.removeItem(this.options.storageKey);
+      console.log(`🧹 Cleared autosaved data for ${this.options.storageKey}`);
+    } catch (error) {
+      console.warn('Error clearing autosaved data:', error);
+    }
   }
 
   // Cleanup

@@ -139,31 +139,33 @@ function initializeForm() {
  */
 function updateFileUploadRequirement(required) {
     const $fileUploadSection = $('#file-upload-section, .file-upload-area');
+    const $fileField = $fileUploadSection.find('input[type="file"]');
     const $fileLabel = $('label[for*="file"], label[for*="upload"]');
-    const $requiredIndicator = $fileLabel.find('.required-field, .required');
     
-    if (required) {
-        // Add required indicator if not present
-        if ($requiredIndicator.length === 0) {
-            $fileLabel.append('<span class="required-field" aria-hidden="true">*</span>');
+    // Set or remove the required attribute on the file input
+    if ($fileField.length) {
+        if (required) {
+            $fileField.attr('required', 'required');
+        } else {
+            $fileField.removeAttr('required');
         }
-        $fileUploadSection.attr('aria-required', 'true');
         
-        // Update help text
-        const $helpText = $fileUploadSection.find('.form-text, .help-text');
-        if ($helpText.length) {
-            $helpText.text('File upload is required when no location is specified.');
+        // Use the accessibility extension to handle required field marking
+        if (formHandler && formHandler.getExtension) {
+            const accessibility = formHandler.getExtension('accessibility');
+            if (accessibility && accessibility.markRequiredFields) {
+                // Just mark the file field specifically
+                accessibility.markRequiredFields($fileField);
+            }
         }
-    } else {
-        // Remove required indicator
-        $requiredIndicator.remove();
-        $fileUploadSection.attr('aria-required', 'false');
-        
-        // Update help text
-        const $helpText = $fileUploadSection.find('.form-text, .help-text');
-        if ($helpText.length) {
-            $helpText.text('File upload is optional when location is specified.');
-        }
+    }
+    
+    // Update help text regardless of extension availability
+    const $helpText = $fileUploadSection.find('.form-text, .help-text');
+    if ($helpText.length) {
+        $helpText.text(required ? 
+            'File upload is required when no location is specified.' : 
+            'File upload is optional when location is specified.');
     }
 }
 

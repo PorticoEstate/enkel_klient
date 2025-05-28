@@ -90,11 +90,7 @@ function fallbackToDirectInitialization() {
  * Setup helpdesk-specific features that aren't handled by extensions
  */
 function setupHelpdeskSpecificFeatures() {
-    // Set focus on first input field - retain this form-specific behavior
-    setInitialFocus();
-    
-    // Add keyboard accessibility enhancements for helpdesk-specific elements
-    enhanceHelpdeskKeyboardAccessibility();
+    // Note: Initial focus and keyboard accessibility are now handled by the form-accessibility extension
     
     // Setup custom validation for helpdesk fields
     setupHelpdeskValidation();
@@ -104,72 +100,13 @@ function setupHelpdeskSpecificFeatures() {
 }
 
 /**
- * Set focus on the first available input field
+ * MIGRATION CLEANUP: 
+ * The following functions have been removed as they're now handled by form-accessibility.js:
+ * - setInitialFocus() - Initial focus is now handled by the accessibility extension
+ * - enhanceHelpdeskKeyboardAccessibility() - Keyboard support for autocomplete and rich text editors
+ *   is now managed by the centralized extension via setupAutocompleteKeyboardSupport() and
+ *   setupRichTextEditorAccessibility() methods
  */
-function setInitialFocus() {
-    try {
-        // Try location field first
-        const locationField = document.getElementById("location_name");
-        if (locationField && !locationField.disabled) {
-            locationField.focus();
-            return;
-        }
-    } catch (error) {
-        // Continue to next field
-    }
-    
-    try {
-        // Try phone field as fallback
-        const phoneField = document.getElementById("phone");
-        if (phoneField && !phoneField.disabled) {
-            phoneField.focus();
-            return;
-        }
-    } catch (error) {
-        // If no field can be focused, no action needed
-        console.log('No focusable input field found');
-    }
-}
-
-/**
- * Enhance keyboard accessibility for helpdesk-specific elements
- */
-function enhanceHelpdeskKeyboardAccessibility() {
-    // Add keyboard support for autocomplete results with WCAG compliance
-    $(document).on('keydown', '.autoComplete_wrapper ul, .autoComplete_result', function(e) {
-        const key = e.which || e.keyCode;
-
-        // Enter or Space: select item
-        if (key === 13 || key === 32) {
-            $(document.activeElement).click();
-            e.preventDefault();
-        }
-        
-        // Escape key: dismiss dropdown and return focus
-        if (key === 27) {
-            const $input = $(this).closest('.autoComplete_wrapper').find('input');
-            $input.focus();
-            // Announce to screen reader
-            if (formHandler && formHandler.getExtension) {
-                const accessibility = formHandler.getExtension('accessibility');
-                if (accessibility && accessibility.announceToScreenReader) {
-                    accessibility.announceToScreenReader('Autocomplete closed');
-                }
-            }
-        }
-    });
-
-    // For better keyboard accessibility, ensure rich text toolbar buttons receive focus
-    setTimeout(() => {
-        $('.ql-toolbar button').attr('tabindex', '0');
-        
-        // Add ARIA labels for each button group in the toolbar
-        $('.ql-toolbar .ql-formats').each(function(index) {
-            $(this).attr('role', 'group');
-            $(this).attr('aria-label', `Formatting options group ${index + 1}`);
-        });
-    }, 500); // Wait for Quill to initialize
-}
 
 /**
  * Setup helpdesk-specific validation rules
@@ -202,6 +139,8 @@ function setupHelpdeskValidation() {
 
 /**
  * Initialize rich text editor for the message field
+ * Note: Keyboard accessibility for the editor is handled by the form-accessibility extension
+ * This function only handles the initialization of the editor itself
  */
 function initializeRichTextEditor() {
     // This will be handled by quill-textarea.js if it's loaded
@@ -232,7 +171,17 @@ function getFormHandler() {
  */
 window.helpdeskForm = {
     getFormHandler: getFormHandler,
-    setInitialFocus: setInitialFocus,
+    
+    // Use the accessibility extension for setting focus
+    setInitialFocus: function() {
+        console.warn('Direct setInitialFocus() call is deprecated. The accessibility extension handles this automatically.');
+        if (formHandler && formHandler.getExtension) {
+            const accessibility = formHandler.getExtension('accessibility');
+            if (accessibility && accessibility.setInitialFocus) {
+                accessibility.setInitialFocus();
+            }
+        }
+    },
     
     // Legacy function compatibility (deprecated but functional)
     markRequiredFields: function() {

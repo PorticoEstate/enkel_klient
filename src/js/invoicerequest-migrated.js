@@ -69,8 +69,8 @@ function initializeForm() {
         });
     }
 
-    // Enhance keyboard accessibility
-    enhanceKeyboardAccessibility();
+    // Keyboard accessibility is now handled by the form-accessibility extension
+    // No need to call enhanceKeyboardAccessibility() anymore
 }
 
 /**
@@ -237,36 +237,13 @@ function initializeRichTextEditor() {
 }
 
 /**
- * Enhance keyboard accessibility for complex form elements
+ * NOTE: Keyboard accessibility functionality has been moved to form-accessibility.js extension
+ * - Autocomplete keyboard navigation
+ * - Interactive element keyboard access
+ * - Custom form control keyboard support
+ * 
+ * This eliminates duplication and ensures consistent keyboard accessibility across forms
  */
-function enhanceKeyboardAccessibility() {
-    // Enhance autocomplete accessibility
-    $('.autoComplete_wrapper').on('mouseenter', function() {
-        $(this).addClass('hover-active');
-    }).on('mouseleave', function() {
-        $(this).removeClass('hover-active');
-    });
-
-    // Ensure all interactive elements are keyboard accessible
-    $('button, .btn, [role="button"]').each(function() {
-        if (!$(this).attr('tabindex')) {
-            $(this).attr('tabindex', '0');
-        }
-    });
-
-    // Add keyboard support for custom elements
-    $('.custom-control, .form-check').on('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            const input = $(this).find('input[type="radio"], input[type="checkbox"]');
-            if (input.length) {
-                e.preventDefault();
-                input.trigger('click');
-            }
-        }
-    });
-
-    console.log('✅ Enhanced keyboard accessibility for invoice form');
-}
 
 /**
  * Invoice-specific validation
@@ -337,6 +314,16 @@ function validateInvoiceSpecific(formData) {
  * @param {string} message The message to announce
  */
 function announceToScreenReader(message) {
+    // First try to use the accessibility extension
+    if (formHandler && formHandler.getExtension) {
+        const accessibility = formHandler.getExtension('accessibility');
+        if (accessibility && accessibility.announceToScreenReader) {
+            accessibility.announceToScreenReader(message);
+            return;
+        }
+    }
+    
+    // Then try the formHandler method (legacy support)
     if (formHandler && formHandler.announceToScreenReader) {
         formHandler.announceToScreenReader(message);
     } else {

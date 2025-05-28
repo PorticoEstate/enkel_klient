@@ -238,7 +238,7 @@ function updateValidationRules() {
 
 /**
  * Initialize rich text editor (Quill) if present
- * Enhanced with accessibility features
+ * Note: Most accessibility features are now handled by form-accessibility.js extension
  */
 function initializeQuillEditor() {
     const remarkField = document.getElementById('merknad');
@@ -254,10 +254,8 @@ function initializeQuillEditor() {
             if (quillContainer) {
                 console.log('✅ Quill editor initialized for merknad field');
                 
-                // Enhance accessibility for the Quill editor
+                // Add form-specific label (accessibility extension handles the rest)
                 quillContainer.setAttribute('aria-label', 'Inspection remark (rich text editor)');
-                quillContainer.setAttribute('role', 'textbox');
-                quillContainer.setAttribute('aria-multiline', 'true');
                 
                 // Set global flag to indicate Quill is ready
                 window.quillTextareaSetup = true;
@@ -323,20 +321,11 @@ function validateInspectionSpecific(formData) {
 
 /**
  * Initialize accessibility features for dynamic content
+ * Note: Basic form field accessibility is now handled by form-accessibility.js extension
  */
 function initializeAccessibility() {
-    // Enhanced error handling for all form fields
-    $('input, select, textarea').on('invalid', function() {
-        const id = $(this).attr('id');
-        const $label = $('label[for="' + id + '"]');
-        const fieldName = $label.text().trim();
-
-        // Set aria-invalid
-        $(this).attr('aria-invalid', 'true');
-
-        // Update screen reader status
-        announceToScreenReader('Validation error: ' + fieldName);
-    });
+    // The error handling for form fields is now handled by the accessibility extension
+    // We just need to maintain the dynamic section announcements
 
     // Announce when form sections become visible/hidden
     const observer = new MutationObserver(function(mutations) {
@@ -364,6 +353,22 @@ function initializeAccessibility() {
  * @param {string} message The message to announce
  */
 function announceToScreenReader(message) {
+    // First try to use the accessibility extension
+    if (formHandler && formHandler.getExtension) {
+        const accessibility = formHandler.getExtension('accessibility');
+        if (accessibility && accessibility.announceToScreenReader) {
+            accessibility.announceToScreenReader(message);
+            return;
+        }
+    }
+    
+    // Then try the formHandler method (legacy support)
+    if (formHandler && formHandler.announceToScreenReader) {
+        formHandler.announceToScreenReader(message);
+        return;
+    }
+    
+    // Fallback implementation if the extension isn't available
     const announcement = document.createElement('div');
     announcement.setAttribute('aria-live', 'polite');
     announcement.setAttribute('aria-atomic', 'true');
@@ -404,28 +409,11 @@ function handleChangeSlukkeutstyr(src) {
 
 /**
  * Helper function to announce changes to screen readers
+ * This is now a simple wrapper around announceToScreenReader
  */
 function announceChange(message) {
-    if (formHandler && formHandler.announceToScreenReader) {
-        formHandler.announceToScreenReader(message);
-    } else {
-        // Fallback implementation
-        let liveRegion = document.getElementById('form-submission-status');
-        if (!liveRegion) {
-            // Create the live region if it doesn't exist
-            liveRegion = document.createElement('div');
-            liveRegion.id = 'form-submission-status';
-            liveRegion.className = 'sr-only';
-            liveRegion.setAttribute('aria-live', 'assertive');
-            document.body.appendChild(liveRegion);
-        }
-        liveRegion.textContent = message;
-
-        // Clear the announcement after screen readers have time to read it
-        setTimeout(() => {
-            liveRegion.textContent = '';
-        }, 3000);
-    }
+    // Use the centralized announceToScreenReader function
+    announceToScreenReader(message);
 }
 
 /**

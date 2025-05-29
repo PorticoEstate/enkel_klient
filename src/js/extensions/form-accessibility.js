@@ -1,6 +1,7 @@
 /**
  * FormAccessibility Extension
- * Handles all accessibility-related functionality
+ * Handles form-specific accessibility functionality using global accessibility helpers
+ * Integrates with accessibility-helpers.js for unified accessibility management
  */
 
 // Prevent multiple declarations
@@ -23,11 +24,35 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           enhanceKeyboardNavigation: true,
           announceDelay: 100,
           debounceDelay: 300,
+          useGlobalHelpers: true,
           ...options
         };
         this.debounceTimers = new Map();
         this.observers = [];
         this.eventListeners = [];
+        
+        // Check if global accessibility helpers are available
+        this.hasGlobalHelpers = typeof announceToScreenReader === 'function' && 
+                                typeof makeInputsAccessible === 'function' &&
+                                typeof createScreenReaderAnnouncer === 'function';
+        
+        // Additional global functions check for enhanced integration
+        this.hasDropzoneHelper = typeof makeDropzoneAccessible === 'function';
+        this.hasFormStatusHelper = typeof announceFormStatus === 'function';
+        
+        if (this.hasGlobalHelpers && this.options.useGlobalHelpers) {
+          const helpers = [];
+          if (typeof announceToScreenReader === 'function') helpers.push('announceToScreenReader');
+          if (typeof makeInputsAccessible === 'function') helpers.push('makeInputsAccessible');
+          if (typeof createScreenReaderAnnouncer === 'function') helpers.push('createScreenReaderAnnouncer');
+          if (this.hasDropzoneHelper) helpers.push('makeDropzoneAccessible');
+          if (this.hasFormStatusHelper) helpers.push('announceFormStatus');
+          
+          console.log('FormAccessibilityExtension: Using global accessibility helpers:', helpers.join(', '));
+        } else {
+          console.log('FormAccessibilityExtension: Using fallback implementations');
+        }
+        
         this.init();
       }
       
@@ -67,6 +92,13 @@ if (typeof FormAccessibilityExtension === 'undefined') {
       }
 
       createScreenReaderStatus() {
+        // Use global helper if available and no form-specific status needed
+        if (this.hasGlobalHelpers && typeof createScreenReaderAnnouncer === 'function') {
+          createScreenReaderAnnouncer();
+          return;
+        }
+        
+        // Fallback: Create form-specific status regions
         if (!$('#form-status').length) {
           $('<div>', {
             id: 'form-status',
@@ -132,6 +164,11 @@ if (typeof FormAccessibilityExtension === 'undefined') {
       }
 
       setupAccessibilityFeatures() {
+        // Use global helper to enhance form inputs if available
+        if (this.hasGlobalHelpers && typeof makeInputsAccessible === 'function') {
+          makeInputsAccessible(this.$form[0]);
+        }
+        
         // Enhanced field validation with accessibility features
         const invalidHandler = (e) => {
           const field = e.target;
@@ -259,20 +296,49 @@ if (typeof FormAccessibilityExtension === 'undefined') {
       }
 
       enhanceFileUploadAccessibility() {
-        const $dropArea = this.$form.find('#drop-area');
-        if ($dropArea.length) {
-          $dropArea.attr({
-            'role': 'button',
-            'tabindex': '0',
-            'aria-label': 'Click or press Enter to select files for upload'
-          }).on('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              $('#fileupload').click();
+        // Use global helper if available
+        if (this.hasDropzoneHelper && this.options.useGlobalHelpers) {
+          const $dropArea = this.$form.find('#drop-area, .drop-area, [data-drop-area]').first();
+          const $fileInput = this.$form.find('#fileupload, input[type="file"]').first();
+          
+          if ($dropArea.length && $fileInput.length) {
+            // Ensure elements have IDs for global helper
+            let dropAreaId = $dropArea.attr('id');
+            let fileInputId = $fileInput.attr('id');
+            
+            if (!dropAreaId) {
+              dropAreaId = 'drop-area-' + Date.now();
+              $dropArea.attr('id', dropAreaId);
             }
-          });
+            
+            if (!fileInputId) {
+              fileInputId = 'fileupload-' + Date.now();
+              $fileInput.attr('id', fileInputId);
+            }
+            
+            makeDropzoneAccessible(dropAreaId, fileInputId);
+          }
+        } else {
+          // Fallback implementation for standalone operation
+          const $dropArea = this.$form.find('#drop-area, .drop-area, [data-drop-area]').first();
+          if ($dropArea.length) {
+            $dropArea.attr({
+              'role': 'button',
+              'tabindex': '0',
+              'aria-label': 'Click or press Enter to select files for upload'
+            }).on('keydown', function(e) {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const $fileInput = $(this).closest('form').find('input[type="file"]').first();
+                if ($fileInput.length) {
+                  $fileInput[0].click();
+                }
+              }
+            });
+          }
         }
         
+        // File count monitoring (always apply as it's form-specific)
         const filesCount = document.getElementById('files-count');
         if (filesCount) {
           const observer = new MutationObserver((mutations) => {
@@ -373,6 +439,14 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           return;
         }
         
+        // Use global helper if available
+        if (this.hasGlobalHelpers && typeof window.announceToScreenReader === 'function') {
+          const priority = isUrgent ? 'assertive' : 'polite';
+          window.announceToScreenReader(message, priority);
+          return;
+        }
+        
+        // Fallback implementation for standalone operation
         // Sanitize message to prevent XSS
         const sanitizedMessage = message.replace(/[<>]/g, '');
         
@@ -415,22 +489,105 @@ if (typeof FormAccessibilityExtension === 'undefined') {
       // Hook methods for form events
       beforeSubmit() {
         if (this.options.announceErrors) {
-          this.announceToScreenReader('Form is being submitted, please wait...');
+          // Use global form status helper if available
+          if (this.hasFormStatusHelper && typeof announceFormStatus === 'function') {
+            announceFormStatus('Form is being submitted, please wait...', this.$form.attr('id'));
+          } else {
+            this.announceToScreenReader('Form is being submitted, please wait...');
+          }
         }
         return true;
       }
 
       afterSuccess(data) {
         if (this.options.announceErrors) {
-          this.announceToScreenReader('Form submitted successfully', true);
+          // Use global form status helper if available
+          if (this.hasFormStatusHelper && typeof announceFormStatus === 'function') {
+            announceFormStatus('Form submitted successfully', this.$form.attr('id'));
+          } else {
+            this.announceToScreenReader('Form submitted successfully', true);
+          }
         }
       }
 
       afterError(xhr, status, error) {
         if (this.options.announceErrors) {
           const message = xhr.responseJSON?.message || 'Form submission failed. Please check for errors and try again.';
-          this.announceToScreenReader(message, true);
+          // Use global form status helper if available
+          if (this.hasFormStatusHelper && typeof announceFormStatus === 'function') {
+            announceFormStatus(message, this.$form.attr('id'));
+          } else {
+            this.announceToScreenReader(message, true);
+          }
         }
+      }
+
+      // Utility methods for enhanced accessibility
+      
+      /**
+       * Get the current accessibility configuration status
+       * @returns {Object} Configuration status object
+       */
+      getAccessibilityStatus() {
+        return {
+          hasGlobalHelpers: this.hasGlobalHelpers,
+          hasDropzoneHelper: this.hasDropzoneHelper,
+          hasFormStatusHelper: this.hasFormStatusHelper,
+          useGlobalHelpers: this.options.useGlobalHelpers,
+          formId: this.$form?.attr('id'),
+          observerCount: this.observers.length,
+          eventListenerCount: this.eventListeners.length
+        };
+      }
+      
+      /**
+       * Manually trigger screen reader announcement (for external use)
+       * @param {string} message - Message to announce
+       * @param {boolean} isUrgent - Whether to use assertive priority
+       */
+      announce(message, isUrgent = false) {
+        this.announceToScreenReader(message, isUrgent);
+      }
+      
+      /**
+       * Check if a field has accessibility enhancements
+       * @param {string|HTMLElement|jQuery} field - Field identifier, element, or jQuery object
+       * @returns {boolean} Whether the field has accessibility enhancements
+       */
+      isFieldAccessible(field) {
+        const $field = typeof field === 'string' ? $(`#${field}`) : $(field);
+        
+        return $field.length > 0 && (
+          $field.attr('aria-describedby') ||
+          $field.attr('aria-labelledby') ||
+          $field.attr('aria-label') ||
+          $field.prev('label[for="' + $field.attr('id') + '"]').length > 0
+        );
+      }
+      
+      /**
+       * Refresh accessibility features for dynamically added form elements
+       * @param {jQuery} $container - Container with new elements (defaults to form)
+       */
+      refreshAccessibility($container = null) {
+        const $target = $container || this.$form;
+        
+        if (!$target || !$target.length) return;
+        
+        // Re-apply global helpers if available
+        if (this.hasGlobalHelpers && this.options.useGlobalHelpers) {
+          if (typeof makeInputsAccessible === 'function') {
+            makeInputsAccessible($target[0]);
+          }
+        }
+        
+        // Re-apply required field marking
+        if (this.options.markRequired) {
+          this.markRequiredFields();
+        }
+        
+        // Re-apply field descriptions
+        this.setupFieldDescriptions();
       }
 
       // Cleanup method
@@ -452,8 +609,11 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           });
           this.eventListeners = [];
           
-          // Remove status elements
-          $('#form-status, #form-status-assertive').remove();
+          // Only remove status elements if we're using fallback implementations
+          // Don't remove global status elements managed by accessibility-helpers.js
+          if (!this.hasGlobalHelpers || !this.options.useGlobalHelpers) {
+            $('#form-status, #form-status-assertive').remove();
+          }
         } catch (error) {
           console.error('Error during FormAccessibilityExtension cleanup:', error);
         }

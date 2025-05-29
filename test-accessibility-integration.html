@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormAccessibilityExtension Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+        .success { background: #d4edda !important; color: #155724; }
+        .error { background: #f8d7da !important; color: #721c24; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; margin-bottom: 5px; }
+        button { padding: 10px 20px; margin: 5px; }
+        #drop-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 10px 0; }
+        .required-field { color: red; }
+    </style>
+</head>
+<body>
+    <h1>FormAccessibilityExtension Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Form</h2>
+        <form id="test-form" novalidate>
+            <div class="form-group">
+                <label for="test-name">Name (Required)</label>
+                <input type="text" id="test-name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="test-email">Email (Required)</label>
+                <input type="email" id="test-email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="test-phone">Phone</label>
+                <input type="tel" id="test-phone" name="phone" data-description="Optional contact number">
+            </div>
+            
+            <div class="form-group">
+                <label for="test-message">Message</label>
+                <textarea id="test-message" name="message" rows="4"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="test-file">File Upload</label>
+                <div id="drop-area">
+                    <p>Drop files here or click to select</p>
+                    <input type="file" id="test-file" name="file" multiple>
+                </div>
+                <div id="files-count">No files selected</div>
+            </div>
+            
+            <button type="submit">Submit Form</button>
+            <button type="button" id="test-accessibility">Test Accessibility Features</button>
+        </form>
+    </div>
+    
+    <!-- Load dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../src/js/accessibility-helpers.js"></script>
+    <script src="../src/js/core/form-handler.js"></script>
+    <script src="../src/js/extensions/form-accessibility.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            const resultsContainer = $('#test-results');
+            
+            // Test function to add results
+            function addTestResult(testName, passed, details) {
+                const resultClass = passed ? 'success' : 'error';
+                const resultText = passed ? 'PASS' : 'FAIL';
+                
+                resultsContainer.append(`
+                    <div class="test-result ${resultClass}">
+                        <strong>${testName}: ${resultText}</strong>
+                        ${details ? `<br><small>${details}</small>` : ''}
+                    </div>
+                `);
+            }
+            
+            // Test 1: Check if global helpers are available
+            const hasGlobalAnnouncer = typeof announceToScreenReader === 'function';
+            const hasGlobalInputsHelper = typeof makeInputsAccessible === 'function';
+            const hasGlobalDropzoneHelper = typeof makeDropzoneAccessible === 'function';
+            const hasGlobalFormStatus = typeof announceFormStatus === 'function';
+            
+            addTestResult(
+                'Global Helpers Available',
+                hasGlobalAnnouncer && hasGlobalInputsHelper,
+                `announceToScreenReader: ${hasGlobalAnnouncer}, makeInputsAccessible: ${hasGlobalInputsHelper}, makeDropzoneAccessible: ${hasGlobalDropzoneHelper}, announceFormStatus: ${hasGlobalFormStatus}`
+            );
+            
+            // Test 2: Initialize FormHandler with accessibility extension
+            let formHandler, accessibilityExtension;
+            try {
+                formHandler = new FormHandler('#test-form', {
+                    enableDebug: true,
+                    extensions: {
+                        accessibility: {
+                            announceErrors: true,
+                            markRequired: true,
+                            setInitialFocus: true,
+                            enhanceKeyboardNavigation: true
+                        }
+                    }
+                });
+                
+                accessibilityExtension = formHandler.getExtension('accessibility');
+                
+                addTestResult(
+                    'FormHandler Initialization',
+                    formHandler && accessibilityExtension,
+                    accessibilityExtension ? 'Extension loaded successfully' : 'Extension not found'
+                );
+            } catch (error) {
+                addTestResult('FormHandler Initialization', false, error.message);
+            }
+            
+            // Test 3: Check accessibility status
+            if (accessibilityExtension) {
+                const status = accessibilityExtension.getAccessibilityStatus();
+                
+                addTestResult(
+                    'Accessibility Configuration',
+                    status.hasGlobalHelpers,
+                    `Using global helpers: ${status.useGlobalHelpers}, Observers: ${status.observerCount}, Event listeners: ${status.eventListenerCount}`
+                );
+            }
+            
+            // Test 4: Check if required fields are marked
+            setTimeout(() => {
+                const requiredFields = $('input[required]');
+                const markedFields = $('label .required-field');
+                
+                addTestResult(
+                    'Required Fields Marked',
+                    markedFields.length > 0,
+                    `Required fields: ${requiredFields.length}, Marked labels: ${markedFields.length}`
+                );
+            }, 100);
+            
+            // Test 5: Check if ARIA attributes are set
+            setTimeout(() => {
+                const fieldsWithAria = $('input[aria-required="true"]');
+                const fieldsWithDescriptions = $('input[aria-describedby]');
+                
+                addTestResult(
+                    'ARIA Attributes Applied',
+                    fieldsWithAria.length > 0,
+                    `Fields with aria-required: ${fieldsWithAria.length}, Fields with descriptions: ${fieldsWithDescriptions.length}`
+                );
+            }, 200);
+            
+            // Test 6: Check screen reader announcer
+            setTimeout(() => {
+                const announcer = $('#screen-reader-announcer');
+                const formStatus = $('#form-status');
+                
+                addTestResult(
+                    'Screen Reader Elements',
+                    announcer.length > 0 || formStatus.length > 0,
+                    `Global announcer: ${announcer.length > 0}, Form status: ${formStatus.length > 0}`
+                );
+            }, 300);
+            
+            // Test accessibility features button
+            $('#test-accessibility').on('click', function() {
+                if (accessibilityExtension) {
+                    // Test announcement
+                    accessibilityExtension.announce('Testing accessibility announcement');
+                    
+                    // Test field accessibility check
+                    const nameField = accessibilityExtension.isFieldAccessible('#test-name');
+                    const emailField = accessibilityExtension.isFieldAccessible('#test-email');
+                    
+                    addTestResult(
+                        'Field Accessibility Check',
+                        nameField && emailField,
+                        `Name field accessible: ${nameField}, Email field accessible: ${emailField}`
+                    );
+                    
+                    // Test refresh functionality
+                    accessibilityExtension.refreshAccessibility();
+                    
+                    addTestResult(
+                        'Refresh Accessibility',
+                        true,
+                        'Refresh completed successfully'
+                    );
+                }
+            });
+            
+            // Test form submission
+            $('#test-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Trigger validation
+                const isValid = this.checkValidity();
+                
+                addTestResult(
+                    'Form Validation Test',
+                    !isValid, // We expect it to fail with empty required fields
+                    isValid ? 'Form is valid' : 'Form validation triggered (expected with empty required fields)'
+                );
+            });
+            
+            // Test file upload
+            $('#test-file').on('change', function() {
+                const fileCount = this.files.length;
+                $('#files-count').text(`${fileCount} file(s) selected`);
+            });
+        });
+    </script>
+</body>
+</html>

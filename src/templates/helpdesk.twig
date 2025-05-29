@@ -167,8 +167,6 @@ var schema = 'helpdesk';
 		<!-- CLEAN ARCHITECTURE: Core form handler + extension system -->
 		<script src="{{ base_path }}/src/js/form-handler-core.js?n={{ cache_refresh_token }}"></script>
 		<script src="{{ base_path }}/src/js/form-extension-loader.js?n={{ cache_refresh_token }}"></script>
-		<!-- Required for two-phase submission file chunking capabilities -->
-		<script src="{{ base_path }}/src/js/file-uploader.js?n={{ cache_refresh_token }}"></script>
 
 		<!-- Load only needed extensions (80% reduction in file loading) -->
 		<script src="{{ base_path }}/src/js/extensions/form-validation.js?n={{ cache_refresh_token }}"></script>
@@ -191,4 +189,4 @@ var schema = 'helpdesk';
 		<!-- MIGRATED: Clean helpdesk form handler -->
 		<script src="{{ base_path }}/src/js/helpdesk-migrated.js?n={{ cache_refresh_token }}"></script>
 	{% endif %}
-{% endblock %}
+{% endblock %

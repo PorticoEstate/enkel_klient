@@ -14,6 +14,7 @@ if (typeof FileUploadExtension === 'undefined') {
       required: false,
       allowedFileTypes: ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'],
       maxFileSizeMB: 15,
+      maxChunkSize: 8388000, // Add default chunk size (8MB)
       ...options
     };
     
@@ -99,6 +100,23 @@ if (typeof FileUploadExtension === 'undefined') {
         sequentialUploads: true,
         replaceFileInput: false,
         
+        // Enhanced chunking capabilities (from FileUploader)
+        maxChunkSize: this.options.maxChunkSize || 8388000, // 8MB chunks by default
+        limitConcurrentUploads: 1,
+        
+        // Add formData for security tokens (like FileUploader does)
+        formData: () => {
+          const formData = {};
+          
+          // Include randcheck token if available
+          const randcheck = this.$form.find('input[name="randcheck"]').val();
+          if (randcheck) {
+            formData.randcheck = randcheck;
+          }
+          
+          return formData;
+        },
+        
         add: (e, data) => {
           console.log('Files added:', data.files);
           this.handleFilesAdded(data);
@@ -106,38 +124,50 @@ if (typeof FileUploadExtension === 'undefined') {
         
         submit: (e, data) => {
           console.log('File submit:', data.files[0].name);
+          
+          // Update URL for two-phase submission if needed
+          if (this.uploadId) {
+            const baseUrl = this.uploadUrl;
+            const hasQueryParams = baseUrl.includes('?');
+            const separator = hasQueryParams ? '&' : '?';
+            data.url = `${baseUrl}${separator}id=${this.uploadId}&phase2=true`;
+          }
+          
           return true;
+        },
+        
+        progress: (e, data) => {
+          const percent = parseInt((data.loaded / data.total) * 100, 10);
+          
+          // Update progress bar in file item
+          const $progressBar = data.context?.find('.progress-bar');
+          if ($progressBar.length) {
+            $progressBar.css('width', percent + '%');
+            $progressBar.parent().show();
+          }
+          
+          // Announce progress for accessibility
+          if (percent % 25 === 0) {
+            console.log(`Upload ${percent}% complete`);
+          }
         },
         
         done: (e, data) => {
           console.log('File upload complete:', data.files[0].name);
-          this.handleUploadComplete(true);
+          this.handleUploadComplete(true, data);
         },
         
         fail: (e, data) => {
           console.log('File upload failed:', data.files[0].name);
-          this.handleUploadComplete(false);
+          this.handleUploadComplete(false, data);
         }
       });
       
       // Set up drag-and-drop visual feedback after plugin initialization
       this.setupDropZoneEvents();
       
-    } else if (typeof FileUploader === 'function') {
-      // Fallback to FileUploader class if available
-      console.log('FileUploadExtension: Using FileUploader class');
-      this.fileUploader = new FileUploader({
-        formId: this.formHandler.getFormId(),
-        uploadUrl: this.uploadUrl,
-        required: this.options.required,
-        allowedFileTypes: this.options.allowedFileTypes,
-        maxFileSizeMB: this.options.maxFileSizeMB,
-        onComplete: (success) => this.handleUploadComplete(success)
-      });
-      
-      this.fileUploader.initialize();
     } else {
-      console.warn('FileUploadExtension: Neither jQuery fileupload plugin nor FileUploader class available');
+      console.warn('FileUploadExtension: jQuery fileupload plugin not available');
     }
     
     // Ensure file-select-btn works (fallback if neither method handles it)
@@ -145,6 +175,209 @@ if (typeof FileUploadExtension === 'undefined') {
     setTimeout(() => {
       this.setupFileSelectButton();
     }, 100);
+  }
+
+  // Add methods for two-phase submission compatibility
+  sendAllFiles(uploadId) {
+    this.uploadId = uploadId;
+    console.log('FileUploadExtension: Starting upload for ID:', uploadId);
+    
+    // Trigger all pending uploads
+    this.$form.find('.file-item').each((index, item) => {
+      const $item = $(item);
+      const uploadData = $item.data('uploadData');
+      
+      if (uploadData && !$item.hasClass('done')) {
+        console.log('Submitting file:', uploadData.files[0]?.name);
+        uploadData.submit();
+      }
+    });
+  }
+  
+  getPendingCount() {
+    return this.$form.find('.file-item:not(.done)').length;
+  }
+  
+  getFileCount() {
+    return this.getPendingCount();
+  }
+  
+  resetCounts() {
+    this.$form.find('.file-item').remove();
+    this.updateFileCount();
+  }
+  
+  init() {
+    this.$form = this.formHandler.getForm();
+    this.uploadUrl = this.options.uploadUrl || `${strBaseURL}/${this.formHandler.getFormId()}/upload`;
+    
+    this.initFileUploader();
+    this.setupValidation();
+    this.displayAllowedFileTypes();
+  }
+  
+  displayAllowedFileTypes() {
+    console.log('FileUploadExtension: Displaying allowed file types in drop area');
+    
+    // Create a debug info div to show allowed file types
+    const allowedTypesInfo = `
+      <div class="file-types-debug alert alert-info mt-2" style="font-size: 0.9em;">
+        <strong>🔍 Debug - Allowed file types:</strong> ${this.options.allowedFileTypes.join(', ')}<br>
+        <strong>📏 Max file size:</strong> ${this.options.maxFileSizeMB}MB<br>
+        <strong>📋 Form:</strong> ${this.formHandler.getFormId()}
+      </div>
+    `;
+    
+    // Add the info to the drop area
+    const dropArea = this.$form.find('#drop-area');
+    if (dropArea.length) {
+      // Remove any existing debug info first
+      dropArea.find('.file-types-debug').remove();
+      dropArea.append(allowedTypesInfo);
+      console.log('FileUploadExtension: Added file types debug info to drop area');
+      
+      // Also add it to the upload instructions
+      const uploadInstructions = dropArea.find('#upload-instructions');
+      if (uploadInstructions.length) {
+        const originalText = uploadInstructions.text();
+        if (!originalText.includes('Allowed types:')) {
+          uploadInstructions.append(`<br><small style="color:rgb(5, 43, 85);"><strong>Allowed types:</strong> ${this.options.allowedFileTypes.join(', ')} (max ${this.options.maxFileSizeMB}MB)</small>`);
+        }
+      }
+    } else {
+      console.warn('FileUploadExtension: Drop area not found for displaying file types');
+    }
+    
+    // Also log to console for debugging
+    console.log('=== FileUploadExtension Configuration ===');
+    console.log('Form ID:', this.formHandler.getFormId());
+    console.log('Allowed file types:', this.options.allowedFileTypes);
+    console.log('Max file size:', this.options.maxFileSizeMB + 'MB');
+    console.log('Upload URL:', this.uploadUrl);
+    console.log('Required:', this.options.required);
+    console.log('========================================');
+  }
+  
+  initFileUploader() {
+    // Initialize jQuery fileupload plugin directly since FileUploader class may not be available
+    const fileInput = this.$form.find('input[type="file"]').first();
+    
+    if (fileInput.length && $.fn.fileupload) {
+      console.log('FileUploadExtension: Initializing jQuery fileupload plugin directly');
+      
+      // Initialize the plugin
+      fileInput.fileupload({
+        url: this.uploadUrl,
+        dropZone: this.$form.find('#drop-area'),
+        autoUpload: false,
+        sequentialUploads: true,
+        replaceFileInput: false,
+        
+        // Enhanced chunking capabilities (from FileUploader)
+        maxChunkSize: this.options.maxChunkSize || 8388000, // 8MB chunks by default
+        limitConcurrentUploads: 1,
+        
+        // Add formData for security tokens (like FileUploader does)
+        formData: () => {
+          const formData = {};
+          
+          // Include randcheck token if available
+          const randcheck = this.$form.find('input[name="randcheck"]').val();
+          if (randcheck) {
+            formData.randcheck = randcheck;
+          }
+          
+          return formData;
+        },
+        
+        add: (e, data) => {
+          console.log('Files added:', data.files);
+          this.handleFilesAdded(data);
+        },
+        
+        submit: (e, data) => {
+          console.log('File submit:', data.files[0].name);
+          
+          // Update URL for two-phase submission if needed
+          if (this.uploadId) {
+            const baseUrl = this.uploadUrl;
+            const hasQueryParams = baseUrl.includes('?');
+            const separator = hasQueryParams ? '&' : '?';
+            data.url = `${baseUrl}${separator}id=${this.uploadId}&phase2=true`;
+          }
+          
+          return true;
+        },
+        
+        progress: (e, data) => {
+          const percent = parseInt((data.loaded / data.total) * 100, 10);
+          
+          // Update progress bar in file item
+          const $progressBar = data.context?.find('.progress-bar');
+          if ($progressBar.length) {
+            $progressBar.css('width', percent + '%');
+            $progressBar.parent().show();
+          }
+          
+          // Announce progress for accessibility
+          if (percent % 25 === 0) {
+            console.log(`Upload ${percent}% complete`);
+          }
+        },
+        
+        done: (e, data) => {
+          console.log('File upload complete:', data.files[0].name);
+          this.handleUploadComplete(true, data);
+        },
+        
+        fail: (e, data) => {
+          console.log('File upload failed:', data.files[0].name);
+          this.handleUploadComplete(false, data);
+        }
+      });
+      
+      // Set up drag-and-drop visual feedback after plugin initialization
+      this.setupDropZoneEvents();
+      
+    } else {
+      console.warn('FileUploadExtension: jQuery fileupload plugin not available');
+    }
+    
+    // Ensure file-select-btn works (fallback if neither method handles it)
+    // Use a small delay to ensure DOM is fully ready and fileupload plugin is initialized
+    setTimeout(() => {
+      this.setupFileSelectButton();
+    }, 100);
+  }
+
+  // Add methods for two-phase submission compatibility
+  sendAllFiles(uploadId) {
+    this.uploadId = uploadId;
+    console.log('FileUploadExtension: Starting upload for ID:', uploadId);
+    
+    // Trigger all pending uploads
+    this.$form.find('.file-item').each((index, item) => {
+      const $item = $(item);
+      const uploadData = $item.data('uploadData');
+      
+      if (uploadData && !$item.hasClass('done')) {
+        console.log('Submitting file:', uploadData.files[0]?.name);
+        uploadData.submit();
+      }
+    });
+  }
+  
+  getPendingCount() {
+    return this.$form.find('.file-item:not(.done)').length;
+  }
+  
+  getFileCount() {
+    return this.getPendingCount();
+  }
+  
+  resetCounts() {
+    this.$form.find('.file-item').remove();
+    this.updateFileCount();
   }
   
   handleFilesAdded(data) {

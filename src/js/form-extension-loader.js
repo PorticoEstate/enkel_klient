@@ -108,51 +108,6 @@ class FormExtensionLoader {
         }
       },
       
-      contact: {
-        validation: {
-          realTimeValidation: true,
-          wcagCompliant: true
-        },
-        accessibility: {
-          announceErrors: true,
-          markRequired: true
-        }
-      },
-
-      upload: {
-        fileUpload: {
-          required: true,
-          allowedFileTypes: ['.pdf', '.doc', '.docx', '.jpg', '.png'],
-          maxFileSizeMB: 10
-        },
-        validation: {
-          realTimeValidation: true,
-          wcagCompliant: true
-        },
-        accessibility: {
-          announceErrors: true,
-          markRequired: true
-        }
-      },
-
-      complex: {
-        validation: {
-          realTimeValidation: true,
-          wcagCompliant: true
-        },
-        autoSave: {
-          interval: 30000
-        },
-        accessibility: {
-          announceErrors: true,
-          markRequired: true
-        },
-        confirmation: {
-          showSummary: true,
-          requireConfirmation: true
-        }
-      },
-
       helpdesk: {
         fileUpload: {
           required: false,
@@ -173,26 +128,6 @@ class FormExtensionLoader {
         twoPhaseSubmit: {
           showSummary: true,
           enableFileUpload: true
-        }
-      },
-
-      invoice: {
-        fileUpload: {
-          required: true,
-          allowedFileTypes: ['.pdf', '.doc', '.docx', '.xls', '.xlsx'],
-          maxFileSizeMB: 15
-        },
-        validation: {
-          realTimeValidation: true,
-          wcagCompliant: true
-        },
-        autoSave: {
-          interval: 30000,
-          storageKey: 'invoice_autosave'
-        },
-        accessibility: {
-          announceErrors: true,
-          markRequired: true
         }
       },
 

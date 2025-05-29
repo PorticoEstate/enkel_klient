@@ -1110,7 +1110,7 @@ if (typeof FormConfirmationExtension === 'undefined') {
     const messages = {
       'helpdesk': 'Are you sure you want to submit this support request?',
       'nokkelbestilling': 'Are you sure you want to submit this key order?',
-      'inspection': 'Are you sure you want to submit this inspection report?',
+      'inspection_1': 'Are you sure you want to submit this inspection report?',
           'invoicerequest': 'Are you sure you want to submit this invoice request?'
     };
     

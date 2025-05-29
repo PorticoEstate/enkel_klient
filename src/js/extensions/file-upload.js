@@ -560,7 +560,6 @@ if (typeof FileUploadExtension === 'undefined') {
         console.log('FileUploadExtension: jQuery fileupload plugin detected, ensuring drop zone connection');
         
         try {
-          // Ensure the dropZone option is correctly set (similar to drop-fix.js)
           fileInput.fileupload('option', 'dropZone', dropArea);
           console.log('FileUploadExtension: Drop zone connection verified');
         } catch (error) {

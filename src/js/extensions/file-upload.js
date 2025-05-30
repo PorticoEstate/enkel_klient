@@ -40,7 +40,7 @@ if (typeof FileUploadExtension === 'undefined') {
     
     this.initFileUploader();
     this.setupValidation();
-    this.displayAllowedFileTypes();
+//    this.displayAllowedFileTypes();
   }
   
   displayAllowedFileTypes() {

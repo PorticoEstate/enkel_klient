@@ -297,6 +297,8 @@ return [
         'phase_error_heading' => 'Error:',
         'submitting_form_data' => 'Submitting form data...',
         'form_locked_notice' => 'The form is locked after Phase 1 submission and cannot be edited.',
+        'form_locked_modal_notice' => 'Form data has been successfully submitted and is now locked. You can continue with file upload but cannot edit the submitted information.',
+        'form_locked_banner_notice' => 'Your form data has been submitted (Record ID: {recordId}). Form fields are locked to prevent changes. You can still upload files if needed.',
         'phase_incomplete_notice' => 'Please complete the file upload process before closing this dialog.',
         'close_warning' => 'Please complete both phases before closing this dialog. The close button will be enabled once all uploads are complete.',
     ],

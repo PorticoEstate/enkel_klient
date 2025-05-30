@@ -297,6 +297,8 @@ return [
         'phase_error_heading' => 'Feil:',
         'submitting_form_data' => 'Sender skjemadata...',
         'form_locked_notice' => 'Skjemaet er låst etter fase 1-innsending og kan ikke redigeres.',
+        'form_locked_modal_notice' => 'Skjemadata har blitt sendt inn og er nå låst. Du kan fortsette med filopplasting, men kan ikke redigere den innsendte informasjonen.',
+        'form_locked_banner_notice' => 'Skjemadataene dine har blitt sendt inn (Saks-ID: {recordId}). Skjemafelt er låst for å forhindre endringer. Du kan fortsatt laste opp filer om nødvendig.',
         'phase_incomplete_notice' => 'Vennligst fullfør filopplastingsprosessen før du lukker denne dialogen.',
         'close_warning' => 'Vennligst fullfør begge faser før du lukker denne dialogen. Lukkeknappen vil bli aktivert når alle opplastinger er fullført.',
     ],

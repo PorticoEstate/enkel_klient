@@ -758,6 +758,16 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         $(this).remove();
       });
       
+      // Remove both form locked notices after Phase 2 completion
+      $modal.find('.form-locked-notice').fadeOut(function() {
+        $(this).remove();
+      });
+      
+      // Also remove the form locked banner from the main form
+      this.$form.find('.form-locked-banner').fadeOut(function() {
+        $(this).remove();
+      });
+      
       // Enable the close button now that all phases are complete
       $modal.find('.form-summary-close').removeAttr('data-phase-locked');
       
@@ -1310,10 +1320,12 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       
       // Add a form locked notice
       if ($modal.find('.form-locked-notice').length === 0) {
+        const modalNoticeText = this.getTranslation('form_confirmation.form_locked_modal_notice', 
+          'Form data has been successfully submitted and is now locked. You can continue with file upload but cannot edit the submitted information.');
+        
         $modal.find('.form-summary-body').prepend(`
           <div class="form-locked-notice alert alert-info" role="alert">
-            <strong>🔒 Form Locked:</strong> Form data has been successfully submitted and is now locked. 
-            You can continue with file upload but cannot edit the submitted information.
+            <strong>🔒 Form Locked:</strong> ${modalNoticeText}
           </div>
         `);
       }
@@ -1395,10 +1407,13 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     
     // Add a visual indicator to the form about the locked state
     if (!this.$form.find('.form-locked-banner').length) {
+      const bannerNoticeText = this.getTranslation('form_confirmation.form_locked_banner_notice', 
+        'Your form data has been submitted (Record ID: {recordId}). Form fields are locked to prevent changes. You can still upload files if needed.')
+        .replace('{recordId}', this.recordId);
+      
       this.$form.prepend(`
         <div class="form-locked-banner form-locked-notice" style="margin-bottom: 20px;">
-          <strong>🔒 Form Locked:</strong> Your form data has been submitted (Record ID: ${this.recordId}). 
-          Form fields are locked to prevent changes. You can still upload files if needed.
+          <strong>🔒 Form Locked:</strong> ${bannerNoticeText}
         </div>
       `);
     }

@@ -3,9 +3,9 @@
  * Handles WCAG 3.3.4 confirmation features (summary and dialogs)
  */
 
-// Prevent multiple declarations
-if (typeof FormConfirmationExtension === 'undefined') {
-  class FormConfirmationExtension {
+// Define the class only if it doesn't exist already
+var FormConfirmationExtension = FormConfirmationExtension || (function() {
+  return class FormConfirmationExtension {
   constructor(formHandler, options = {}) {
     this.formHandler = formHandler;
     this.$form = formHandler.getForm();
@@ -1287,8 +1287,8 @@ if (typeof FormConfirmationExtension === 'undefined') {
     
     console.log('Form fields locked successfully');
   }
-} // End of FormConfirmationExtension class
-} // End of if (typeof FormConfirmationExtension === 'undefined')
+  } // End of FormConfirmationExtension class
+})(); // End of IIFE returning the class definition
 
 // Register extension with FormHandler
 if (typeof FormHandler !== 'undefined') {

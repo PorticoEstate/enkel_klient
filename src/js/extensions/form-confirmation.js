@@ -369,8 +369,8 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
   }
   
   setupSummaryEvents($modal, hasPhases) {
-    // Close modal events - Respect locked state for edit button
-    $modal.find('.form-summary-close, .form-summary-backdrop').on('click', () => {
+    // Close modal events - Only for the close button, not the backdrop
+    $modal.find('.form-summary-close').on('click', () => {
       $modal.remove();
     });
     
@@ -821,7 +821,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
           }
           .form-summary-backdrop {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
           }
           .form-summary-content {
             position: relative; background: white; border-radius: 8px;

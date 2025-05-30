@@ -64,7 +64,10 @@ function fallbackToDirectInitialization() {
                     wcagCompliant: true
                 },
                 autoSave: true,
-                fileUpload: true
+                fileUpload: true,
+                confirmation: {
+                    showSummary: true  // Enable form summary for WCAG 3.3.4 compliance
+                }
             }
         });
         

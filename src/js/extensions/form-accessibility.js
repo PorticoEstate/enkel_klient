@@ -439,14 +439,11 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           return;
         }
         
-        // Use global helper if available
-        if (this.hasGlobalHelpers && typeof window.announceToScreenReader === 'function') {
-          const priority = isUrgent ? 'assertive' : 'polite';
-          window.announceToScreenReader(message, priority);
-          return;
-        }
-        
-        // Fallback implementation for standalone operation
+        // Direct implementation to avoid recursion
+        this._createScreenReaderAnnouncement(message, isUrgent);
+      }
+      
+      _createScreenReaderAnnouncement(message, isUrgent = false) {
         // Sanitize message to prevent XSS
         const sanitizedMessage = message.replace(/[<>]/g, '');
         

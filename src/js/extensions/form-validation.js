@@ -448,37 +448,21 @@ if (typeof FormValidationExtension === 'undefined') {
     $status.text(message);
   }
   
-  setupLocationValidator() {
-    try {
-      const form = this.formHandler.getForm();
-      const locationCodeInput = form.find('#location_code')[0];
-      const locationNameField = form.find('#location_name')[0];
+    setupLocationValidator() {
+    const $locationName = $('#location_name');
+    const $locationCode = $('#location_code');
+    
+    if ($locationName.length && $locationCode.length) {
+      // Simple event-based approach
+      $locationCode.on('change input', () => {
+        console.log('🏙️ Location code changed, triggering validation');
+        this.validateField($locationName[0]);
+      });
       
-      if (locationCodeInput && locationNameField) {
-        console.log('🏙️ Setting up location validator for', locationNameField.id);
-        
-        // Monitor changes to the location_code field
-        $(locationCodeInput).on('change input', () => {
-          console.log('🏙️ Location code changed:', locationCodeInput.value);
-          this.validateField(locationNameField);
-        });
-        
-        // Use MutationObserver for programmatic changes to the location_code field
-        const observer = new MutationObserver(() => {
-          console.log('🏙️ Location code modified via DOM mutation');
-          this.validateField(locationNameField);
-        });
-        
-        // Observe the value attribute and DOM changes
-        observer.observe(locationCodeInput, {
-          attributes: true,
-          attributeFilter: ['value'],
-          childList: false,
-          subtree: false
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error setting up location validator:', error);
+      $locationName.on('change input', () => {
+        console.log('🏙️ Location name changed, triggering validation');
+        this.validateField($locationName[0]);
+      });
     }
   }
 }

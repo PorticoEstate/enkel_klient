@@ -297,6 +297,8 @@ return [
         'phase_error_heading' => 'Feil:',
         'submitting_form_data' => 'Sender skjemadata...',
         'form_locked_notice' => 'Skjemaet er låst etter fase 1-innsending og kan ikke redigeres.',
+        'phase_incomplete_notice' => 'Vennligst fullfør filopplastingsprosessen før du lukker denne dialogen.',
+        'close_warning' => 'Vennligst fullfør begge faser før du lukker denne dialogen. Lukkeknappen vil bli aktivert når alle opplastinger er fullført.',
     ],
 
     // File upload error messages

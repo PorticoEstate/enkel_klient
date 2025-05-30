@@ -297,6 +297,8 @@ return [
         'phase_error_heading' => 'Error:',
         'submitting_form_data' => 'Submitting form data...',
         'form_locked_notice' => 'The form is locked after Phase 1 submission and cannot be edited.',
+        'phase_incomplete_notice' => 'Please complete the file upload process before closing this dialog.',
+        'close_warning' => 'Please complete both phases before closing this dialog. The close button will be enabled once all uploads are complete.',
     ],
 
     // File upload error messages

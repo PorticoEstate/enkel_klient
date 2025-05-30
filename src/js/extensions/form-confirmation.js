@@ -170,6 +170,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const hasPhases = this.shouldUseTwoPhaseSubmission();
     const fileCount = this.getFileCount();
     
+    // Set a flag to track if the close button should be initially disabled
+    const shouldDisableCloseButton = hasPhases && fileCount > 0;
+    
     // Get translations with fallbacks
     const reviewTitle = this.getTranslation('form_confirmation.review_title', 'Review Your Information');
     const reviewIntro = this.getTranslation('form_confirmation.review_intro', 'Please review your information before submitting:');
@@ -223,7 +226,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         <div class="form-summary-content">
           <div class="form-summary-header">
             <h2>${reviewTitle}</h2>
-            <button type="button" class="form-summary-close">&times;</button>
+            <button type="button" class="form-summary-close" ${shouldDisableCloseButton ? 'data-phase-locked="true"' : ''}>&times;</button>
           </div>
           <div class="form-summary-body">
             <p>${reviewIntro}</p>
@@ -370,7 +373,19 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
   
   setupSummaryEvents($modal, hasPhases) {
     // Close modal events - Only for the close button, not the backdrop
-    $modal.find('.form-summary-close').on('click', () => {
+    $modal.find('.form-summary-close').on('click', (e) => {
+      // Check if the modal can be closed (all required phases completed)
+      if (!this.canCloseModal()) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Show a message explaining why the modal can't be closed
+        const phaseIncompleteMessage = this.getTranslation('form_confirmation.phase_incomplete_notice', 'Please complete the file upload process before closing this dialog.');
+        alert(phaseIncompleteMessage);
+        return false;
+      }
+      
+      // No issues found, allow closing
       $modal.remove();
     });
     
@@ -604,6 +619,35 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const $phase1Button = $modal.find('.btn-run-phase1');
     const $phase1Step = $modal.find('#step-form-data');
     
+    // Add notice about not closing the modal
+    if (this.getFileCount() > 0 && !$modal.find('.phase-incomplete-notice').length) {
+      const closeWarningText = this.getTranslation('form_confirmation.close_warning', 
+        'Please complete both phases before closing this dialog. The close button will be enabled once all uploads are complete.');
+      $modal.find('.form-summary-header').append(`
+        <div class="phase-incomplete-notice" role="alert">
+          <span aria-hidden="true">⚠️</span> ${closeWarningText}
+        </div>
+      `);
+      
+      // Add styling for the notice
+      if (!$('#phase-notice-styles').length) {
+        $('head').append(`
+          <style id="phase-notice-styles">
+            .phase-incomplete-notice {
+              font-size: 14px;
+              color: #856404;
+              background-color: #fff3cd;
+              border: 1px solid #ffeeba;
+              border-radius: 4px;
+              padding: 8px 12px;
+              margin-top: 10px;
+              width: 100%;
+            }
+          </style>
+        `);
+      }
+    }
+    
     // Update button state
     $phase1Button.prop('disabled', true).text(this.getTranslation('form_confirmation.submitting_data', 'Submitting data...'));
     $phase1Step.addClass('active');
@@ -709,6 +753,14 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Enable completion button
       $modal.find('.btn-complete-process').prop('disabled', false);
       
+      // Remove the warning notice as it's no longer needed
+      $modal.find('.phase-incomplete-notice').fadeOut(function() {
+        $(this).remove();
+      });
+      
+      // Enable the close button now that all phases are complete
+      $modal.find('.form-summary-close').removeAttr('data-phase-locked');
+      
       console.log('✅ Phase 2 complete: Files uploaded');
       
     } catch (error) {
@@ -755,6 +807,36 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     }
     
     // Add any other conditions that might prevent editing here
+    return true;
+  }
+  
+  // Helper method to check if all required phases are complete
+  canCloseModal() {
+    // If two-phase submission is not needed or the form is not locked, closing is allowed
+    const hasFilesToUpload = this.shouldUseTwoPhaseSubmission();
+    
+    // If there are no files to upload, the modal can be closed anytime
+    if (!hasFilesToUpload) {
+      return true;
+    }
+    
+    // If form is locked (Phase 1 completed) but there are files to upload,
+    // we should check if Phase 2 is also complete before allowing the modal to close
+    if (this.isFormLocked) {
+      // Check if Phase 2 has been completed 
+      // (presence of record ID and no files remaining to upload)
+      const fileCount = this.getFileCount();
+      if (this.recordId && fileCount === 0) {
+        // Both phases are complete, can close modal
+        return true;
+      } else {
+        // Phase 2 not completed yet, don't allow closing
+        console.log('Preventing modal close: Phase 2 (file upload) not completed');
+        return false;
+      }
+    }
+    
+    // Default to allowing closing if there's no special condition
     return true;
   }
   
@@ -844,7 +926,16 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
             gap: 10px; 
           }
           .form-summary-body { padding: 20px; }
-          .form-summary-close { background: none; border: none; font-size: 24px; cursor: pointer; }
+          .form-summary-close { 
+            background: none; 
+            border: none; 
+            font-size: 24px; 
+            cursor: pointer;
+          }
+          .form-summary-close[data-phase-locked="true"] {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
           .form-summary-list { margin: 0; }
           .form-summary-item { display: flex; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
           .form-summary-item dt { font-weight: 600; width: 150px; margin: 0; }

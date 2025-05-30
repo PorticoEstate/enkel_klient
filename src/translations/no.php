@@ -66,6 +66,7 @@ return [
         'email_help' => 'Din e-postadresse',
         'invalid_email' => 'Vennligst oppgi en gyldig e-postadresse',
         'invalid_phone' => 'Vennligst oppgi et gyldig telefonnummer',
+        'invalid_location' => 'Vennligst velg en gyldig adresse fra listen',
         'invalid_address' => 'Vennligst oppgi en gyldig adresse',
         'invalid_subject' => 'Vennligst oppgi et emne',
         'invalid_message' => 'Vennligst gi mer informasjon',

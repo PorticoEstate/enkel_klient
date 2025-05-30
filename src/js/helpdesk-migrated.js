@@ -174,18 +174,7 @@ function getFormHandler() {
  */
 window.helpdeskForm = {
     getFormHandler: getFormHandler,
-    
-    // Use the accessibility extension for setting focus
-    setInitialFocus: function() {
-        console.warn('Direct setInitialFocus() call is deprecated. The accessibility extension handles this automatically.');
-        if (formHandler && formHandler.getExtension) {
-            const accessibility = formHandler.getExtension('accessibility');
-            if (accessibility && accessibility.setInitialFocus) {
-                accessibility.setInitialFocus();
-            }
-        }
-    },
-    
+        
     // Legacy function compatibility (deprecated but functional)
     markRequiredFields: function() {
         console.warn('markRequiredFields() is deprecated. Use accessibility extension instead.');

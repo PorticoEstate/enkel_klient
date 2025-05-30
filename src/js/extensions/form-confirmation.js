@@ -685,6 +685,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       console.log('✅ Phase 1 complete, record ID:', recordId);
       console.log('🔒 Form is now locked to prevent editing');
       
+      // Clear autosaved data after successful Phase 1 completion
+      this.clearAutosaveData();
+      
     } catch (error) {
       console.error('❌ Phase 1 failed:', error);
       
@@ -773,6 +776,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       
       console.log('✅ Phase 2 complete: Files uploaded');
       
+      // Clear any remaining autosaved data after successful Phase 2 completion
+      this.clearAutosaveData();
+      
     } catch (error) {
       console.error('❌ Phase 2 failed:', error);
       
@@ -848,6 +854,29 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     
     // Default to allowing closing if there's no special condition
     return true;
+  }
+  
+  // Helper method to clear autosave data with fallback logic
+  clearAutosaveData() {
+    try {
+      // Try to get the autosave extension first
+      const autosaveExtension = this.formHandler.getExtension ? this.formHandler.getExtension('autoSave') : null;
+      
+      if (autosaveExtension && typeof autosaveExtension.clearSavedData === 'function') {
+        console.log('🧹 Clearing autosave data via extension method');
+        autosaveExtension.clearSavedData();
+      } else {
+        // Fallback: manually clear localStorage for this form
+        const formId = this.formHandler.getFormId();
+        const storageKey = `autosave_${formId}`;
+        localStorage.removeItem(storageKey);
+        console.log(`🧹 Cleared autosave data manually for ${storageKey}`);
+      }
+      
+      console.log('✅ Autosave data cleared successfully');
+    } catch (error) {
+      console.warn('❌ Error clearing autosave data:', error);
+    }
   }
   
   // Phase 1: Submit form data without files

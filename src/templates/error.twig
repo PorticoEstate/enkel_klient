@@ -19,8 +19,8 @@
 
 						{% if error_trace is defined %}
 							<section class="mt-4 mb-4" aria-labelledby="error-details">
-								<h2 id="error-details" class="h4">Error details:</h2>
-								<p><strong>File:</strong> <span>{{ error_file }}</span> (line <span>{{ error_line }}</span>)</p>
+								<h2 id="error-details" class="h4">{{ __('error_details') }}</h2>
+								<p><strong>{{ __('file_label') }}</strong> <span>{{ error_file }}</span> {{ __('line_label') }} <span>{{ error_line }}</span>)</p>
 								<div class="bg-light p-3" style="overflow-x: auto;" aria-label="Error stack trace">
 									<pre style="white-space: pre-wrap;">{{ error_trace }}</pre>
 								</div>

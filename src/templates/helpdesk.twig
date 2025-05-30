@@ -40,7 +40,7 @@
 		{% else %}
 			{% if error|length > 0 %}
 				<div class="alert alert-danger alert-dismissible" role="alert" aria-live="assertive">
-					<h2 class="h6">There were errors with your submission:</h2>
+					<h2 class="h6">{{ __('form_errors_with_submission') }}</h2>
 					<ul>
 					{% for message in error %}
 						<li>{{ message }}</li>
@@ -54,7 +54,7 @@
 			<form id="helpdesk" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate>
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
-					<legend class="sr-only">Contact Information</legend>
+					<legend class="sr-only">{{ __('contact_information') }}</legend>
 					{% if user_name %}
 						<p>{{ __('name') }}:
 							{{ user_name }}</p>
@@ -115,7 +115,7 @@
 
 				<div id="details">
 					<fieldset>
-						<legend class="sr-only">Helpdesk Request Details</legend>
+						<legend class="sr-only">{{ __('helpdesk_request_details') }}</legend>
 						<div class="form-group mt-2">
 							<label for="subject">
 								{{ __('subject') }}

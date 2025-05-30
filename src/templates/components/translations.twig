@@ -44,6 +44,30 @@ var translations = {
         close_summary: "{{ __('close_summary', 'form_confirmation') }}",
         uploaded_files: "{{ __('uploaded_files', 'form_confirmation') }}",
         
+        // Two-phase submission translations
+        file_attachments_heading: "{{ __('file_attachments_heading', 'form_confirmation') }}",
+        file_attachments_description: "{{ __('file_attachments_description', 'form_confirmation') }}",
+        submission_progress_heading: "{{ __('submission_progress_heading', 'form_confirmation') }}",
+        phase1_title: "{{ __('phase1_title', 'form_confirmation') }}",
+        phase2_title: "{{ __('phase2_title', 'form_confirmation') }}",
+        submission_complete: "{{ __('submission_complete', 'form_confirmation') }}",
+        percent_complete: "{{ __('percent_complete', 'form_confirmation') }}",
+        run_phase1_button: "{{ __('run_phase1_button', 'form_confirmation') }}",
+        run_phase2_button: "{{ __('run_phase2_button', 'form_confirmation') }}",
+        complete_process_button: "{{ __('complete_process_button', 'form_confirmation') }}",
+        submitting_data: "{{ __('submitting_data', 'form_confirmation') }}",
+        data_submitted: "{{ __('data_submitted', 'form_confirmation') }}",
+        uploading_files: "{{ __('uploading_files', 'form_confirmation') }}",
+        files_uploaded: "{{ __('files_uploaded', 'form_confirmation') }}",
+        process_completed: "{{ __('process_completed', 'form_confirmation') }}",
+        retry_phase1: "{{ __('retry_phase1', 'form_confirmation') }}",
+        retry_phase2: "{{ __('retry_phase2', 'form_confirmation') }}",
+        phase_success_heading: "{{ __('phase_success_heading', 'form_confirmation') }}",
+        phase_success_record: "{{ __('phase_success_record', 'form_confirmation') }}",
+        phase_error_heading: "{{ __('phase_error_heading', 'form_confirmation') }}",
+        submitting_form_data: "{{ __('submitting_form_data', 'form_confirmation') }}",
+        form_locked_notice: "{{ __('form_locked_notice', 'form_confirmation') }}",
+        
         {# Form-specific confirmation messages #}
         {% if formType is defined %}
             {{ formType }}_confirm: "{{ __( formType ~ '_confirm', 'form_confirmation') }}",

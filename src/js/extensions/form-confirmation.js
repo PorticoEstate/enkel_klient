@@ -177,33 +177,43 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const submitButton = this.getTranslation('form_confirmation.submit_button', 'Submit');
     
     // Prepare information about file attachments if any
+    const fileAttachmentsHeading = this.getTranslation('form_confirmation.file_attachments_heading', 'File Attachments');
+    const fileAttachmentsDescription = this.getTranslation('form_confirmation.file_attachments_description', '{count} file(s) will be uploaded after form submission.')
+      .replace('{count}', fileCount);
+    
     const fileUploadInfo = fileCount > 0 ? 
       `<div class="file-upload-info">
-        <h4>📎 File Attachments</h4>
-        <p>${fileCount} file(s) will be uploaded after form submission.</p>
+        <h4>📎 ${fileAttachmentsHeading}</h4>
+        <p>${fileAttachmentsDescription}</p>
       </div>` : '';
     
     // Prepare progress tracking area for phases
+    const submissionProgressHeading = this.getTranslation('form_confirmation.submission_progress_heading', 'Submission Progress');
+    const phase1Title = this.getTranslation('form_confirmation.phase1_title', 'Phase 1: Submitting form data...');
+    const phase2Title = this.getTranslation('form_confirmation.phase2_title', 'Phase 2: Uploading files...');
+    const percentComplete = this.getTranslation('form_confirmation.percent_complete', '{percent}% complete').replace('{percent}', '0');
+    const submissionComplete = this.getTranslation('form_confirmation.submission_complete', 'Submission complete!');
+    
     const progressTrackingHtml = hasPhases ? 
       `<div class="two-phase-progress" style="display: none;">
-        <h4>📤 Submission Progress</h4>
+        <h4>📤 ${submissionProgressHeading}</h4>
         <div class="progress-step" id="step-form-data">
           <div class="step-indicator">⏳</div>
-          <span class="step-text">Phase 1: Submitting form data...</span>
+          <span class="step-text">${phase1Title}</span>
         </div>
         <div class="progress-step" id="step-file-upload" style="display: none;">
           <div class="step-indicator">⏳</div>
-          <span class="step-text">Phase 2: Uploading files...</span>
+          <span class="step-text">${phase2Title}</span>
           <div class="file-progress-container" style="margin-top: 10px; display: none;">
             <div class="progress">
               <div class="progress-bar" role="progressbar" style="width: 0%"></div>
             </div>
-            <div class="progress-text">0% complete</div>
+            <div class="progress-text">${percentComplete}</div>
           </div>
         </div>
         <div class="progress-step" id="step-complete" style="display: none;">
           <div class="step-indicator">✅</div>
-          <span class="step-text">Submission complete!</span>
+          <span class="step-text">${submissionComplete}</span>
         </div>
       </div>` : '';
     
@@ -227,9 +237,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
             </div>
             <div class="button-group-right">
               ${hasPhases ? 
-                `<button type="button" class="btn btn-success btn-run-phase1">Run Phase 1 (Submit Data)</button>
-                <button type="button" class="btn btn-primary btn-run-phase2" disabled>Run Phase 2 (Upload Files)</button>
-                <button type="button" class="btn btn-outline-primary btn-complete-process" disabled>Complete Process</button>` 
+                `<button type="button" class="btn btn-success btn-run-phase1">${this.getTranslation('form_confirmation.run_phase1_button', 'Run Phase 1 (Submit Data)')}</button>
+                <button type="button" class="btn btn-primary btn-run-phase2" disabled>${this.getTranslation('form_confirmation.run_phase2_button', 'Run Phase 2 (Upload Files)')}</button>
+                <button type="button" class="btn btn-outline-primary btn-complete-process" disabled>${this.getTranslation('form_confirmation.complete_process_button', 'Complete Process')}</button>` 
                 : 
                 `<button type="button" class="btn btn-primary form-summary-submit">${submitButton}</button>`
               }
@@ -372,7 +382,8 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         e.stopPropagation();
         
         // Show a tooltip or alert about the locked state
-        alert('The form is locked after Phase 1 submission and cannot be edited.');
+        const formLockedMessage = this.getTranslation('form_confirmation.form_locked_notice', 'The form is locked after Phase 1 submission and cannot be edited.');
+        alert(formLockedMessage);
         return false;
       }
       
@@ -517,7 +528,8 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     
     try {
       // Phase 1: Submit form data
-      $overlay.find('.status-text').text('Submitting form data...');
+      const submittingFormData = this.getTranslation('form_confirmation.submitting_form_data', 'Submitting form data...');
+      $overlay.find('.status-text').text(submittingFormData);
       $overlay.find('.progress-bar').css('width', '30%');
       
       const recordId = await this.submitFormData();
@@ -526,14 +538,16 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Phase 2: Upload files (if any)
       const fileCount = this.getFileCount();
       if (fileCount > 0) {
-        $overlay.find('.status-text').text(`Uploading ${fileCount} file(s)...`);
+        const uploadingFiles = this.getTranslation('form_confirmation.uploading_files', 'Uploading files...');
+        $overlay.find('.status-text').text(uploadingFiles);
         $overlay.find('.progress-bar').css('width', '60%');
         
         await this.uploadFiles();
       }
       
       // Complete
-      $overlay.find('.status-text').text('Submission complete!');
+      const submissionComplete = this.getTranslation('form_confirmation.submission_complete', 'Submission complete!');
+      $overlay.find('.status-text').text(submissionComplete);
       $overlay.find('.progress-bar').css('width', '100%');
       
       // Redirect after a brief delay
@@ -546,10 +560,14 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       
       // Show error in overlay
       $overlay.find('.spinner').hide();
+      
+      const errorHeading = this.getTranslation('form_confirmation.phase_error_heading', 'Error:');
+      const closeButton = this.getTranslation('form_confirmation.cancel_button', 'Close');
+      
       $overlay.find('.status-text').html(`
         <div class="error-message">
-          <strong>Error:</strong> ${error.message}<br>
-          <button class="btn btn-secondary close-overlay" style="margin-top:10px;">Close</button>
+          <strong>${errorHeading}</strong> ${error.message}<br>
+          <button class="btn btn-secondary close-overlay" style="margin-top:10px;">${closeButton}</button>
         </div>
       `);
       
@@ -587,7 +605,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const $phase1Step = $modal.find('#step-form-data');
     
     // Update button state
-    $phase1Button.prop('disabled', true).text('Submitting data...');
+    $phase1Button.prop('disabled', true).text(this.getTranslation('form_confirmation.submitting_data', 'Submitting data...'));
     $phase1Step.addClass('active');
     
     try {
@@ -605,15 +623,18 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Update UI to show success
       $phase1Step.removeClass('active').addClass('complete');
       $phase1Step.find('.step-indicator').text('✅');
-      $phase1Button.text('Data submitted');
+      $phase1Button.text(this.getTranslation('form_confirmation.data_submitted', 'Data submitted'));
       
       // Enable phase 2 button
       $modal.find('.btn-run-phase2').prop('disabled', false);
       
       // Show success message
+      const successHeading = this.getTranslation('form_confirmation.phase_success_heading', 'Success!');
+      const successRecord = this.getTranslation('form_confirmation.phase_success_record', 'Record ID: {id}').replace('{id}', recordId);
+      
       $phase1Step.append(`
         <div class="phase-success">
-          <p><strong>Success!</strong> Record ID: ${recordId}</p>
+          <p><strong>${successHeading}</strong> ${successRecord}</p>
         </div>
       `);
       
@@ -626,14 +647,17 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Update UI to show error
       $phase1Step.removeClass('active');
       $phase1Step.find('.step-indicator').text('❌');
+      
+      const errorHeading = this.getTranslation('form_confirmation.phase_error_heading', 'Error:');
+      
       $phase1Step.append(`
         <div class="phase-error">
-          <p><strong>Error:</strong> ${error.message}</p>
+          <p><strong>${errorHeading}</strong> ${error.message}</p>
         </div>
       `);
       
       // Reset button for retry
-      $phase1Button.prop('disabled', false).text('Retry Phase 1');
+      $phase1Button.prop('disabled', false).text(this.getTranslation('form_confirmation.retry_phase1', 'Retry Phase 1'));
     }
   }
   
@@ -649,7 +673,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     // Update UI
     $phase2Step.show().addClass('active');
     $modal.find('.file-progress-container').show();
-    $phase2Button.prop('disabled', true).text('Uploading files...');
+    $phase2Button.prop('disabled', true).text(this.getTranslation('form_confirmation.uploading_files', 'Uploading files...'));
     
     // Debug: Log file information before upload
     console.log('--- File Upload Debug Info ---');
@@ -680,7 +704,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Update UI for success
       $phase2Step.removeClass('active').addClass('complete');
       $phase2Step.find('.step-indicator').text('✅');
-      $phase2Button.text('Files uploaded');
+      $phase2Button.text(this.getTranslation('form_confirmation.files_uploaded', 'Files uploaded'));
       
       // Enable completion button
       $modal.find('.btn-complete-process').prop('disabled', false);
@@ -693,14 +717,17 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Update UI to show error
       $phase2Step.removeClass('active');
       $phase2Step.find('.step-indicator').text('❌');
+      
+      const errorHeading = this.getTranslation('form_confirmation.phase_error_heading', 'Error:');
+      
       $phase2Step.append(`
         <div class="phase-error">
-          <p><strong>Error:</strong> ${error.message}</p>
+          <p><strong>${errorHeading}</strong> ${error.message}</p>
         </div>
       `);
       
       // Reset button for retry
-      $phase2Button.prop('disabled', false).text('Retry Phase 2');
+      $phase2Button.prop('disabled', false).text(this.getTranslation('form_confirmation.retry_phase2', 'Retry Phase 2'));
     }
   }
   
@@ -711,7 +738,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     
     // Update button
     const $completeButton = $modal.find('.btn-complete-process');
-    $completeButton.prop('disabled', true).text('Process completed');
+    $completeButton.prop('disabled', true).text(this.getTranslation('form_confirmation.process_completed', 'Process completed'));
     
     // Wait a moment to show completion, then redirect
     setTimeout(() => {

@@ -65,7 +65,7 @@ return [
         'email' => 'Email',
         'email_help' => 'Your email address',
         'invalid_email' => 'Please enter a valid email address',
-        'invalid_phone' => 'Please enter a valid phone number',
+        'invalid_phone' => 'Please enter a valid phone number (minimum 8 digits)',
         'invalid_location' => 'Please select a valid location from the list',
         'invalid_address' => 'Please enter a valid address',
         'invalid_subject' => 'Please enter a subject',

@@ -149,27 +149,21 @@ async function initializeDatepicker() {
         }
     });
 
-    // Connect open calendar button 
-    $('#open-datepicker').on('click', function(e) {
-        e.preventDefault();
-        datepicker.open();
-    });
-    
-    // Add keyboard accessibility for datepicker opener button
-    $('#open-datepicker').on('keydown', function(e) {
-        if (e.key === "Enter" || e.key === " ") {
+    // Make the invoice_date field keyboard and click accessible
+    $("#invoice_date").on('click keydown', function(e) {
+        // Open datepicker on click, Enter, Space, or Down arrow
+        if (e.type === 'click' || 
+            (e.type === 'keydown' && (e.key === "Enter" || e.key === "ArrowDown" || e.key === " "))) {
             e.preventDefault();
             datepicker.open();
         }
     });
     
-    // Make the invoice_date field itself keyboard accessible
-    $("#invoice_date").on('keydown', function(e) {
-        // Enter or Down arrow opens the datepicker
-        if (e.key === "Enter" || e.key === "ArrowDown" || e.key === " ") {
-            e.preventDefault();
-            datepicker.open();
-        }
+    // Enhanced focus styling for the input
+    $("#invoice_date").on('focus', function() {
+        $(this).addClass('datepicker-focused');
+    }).on('blur', function() {
+        $(this).removeClass('datepicker-focused');
     });
     
     // Add global escape key handler when datepicker is open

@@ -258,6 +258,7 @@ return [
         'email_help' => 'Email where you can be contacted',
         'message_help' => 'Do not enter sensitive information here.',
         'open_date_picker' => 'Open date picker',
+        'click_or_press_enter_to_select_date' => 'Click or press Enter to select date',
     ],
     'inspection_1' => [
         'form_header' => 'Form for fire prevention inspection on municipal property',

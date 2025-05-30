@@ -257,6 +257,7 @@ return [
         'email_help' => 'E-post du kan kontaktes på',
         'message_help' => 'Ikke skriv inn sensitiv informasjon her.',
         'open_date_picker' => 'Åpne datovelger',
+        'click_or_press_enter_to_select_date' => 'Klikk eller trykk Enter for å velge dato',
     ],
     'inspection_1' => [
         'form_header' => 'Skjema for brannforebyggende tilsyn på kommunal eiendom',

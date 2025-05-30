@@ -94,6 +94,35 @@
 			margin-top: 0.25rem;
 		}
 		
+		/* Enhanced styling for datepicker input */
+		#invoice_date {
+			cursor: pointer;
+			background-color: #fff;
+			background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%23343a40' d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 3a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 3H1v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6z'/%3e%3c/svg%3e");
+			background-repeat: no-repeat;
+			background-position: right 0.75rem center;
+			background-size: 16px 12px;
+			padding-right: 2.5rem;
+		}
+		
+		#invoice_date:hover {
+			background-color: #f8f9fa;
+			border-color: #86b7fe;
+		}
+		
+		#invoice_date.datepicker-focused,
+		#invoice_date:focus {
+			background-color: #fff;
+			border-color: #86b7fe;
+			box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+		}
+		
+		/* Add visual feedback when datepicker is active */
+		#invoice_date.flatpickr-input.active {
+			border-color: #0d6efd;
+			box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+		}
+		
 		/* Add focus styles to interactive elements in popups */
 		.flatpickr-calendar button:focus,
 		.flatpickr-calendar select:focus,
@@ -310,16 +339,11 @@
 									<span class="required-field" aria-hidden="true">*</span>
 								</label>
 								<small id="invoiceDateHelp" class="form-text text-muted d-block mb-2">{{ __('invoice_date_help') }}</small>
-								<div class="d-flex">
-								  <input type="text" class="form-control" id="invoice_date" name="invoice_date" required aria-required="true" 
-										 aria-describedby="invoiceDateHelp datepicker-keyboard-hint invoice-date-error" readonly>
-								  <button type="button" class="btn btn-outline-secondary" id="open-datepicker" 
-										  aria-label="{{ __('open_date_picker') }}">
-									<i class="fas fa-calendar" aria-hidden="true"></i>
-								  </button>
-								</div>
+								<input type="text" class="form-control" id="invoice_date" name="invoice_date" required aria-required="true" 
+									   aria-describedby="invoiceDateHelp datepicker-keyboard-hint invoice-date-error" readonly
+									   placeholder="{{ __('click_or_press_enter_to_select_date') }}">
 								<div id="datepicker-keyboard-hint" class="datepicker-keyboard-hint">
-									{{ __('press_esc_to_close') }}
+									{{ __('click_or_press_enter_space_down_arrow_to_open_calendar') }}
 								</div>
 								<div id="invoice-date-error" class="invalid-feedback">{{ __('invalid_date') }}</div>
 							</div>

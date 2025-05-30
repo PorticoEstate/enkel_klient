@@ -15,6 +15,10 @@ if (typeof FormConfirmationExtension === 'undefined') {
       ...options
     };
     
+    // Form state tracking
+    this.recordId = null;
+    this.isFormLocked = false;
+    
     // Initialize immediately since we have formHandler
     this.init();
   }
@@ -355,13 +359,44 @@ if (typeof FormConfirmationExtension === 'undefined') {
   }
   
   setupSummaryEvents($modal, hasPhases) {
-    // Close modal events
-    $modal.find('.form-summary-close, .form-summary-backdrop, .form-summary-edit').on('click', () => {
+    // Close modal events - Respect locked state for edit button
+    $modal.find('.form-summary-close, .form-summary-backdrop').on('click', () => {
+      $modal.remove();
+    });
+    
+    // Add separate handler for the edit button that respects locked state
+    $modal.find('.form-summary-edit').on('click', (e) => {
+      // Check if form is editable using our helper method
+      if (!this.isFormEditable()) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Show a tooltip or alert about the locked state
+        alert('The form is locked after Phase 1 submission and cannot be edited.');
+        return false;
+      }
+      
+      // Otherwise proceed with normal close action
       $modal.remove();
     });
     
     // Field-specific edit buttons
     $modal.on('click', '.btn-edit-field', (e) => {
+      // Check if form is editable using our helper method
+      if (!this.isFormEditable()) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const $button = $(e.currentTarget);
+        // Visual feedback that editing is not allowed
+        $button.addClass('edit-denied');
+        setTimeout(() => {
+          $button.removeClass('edit-denied');
+        }, 1000);
+        
+        return false;
+      }
+      
       const $button = $(e.currentTarget);
       const fieldId = $button.data('field-id');
       const fieldName = $button.data('field');
@@ -560,6 +595,13 @@ if (typeof FormConfirmationExtension === 'undefined') {
       const recordId = await this.submitFormData();
       this.recordId = recordId;
       
+      console.log('Form data submitted successfully, record ID:', recordId);
+      
+      // Lock the form after successful Phase 1 completion
+      console.log('Setting form locked state to prevent editing');
+      this.isFormLocked = true;
+      this.lockFormFields($modal);
+      
       // Update UI to show success
       $phase1Step.removeClass('active').addClass('complete');
       $phase1Step.find('.step-indicator').text('✅');
@@ -576,6 +618,7 @@ if (typeof FormConfirmationExtension === 'undefined') {
       `);
       
       console.log('✅ Phase 1 complete, record ID:', recordId);
+      console.log('🔒 Form is now locked to prevent editing');
       
     } catch (error) {
       console.error('❌ Phase 1 failed:', error);
@@ -674,6 +717,18 @@ if (typeof FormConfirmationExtension === 'undefined') {
     setTimeout(() => {
       window.location.href = this.formHandler.redirectUrl || window.location.href;
     }, 2000);
+  }
+  
+  // Helper method to check if the form is editable
+  isFormEditable() {
+    // Return false if the form is locked (after Phase 1 completion)
+    if (this.isFormLocked) {
+      console.log('Form editing prevented: Form is locked after Phase 1 submission');
+      return false;
+    }
+    
+    // Add any other conditions that might prevent editing here
+    return true;
   }
   
   // Phase 1: Submit form data without files
@@ -1116,7 +1171,124 @@ if (typeof FormConfirmationExtension === 'undefined') {
     
     return messages[formName] || 'Are you sure you want to submit this form?';
   }
-}
+  
+  // Lock form fields after Phase 1 submission
+  lockFormFields($modal) {
+    console.log('Locking form fields after Phase 1 submission');
+    
+    // If we have a modal, update it to show the form is locked
+    if ($modal) {
+      // Disable the edit buttons in the modal
+      $modal.find('.form-summary-edit').prop('disabled', true)
+        .addClass('form-locked')
+        .attr('title', 'Form is locked after submission')
+        .text('Form Locked 🔒');
+      
+      // Disable all field-specific edit buttons
+      $modal.find('.btn-edit-field').prop('disabled', true)
+        .addClass('form-locked')
+        .attr('title', 'Field is locked after submission')
+        .html('<span class="edit-icon">🔒</span> Locked');
+      
+      // Add a form locked notice
+      if ($modal.find('.form-locked-notice').length === 0) {
+        $modal.find('.form-summary-body').prepend(`
+          <div class="form-locked-notice alert alert-info" role="alert">
+            <strong>🔒 Form Locked:</strong> Form data has been successfully submitted and is now locked. 
+            You can continue with file upload but cannot edit the submitted information.
+          </div>
+        `);
+      }
+    }
+    
+    // Also disable form fields in the background form
+    this.$form.find('input:not([type="file"]), select, textarea').prop('disabled', true);
+    
+    // Add visual indication that the form is locked
+    if (!this.$form.hasClass('form-locked')) {
+      this.$form.addClass('form-locked');
+      
+      // Add styles for locked form if not already present
+      if ($('#form-locked-styles').length === 0) {
+        $('head').append(`
+          <style id="form-locked-styles">
+            .form-locked input:not([type="file"]), 
+            .form-locked select, 
+            .form-locked textarea {
+              background-color: #e9ecef;
+              cursor: not-allowed;
+              opacity: 0.8;
+              border-color: #ced4da;
+            }
+            
+            .btn-edit-field.form-locked {
+              background-color: #e9ecef;
+              border-color: #6c757d;
+              color: #6c757d;
+              cursor: not-allowed;
+            }
+            
+            .form-summary-edit.form-locked {
+              background-color: #e9ecef;
+              border: 1px solid #6c757d;
+              color: #6c757d;
+              cursor: not-allowed;
+            }
+            
+            .form-locked-notice {
+              background-color: #d1ecf1;
+              border: 1px solid #bee5eb;
+              color: #0c5460;
+              padding: 12px;
+              margin-bottom: 15px;
+              border-radius: 4px;
+            }
+            
+            /* Add transition effects for smooth visual feedback */
+            .field-locked {
+              position: relative;
+            }
+            
+            .field-locked::after {
+              content: "🔒";
+              position: absolute;
+              right: 10px;
+              top: 50%;
+              transform: translateY(-50%);
+              font-size: 14px;
+            }
+            
+            /* Animation for denied edit attempts */
+            @keyframes shake {
+              0%, 100% { transform: translateX(0); }
+              10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+              20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+            
+            .edit-denied {
+              animation: shake 0.6s ease;
+              border-color: #dc3545 !important;
+              box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+            }
+          </style>
+        `);
+      }
+    }
+    
+    // Add a visual indicator to the form about the locked state
+    if (!this.$form.find('.form-locked-banner').length) {
+      this.$form.prepend(`
+        <div class="form-locked-banner form-locked-notice" style="margin-bottom: 20px;">
+          <strong>🔒 Form Locked:</strong> Your form data has been submitted (Record ID: ${this.recordId}). 
+          Form fields are locked to prevent changes. You can still upload files if needed.
+        </div>
+      `);
+    }
+    
+    console.log('Form fields locked successfully');
+  }
+} // End of FormConfirmationExtension class
+} // End of if (typeof FormConfirmationExtension === 'undefined')
 
 // Register extension with FormHandler
 if (typeof FormHandler !== 'undefined') {
@@ -1124,5 +1296,9 @@ if (typeof FormHandler !== 'undefined') {
   FormHandler.extensions.confirmation = FormConfirmationExtension;
 }
 
-window.FormConfirmationExtension = FormConfirmationExtension;
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = FormConfirmationExtension;
+} else {
+  window.FormConfirmationExtension = FormConfirmationExtension;
 }

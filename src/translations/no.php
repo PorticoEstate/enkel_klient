@@ -320,6 +320,8 @@ return [
         'max_files_exceeded' => 'Maksimalt antall filer ({maxFiles}) overskredet. Vennligst fjern noen filer før du legger til flere.',
         'file_duplicate' => 'Filen "{filename}" er allerede i opplastingskøen. Vennligst velg en annen fil eller fjern den eksisterende først.',
         'drag_drop_here' => 'Dra og slipp filer her eller klikk for å velge filer',
+        'allowed_types' => 'Tillatte typer:',
+        'max_file_size' => 'maks',
     ],
 
 ];

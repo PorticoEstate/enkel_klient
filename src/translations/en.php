@@ -321,5 +321,7 @@ return [
         'max_files_exceeded' => 'Maximum number of files ({maxFiles}) exceeded. Please remove some files before adding more.',
         'file_duplicate' => 'The file "{filename}" is already in the upload queue. Please select a different file or remove the existing one first.',
         'drag_drop_here' => 'Drag and drop files here or click to select files',
+        'allowed_types' => 'Allowed types:',
+        'max_file_size' => 'max',
     ],
 ];

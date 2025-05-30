@@ -40,7 +40,7 @@ if (typeof FileUploadExtension === 'undefined') {
     
     this.initFileUploader();
     this.setupValidation();
-//    this.displayAllowedFileTypes();
+    this.displayAllowedFileTypes();
   }
   
   displayAllowedFileTypes() {
@@ -60,15 +60,18 @@ if (typeof FileUploadExtension === 'undefined') {
     if (dropArea.length) {
       // Remove any existing debug info first
       dropArea.find('.file-types-debug').remove();
-      dropArea.append(allowedTypesInfo);
+//      dropArea.append(allowedTypesInfo);
       console.log('FileUploadExtension: Added file types debug info to drop area');
       
       // Also add it to the upload instructions
       const uploadInstructions = dropArea.find('#upload-instructions');
       if (uploadInstructions.length) {
         const originalText = uploadInstructions.text();
-        if (!originalText.includes('Allowed types:')) {
-          uploadInstructions.append(`<br><small style="color:rgb(5, 43, 85);"><strong>Allowed types:</strong> ${this.options.allowedFileTypes.join(', ')} (max ${this.options.maxFileSizeMB}MB)</small>`);
+        const allowedTypesText = this.getTranslation('file_upload.allowed_types', 'Allowed types:');
+        const maxFileSizeText = this.getTranslation('file_upload.max_file_size', 'max');
+        
+        if (!originalText.includes(allowedTypesText)) {
+          uploadInstructions.append(`<br><small style="color:rgb(5, 43, 85);"><strong>${allowedTypesText}</strong> ${this.options.allowedFileTypes.join(', ')} (${maxFileSizeText} ${this.options.maxFileSizeMB}MB)</small>`);
         }
       }
     } else {

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Form Configuration Loading Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .config-demo { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-left: 4px solid #007bff; 
+        }
+        .config-source { 
+            background: #e9ecef; 
+            padding: 10px; 
+            margin: 5px 0; 
+            border-radius: 4px; 
+        }
+        .source-priority { 
+            color: #28a745; 
+            font-weight: bold; 
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Dynamic Form Configuration Loading Test</h1>
+        <p class="lead">This page demonstrates the new dynamic configuration loading system for forms.</p>
+
+        <div class="row">
+            <div class="col-md-8">
+                <h2>Configuration Priority Order</h2>
+                <div class="config-source">
+                    <span class="source-priority">1. Data Attributes</span> - Highest priority, set directly on form element
+                </div>
+                <div class="config-source">
+                    <span class="source-priority">2. JavaScript Files</span> - Dynamic configuration from dedicated JS files
+                </div>
+                <div class="config-source">
+                    <span class="source-priority">3. Twig Templates</span> - Configuration from backend via window.formConfigs
+                </div>
+                <div class="config-source">
+                    <span class="source-priority">4. Hardcoded Presets</span> - Fallback configuration (deprecated)
+                </div>
+
+                <h3 class="mt-4">Test Form 1: Data Attributes Configuration</h3>
+                <form id="test-form-data-attrs" 
+                      data-form-config='{"validation":{"realTimeValidation":true},"confirmation":{"showSummary":true,"enableHtmlFormatting":true},"autoSave":{"interval":15000}}'
+                      data-file-upload="true">
+                    <div class="mb-3">
+                        <label for="test-field-1" class="form-label">Test Field (Rich Text)</label>
+                        <div id="quill-test-field-1" style="height: 150px;"></div>
+                        <textarea id="test-field-1" name="test-field-1" style="display:none;" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="test-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="test-email" name="test-email" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="initializeForm('test-form-data-attrs')">Initialize Form</button>
+                </form>
+
+                <h3 class="mt-4">Test Form 2: JavaScript File Configuration</h3>
+                <form id="helpdesk">
+                    <div class="mb-3">
+                        <label for="helpdesk-subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="helpdesk-subject" name="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="helpdesk-message" class="form-label">Message (Rich Text)</label>
+                        <div id="quill-helpdesk-message" style="height: 150px;"></div>
+                        <textarea id="helpdesk-message" name="message" style="display:none;" required></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="initializeForm('helpdesk')">Initialize Form</button>
+                </form>
+
+                <h3 class="mt-4">Test Form 3: Twig Template Configuration</h3>
+                <form id="inspection_1">
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Inspection Notes (Rich Text)</label>
+                        <div id="quill-notes" style="height: 150px;"></div>
+                        <textarea id="notes" name="notes" style="display:none;"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="initializeForm('inspection_1')">Initialize Form</button>
+                </form>
+            </div>
+
+            <div class="col-md-4">
+                <h3>Configuration Debug</h3>
+                <div id="config-debug" class="config-demo">
+                    <p>Initialize a form to see its configuration...</p>
+                </div>
+
+                <h3>Configuration Sources</h3>
+                <div id="config-sources" class="config-demo">
+                    <p>Configuration sources will be shown here...</p>
+                </div>
+
+                <h3>HTML Content Detection</h3>
+                <div id="html-detection" class="config-demo">
+                    <p>HTML detection results will be shown here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+
+    <!-- Form Handler Core -->
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/form-extension-loader.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    <script src="src/js/extensions/form-accessibility.js"></script>
+    <script src="src/js/extensions/form-autosave.js"></script>
+    <script src="src/js/extensions/form-confirmation.js"></script>
+    <script src="src/js/quill-textarea.js"></script>
+
+    <script>
+        // Simulate Twig template configuration
+        window.formConfigs = {
+            'inspection_1': {
+                form_summary_on_submit: true,
+                confirmation_dialog_enabled: true,
+                auto_save_enabled: true,
+                enable_fileupload: true,
+                change_tracking_enabled: true
+            },
+            'test-form-twig': {
+                form_summary_on_submit: true,
+                confirmation_dialog_enabled: false,
+                auto_save_enabled: false
+            }
+        };
+
+        // Initialize Quill editors
+        const quillEditors = {};
+        
+        function initializeQuillEditors() {
+            const editorConfigs = [
+                { container: '#quill-test-field-1', textarea: '#test-field-1' },
+                { container: '#quill-helpdesk-message', textarea: '#helpdesk-message' },
+                { container: '#quill-notes', textarea: '#notes' }
+            ];
+
+            editorConfigs.forEach(config => {
+                if (document.querySelector(config.container)) {
+                    const quill = new Quill(config.container, {
+                        theme: 'snow',
+                        placeholder: 'Enter your text here...',
+                        modules: {
+                            toolbar: [
+                                ['bold', 'italic', 'underline'],
+                                ['link'],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                ['clean']
+                            ]
+                        }
+                    });
+
+                    quillEditors[config.container] = quill;
+                    
+                    // Add some sample rich text content
+                    const sampleContent = [
+                        { insert: 'This is ' },
+                        { insert: 'bold text', attributes: { bold: true } },
+                        { insert: ' and this is ' },
+                        { insert: 'italic text', attributes: { italic: true } },
+                        { insert: '.\n\nHere is a list:\n' },
+                        { insert: 'Item 1', attributes: { list: 'bullet' } },
+                        { insert: '\nItem 2', attributes: { list: 'bullet' } },
+                        { insert: '\nItem 3', attributes: { list: 'bullet' } },
+                        { insert: '\n\nAnd a ' },
+                        { insert: 'link to example.com', attributes: { link: 'https://example.com' } },
+                        { insert: '.\n' }
+                    ];
+                    
+                    quill.setContents(sampleContent);
+                    
+                    // Sync with hidden textarea
+                    quill.on('text-change', function() {
+                        const textarea = document.querySelector(config.textarea);
+                        if (textarea) {
+                            textarea.value = quill.root.innerHTML;
+                        }
+                    });
+                    
+                    // Initial sync
+                    const textarea = document.querySelector(config.textarea);
+                    if (textarea) {
+                        textarea.value = quill.root.innerHTML;
+                    }
+                }
+            });
+        }
+
+        async function initializeForm(formId) {
+            try {
+                console.log(`🔄 Initializing form: ${formId}`);
+                
+                // Get the form configuration to debug
+                const loader = window.formExtensionLoader;
+                const config = await loader.loadFormConfiguration(formId);
+                
+                // Display configuration debug info
+                displayConfigDebug(formId, config);
+                
+                // Initialize the form
+                const formHandler = await loader.quickSetup(formId, 'dynamic');
+                
+                console.log(`✅ Form ${formId} initialized with configuration:`, config);
+                
+                // Test HTML content detection if rich text editors are present
+                testHtmlContentDetection(formId);
+                
+            } catch (error) {
+                console.error(`❌ Failed to initialize form ${formId}:`, error);
+                document.getElementById('config-debug').innerHTML = `
+                    <h5>Error</h5>
+                    <p class="text-danger">Failed to initialize form: ${error.message}</p>
+                `;
+            }
+        }
+
+        function displayConfigDebug(formId, config) {
+            const debugDiv = document.getElementById('config-debug');
+            debugDiv.innerHTML = `
+                <h5>Configuration for: ${formId}</h5>
+                <pre>${JSON.stringify(config, null, 2)}</pre>
+            `;
+
+            // Show configuration sources
+            const sourcesDiv = document.getElementById('config-sources');
+            const sources = [];
+            
+            // Check data attributes
+            const formElement = document.getElementById(formId);
+            if (formElement && (formElement.getAttribute('data-form-config') || 
+                formElement.getAttribute('data-form-summary') ||
+                formElement.getAttribute('data-confirmation-dialog'))) {
+                sources.push('✅ Data Attributes');
+            }
+            
+            // Check JavaScript config file
+            sources.push('🔍 JavaScript File (attempted)');
+            
+            // Check Twig config
+            if (window.formConfigs && window.formConfigs[formId]) {
+                sources.push('✅ Twig Template Config');
+            }
+            
+            sourcesDiv.innerHTML = `
+                <h5>Configuration Sources</h5>
+                ${sources.map(source => `<div class="small">${source}</div>`).join('')}
+            `;
+        }
+
+        function testHtmlContentDetection(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+
+            const textareas = form.querySelectorAll('textarea');
+            const detectionResults = [];
+
+            textareas.forEach(textarea => {
+                const content = textarea.value;
+                if (content) {
+                    // Simulate the HTML detection logic from form-confirmation.js
+                    const isHtml = isHtmlContent(content);
+                    detectionResults.push({
+                        field: textarea.name || textarea.id,
+                        isHtml: isHtml,
+                        content: content.substring(0, 100) + (content.length > 100 ? '...' : '')
+                    });
+                }
+            });
+
+            const detectionDiv = document.getElementById('html-detection');
+            if (detectionResults.length > 0) {
+                detectionDiv.innerHTML = `
+                    <h5>HTML Detection Results</h5>
+                    ${detectionResults.map(result => `
+                        <div class="small mb-2">
+                            <strong>${result.field}:</strong> 
+                            <span class="${result.isHtml ? 'text-success' : 'text-secondary'}">
+                                ${result.isHtml ? 'HTML Detected' : 'Plain Text'}
+                            </span>
+                            <br>
+                            <small class="text-muted">${result.content}</small>
+                        </div>
+                    `).join('')}
+                `;
+            }
+        }
+
+        // Simplified HTML detection function for testing
+        function isHtmlContent(content) {
+            if (!content || typeof content !== 'string') return false;
+            
+            const htmlPatterns = [
+                /<[^>]+>/,                    // HTML tags
+                /&[a-zA-Z][a-zA-Z0-9]*;/,     // HTML entities
+                /<p[^>]*>.*?<\/p>/i,          // Paragraph tags
+                /<strong[^>]*>.*?<\/strong>/i, // Bold tags
+                /<em[^>]*>.*?<\/em>/i,        // Italic tags
+                /<ul[^>]*>.*?<\/ul>/i,        // Unordered lists
+                /<ol[^>]*>.*?<\/ol>/i,        // Ordered lists
+                /<li[^>]*>.*?<\/li>/i,        // List items
+                /<a[^>]*href=["'][^"']*["'][^>]*>.*?<\/a>/i, // Links
+                /<br\s*\/?>/i                 // Line breaks
+            ];
+            
+            return htmlPatterns.some(pattern => pattern.test(content));
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔄 Initializing dynamic configuration test page...');
+            initializeQuillEditors();
+            
+            // Show available configuration methods
+            console.log('📋 Available configuration methods:');
+            console.log('1. Data attributes on form elements');
+            console.log('2. JavaScript configuration files');
+            console.log('3. Twig template configurations');
+            console.log('4. Hardcoded presets (fallback)');
+        });
+    </script>
+</body>
+</html>

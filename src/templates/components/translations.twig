@@ -102,14 +102,55 @@ var translations = {
 
 // Form configuration for WCAG 3.3.4 Error Prevention
 window.formConfigs = window.formConfigs || {};
-{% if formType is defined and config[formType] is defined %}
-window.formConfigs['{{ formType }}'] = {
-    form_summary_on_submit: {{ config[formType].form_summary_on_submit|default(false) ? 'true' : 'false' }},
-    confirmation_dialog_enabled: {{ config[formType].confirmation_dialog_enabled|default(false) ? 'true' : 'false' }},
-    auto_save_enabled: {{ config[formType].auto_save_enabled|default(true) ? 'true' : 'false' }},
-    change_tracking_enabled: {{ config[formType].change_tracking_enabled|default(true) ? 'true' : 'false' }},
-    enable_fileupload: {{ config[formType].enable_fileupload|default(false) ? 'true' : 'false' }}
-};
-console.log("Form configuration for {{ formType }}:", window.formConfigs['{{ formType }}']);
+{% if formType is defined %}
+    {% if config[formType] is defined %}
+        {# Use backend configuration if available #}
+        window.formConfigs['{{ formType }}'] = {
+            form_summary_on_submit: {{ config[formType].form_summary_on_submit|default(false) ? 'true' : 'false' }},
+            confirmation_dialog_enabled: {{ config[formType].confirmation_dialog_enabled|default(false) ? 'true' : 'false' }},
+            auto_save_enabled: {{ config[formType].auto_save_enabled|default(true) ? 'true' : 'false' }},
+            change_tracking_enabled: {{ config[formType].change_tracking_enabled|default(true) ? 'true' : 'false' }},
+            enable_fileupload: {{ config[formType].enable_fileupload|default(false) ? 'true' : 'false' }}
+        };
+    {% else %}
+        {# Fallback to default configurations for specific form types #}
+        {% set defaultConfigs = {
+            'helpdesk': {
+                'form_summary_on_submit': true,
+                'confirmation_dialog_enabled': true,
+                'auto_save_enabled': true,
+                'enable_fileupload': true
+            },
+            'invoicerequest': {
+                'form_summary_on_submit': true,
+                'confirmation_dialog_enabled': true,
+                'auto_save_enabled': true,
+                'enable_fileupload': true
+            },
+            'inspection_1': {
+                'form_summary_on_submit': true,
+                'confirmation_dialog_enabled': true,
+                'auto_save_enabled': true,
+                'enable_fileupload': true
+            },
+            'nokkelbestilling': {
+                'form_summary_on_submit': true,
+                'confirmation_dialog_enabled': false,
+                'auto_save_enabled': true,
+                'enable_fileupload': false
+            }
+        } %}
+        
+        {% if defaultConfigs[formType] is defined %}
+            window.formConfigs['{{ formType }}'] = {
+                form_summary_on_submit: {{ defaultConfigs[formType].form_summary_on_submit ? 'true' : 'false' }},
+                confirmation_dialog_enabled: {{ defaultConfigs[formType].confirmation_dialog_enabled ? 'true' : 'false' }},
+                auto_save_enabled: {{ defaultConfigs[formType].auto_save_enabled ? 'true' : 'false' }},
+                change_tracking_enabled: true,
+                enable_fileupload: {{ defaultConfigs[formType].enable_fileupload ? 'true' : 'false' }}
+            };
+        {% endif %}
+    {% endif %}
+    console.log("Form configuration for {{ formType }}:", window.formConfigs['{{ formType }}']);
 {% endif %}
 </script>

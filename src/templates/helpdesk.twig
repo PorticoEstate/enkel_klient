@@ -51,7 +51,12 @@
 				<p>{{ __('form_info')|raw }}</p>
 			{% endif %}
 
-			<form id="helpdesk" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate>
+			<form id="helpdesk" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate
+				  data-form-summary="{{ config.helpdesk.form_summary_on_submit|default('true') }}"
+				  data-confirmation-dialog="{{ config.helpdesk.confirmation_dialog_enabled|default('false') }}"
+				  data-auto-save="{{ config.helpdesk.auto_save_enabled|default('true') }}"
+				  data-file-upload="{{ enable_fileupload|default('1') }}"
+				  data-real-time-validation="true">
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
 					<legend class="sr-only">{{ __('contact_information') }}</legend>

@@ -266,7 +266,13 @@
 					<p>{{ __('form_info')| raw }}</p>
 				{% endif %}
 
-				<form id="invoicerequest" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate>
+				<form id="invoicerequest" method="post" action="{{ action_url }}" enctype="multipart/form-data" role="form" novalidate
+					  data-form-summary="true"
+					  data-confirmation-dialog="true" 
+					  data-auto-save="true"
+					  data-file-upload="true"
+					  data-real-time-validation="true"
+					  data-form-config='{"confirmation": {"showSummary": true, "requireConfirmation": true, "enableFileUpload": true}, "fileUpload": {"required": true, "allowedFileTypes": [".pdf", ".doc", ".docx", ".xls", ".xlsx"], "maxFileSizeMB": 15}, "validation": {"realTimeValidation": true, "wcagCompliant": true}, "autoSave": {"interval": 30000, "storageKey": "invoicerequest_autosave"}, "accessibility": {"announceErrors": true, "markRequired": true}}'>
 					<input type="hidden" value="{{ rand }}" name="randcheck"/>
 					<fieldset>
 						<legend class="sr-only">{{ __('contact_information') }}</legend>

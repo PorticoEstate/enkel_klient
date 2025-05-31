@@ -43,7 +43,13 @@
 			{% else %}
 				<p>{{ __('form_info')|raw }}</p>
 			{% endif %}
-			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header">
+			<form id="nokkelbestilling" name="nokkelbestilling" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header"
+				  data-form-summary="true"
+				  data-confirmation-dialog="true" 
+				  data-auto-save="true"
+				  data-file-upload="true"
+				  data-real-time-validation="true"
+				  data-form-config='{"confirmation": {"showSummary": true, "requireConfirmation": true, "enableFileUpload": true}, "fileUpload": {"required": false, "allowedFileTypes": [".pdf", ".doc", ".docx", ".jpg", ".png"], "maxFileSizeMB": 10}, "validation": {"realTimeValidation": true, "wcagCompliant": true}, "autoSave": {"interval": 30000, "storageKey": "nokkelbestilling_autosave"}, "accessibility": {"announceErrors": true, "markRequired": true}}'>
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				{% if user_name %}
 					<p>{{ __('name') }}:

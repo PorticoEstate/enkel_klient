@@ -41,7 +41,12 @@
 				</div>
 			{% endif %}
 			
-			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header">
+			<form id="inspection_1" name="inspection_1" method="post" action="{{ action_url }}" enctype="multipart/form-data" novalidate aria-labelledby="form-header"
+				  data-form-summary="{{ config.inspection_1.form_summary_on_submit|default('true') }}"
+				  data-confirmation-dialog="{{ config.inspection_1.confirmation_dialog_enabled|default('true') }}"
+				  data-auto-save="{{ config.inspection_1.auto_save_enabled|default('true') }}"
+				  data-file-upload="{{ enable_fileupload|default('1') }}"
+				  data-real-time-validation="true">
 				<input type="hidden" value="{{ rand }}" name="randcheck"/>
 				<fieldset>
 					<legend class="sr-only">{{ __('inspection_details') }}</legend>

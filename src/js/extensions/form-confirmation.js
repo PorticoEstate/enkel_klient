@@ -271,7 +271,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
           <div class="form-summary-item" data-field-name="${name}">
             <dt>${label}:</dt>
             <dd>
-              <span class="field-value">${this.formatFieldValue(value)}</span>
+              ${this.formatFieldValueWithContainer(value)}
               <button type="button" class="btn-edit-field" data-field="${name}" data-field-id="${fieldId}">
                 <span class="edit-icon">✎</span> ${editButtonText}
               </button>
@@ -363,6 +363,27 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     }
     
     return fallback;
+  }
+  
+  /**
+   * Format a field value with proper container and classes
+   * @param {string} value - The field value to format
+   * @returns {string} - Properly formatted value in a container
+   */
+  formatFieldValueWithContainer(value) {
+    if (!value || typeof value !== 'string') {
+      return `<span class="field-value">${this.escapeHtml(String(value || ''))}</span>`;
+    }
+    
+    // Check if this looks like HTML content (from rich text editor)
+    if (this.isHtmlContent(value)) {
+      // Format as HTML with proper sanitization and styling
+      const formattedContent = this.formatHtmlContent(value);
+      return `<span class="field-value rich-content">${formattedContent}</span>`;
+    } else {
+      // Treat as plain text and escape it
+      return `<span class="field-value">${this.escapeHtml(value)}</span>`;
+    }
   }
   
   /**
@@ -526,6 +547,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const textContent = container.textContent || '';
     
     if (textContent.length > maxLength) {
+      // Store the original HTML content before truncation
+      const originalContent = container.innerHTML;
+      
       // Find a good place to cut off
       const truncatedText = textContent.substring(0, maxLength);
       const lastSpaceIndex = truncatedText.lastIndexOf(' ');
@@ -536,7 +560,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         `<span class="content-truncated">... <button type="button" class="btn-show-full-content">Show full content</button></span>`;
       
       // Store the original content for expansion
-      container.setAttribute('data-full-content', container.innerHTML);
+      container.setAttribute('data-full-content', originalContent);
     }
   }
   
@@ -603,24 +627,85 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       const $field = this.$form.find(`#${fieldId}, [name="${fieldName}"]`).first();
       
       if ($field.length) {
-        // Scroll to the field with some offset for better visibility
-        const offset = $field.offset().top - 100;
+        // Check if this is a textarea with a rich text editor
+        let $targetElement = $field;
+        
+        if ($field.is('textarea')) {
+          // Check for Quill editor
+          const quillEditorId = `quill-${fieldId}`;
+          const $quillEditor = this.$form.find(`#${quillEditorId}`);
+          
+          if ($quillEditor.length) {
+            console.log(`Found Quill editor for textarea ${fieldId}, targeting editor container`);
+            $targetElement = $quillEditor;
+            
+            // Also try to focus the Quill instance directly
+            if (window.quillInstances && window.quillInstances[fieldId]) {
+              setTimeout(() => {
+                try {
+                  window.quillInstances[fieldId].focus();
+                  console.log(`Focused Quill editor instance for ${fieldId}`);
+                } catch (e) {
+                  console.warn(`Could not focus Quill editor for ${fieldId}:`, e);
+                }
+              }, 700);
+            }
+          } else {
+            // Check for other rich text editors by looking for common patterns
+            const $editorContainer = this.$form.find(`[data-quill-id="${fieldId}"], .ql-container[data-field-id="${fieldId}"]`).first();
+            
+            if ($editorContainer.length) {
+              console.log(`Found rich text editor container for textarea ${fieldId}`);
+              $targetElement = $editorContainer;
+            }
+          }
+        }
+        
+        // Scroll to the target element (either the field or the editor container)
+        const offset = $targetElement.offset().top - 100;
         $('html, body').animate({
           scrollTop: offset
         }, 500);
         
-        // Focus on the field after scrolling
+        // Focus on the target element after scrolling
         setTimeout(() => {
-          $field.focus();
+          // For rich text editors, we might need special focus handling
+          if ($targetElement.hasClass('ql-container') || $targetElement.find('.ql-editor').length) {
+            // This is a Quill editor container
+            const $editor = $targetElement.find('.ql-editor').first();
+            if ($editor.length) {
+              $editor.focus();
+              console.log(`Focused Quill editor content area for ${fieldName}`);
+            } else {
+              $targetElement.focus();
+            }
+          } else {
+            // Regular field focus
+            $targetElement.focus();
+          }
           
-          // Add a temporary highlight effect
-          $field.addClass('field-highlight');
+          // Add a temporary highlight effect to the target element
+          $targetElement.addClass('field-highlight');
           setTimeout(() => {
-            $field.removeClass('field-highlight');
+            $targetElement.removeClass('field-highlight');
           }, 2000);
         }, 600);
       } else {
         console.warn(`Field not found: ${fieldName} (ID: ${fieldId})`);
+      }
+    });
+    
+    // Show full content button handler
+    $modal.on('click', '.btn-show-full-content', (e) => {
+      e.preventDefault();
+      const $button = $(e.currentTarget);
+      const $fieldValue = $button.closest('.field-value');
+      const fullContent = $fieldValue.data('full-content');
+      
+      if (fullContent) {
+        $fieldValue.html(fullContent);
+        // Remove the data attribute to prevent repeated expansion
+        $fieldValue.removeData('full-content');
       }
     });
     
@@ -1247,6 +1332,86 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
           
           .field-highlight {
             animation: highlightField 2s ease-out;
+          }
+          
+          /* Enhanced highlighting for rich text editors */
+          .ql-container.field-highlight {
+            animation: highlightField 2s ease-out;
+          }
+          
+          .ql-container.field-highlight .ql-editor {
+            animation: highlightField 2s ease-out;
+          }
+          
+          /* HTML Content Display Styles */
+          .field-value .summary-paragraph {
+            margin: 6px 0;
+            line-height: 1.4;
+          }
+          
+          .field-value .summary-heading {
+            font-weight: 600;
+            margin: 8px 0 4px 0;
+            color: #333;
+          }
+          
+          .field-value .summary-list {
+            margin: 6px 0;
+            padding-left: 20px;
+          }
+          
+          .field-value .summary-list-item {
+            margin: 2px 0;
+          }
+          
+          .field-value .summary-bold {
+            font-weight: 600;
+          }
+          
+          .field-value .summary-italic {
+            font-style: italic;
+          }
+          
+          .field-value .summary-link {
+            color: #007bff;
+            text-decoration: underline;
+          }
+          
+          .field-value .summary-quote {
+            border-left: 3px solid #007bff;
+            margin: 8px 0;
+            padding-left: 12px;
+            color: #666;
+          }
+          
+          .field-value .content-truncated {
+            color: #666;
+            font-style: italic;
+          }
+          
+          .field-value .btn-show-full-content {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 12px;
+            padding: 0;
+            margin-left: 5px;
+          }
+          
+          .field-value .btn-show-full-content:hover {
+            color: #0056b3;
+          }
+          
+          /* Rich text content container */
+          .field-value.rich-content {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
           }
           
           .form-submit-overlay {

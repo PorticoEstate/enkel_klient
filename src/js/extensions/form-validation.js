@@ -82,51 +82,76 @@ if (typeof FormValidationExtension === 'undefined') {
       
       if (!$field.length) return true;
       
-      const value = $field.val();
-      const fieldType = $field.attr('type');
-      const isRequired = $field.attr('required') !== undefined;
-      
-      let isValid = true;
-      let errorMessage = '';
-      
-      // Check required fields
-      if (isRequired && (!value || value.trim() === '')) {
-        isValid = false;
-        errorMessage = this.getRequiredFieldMessage($field);
-      }
-      // Validate email fields
-      else if (fieldType === 'email' && value && !this.isValidEmail(value)) {
-        isValid = false;
-        errorMessage = this.getEmailValidationMessage();
-      }
-      // Validate phone fields
-      else if ((fieldType === 'tel' || $field.attr('name').includes('phone')) && value && !this.isValidPhone(value)) {
-        isValid = false;
-        errorMessage = this.getPhoneValidationMessage();
-      }
-      // Validate location field (checks if location_code has a value)
-      else if ($field.attr('id') === 'location_name' && value && !this.isValidLocation($field)) {
-        isValid = false;
-        errorMessage = this.getLocationValidationMessage();
-      }
-      // Use HTML5 validation if available
-      else if (field.validity && !field.validity.valid) {
-        isValid = false;
-        errorMessage = field.validationMessage || 'Invalid input';
-      }
+      const validationResult = this.performFieldValidation($field);
       
       // Update field appearance
-      if (isValid) {
+      if (validationResult.isValid) {
         this.markFieldValid($field);
       } else {
-        this.markFieldInvalid($field, errorMessage);
+        this.markFieldInvalid($field, validationResult.errorMessage);
       }
       
-      return isValid;
+      return validationResult.isValid;
     } catch (error) {
       console.warn('Error validating field:', error);
       return true; // Assume valid on error to avoid blocking
     }
+  }
+
+  /**
+   * Centralized field validation logic used by both validateField, isValid, and getErrors
+   * @param {jQuery} $field - The field to validate
+   * @returns {object} - {isValid: boolean, errorMessage: string}
+   */
+  performFieldValidation($field) {
+    const value = $field.val();
+    const fieldType = $field.attr('type');
+    const isRequired = $field.attr('required') !== undefined;
+    
+    // Check required fields first
+    if (isRequired && (!value || value.trim() === '')) {
+      return {
+        isValid: false,
+        errorMessage: this.getRequiredFieldMessage($field)
+      };
+    }
+    
+    // If field is empty and not required, it's valid
+    if (!value || value.trim() === '') {
+      return { isValid: true, errorMessage: '' };
+    }
+    
+    // Validate based on field type
+    if (fieldType === 'email' && !this.isValidEmail(value)) {
+      return {
+        isValid: false,
+        errorMessage: this.getEmailValidationMessage()
+      };
+    }
+    
+    if ((fieldType === 'tel' || $field.attr('name').includes('phone')) && !this.isValidPhone(value)) {
+      return {
+        isValid: false,
+        errorMessage: this.getPhoneValidationMessage()
+      };
+    }
+    
+    if ($field.attr('id') === 'location_name' && !this.isValidLocation($field)) {
+      return {
+        isValid: false,
+        errorMessage: this.getLocationValidationMessage()
+      };
+    }
+    
+    // Use HTML5 validation if available
+    if ($field[0].validity && !$field[0].validity.valid) {
+      return {
+        isValid: false,
+        errorMessage: $field[0].validationMessage || 'Invalid input'
+      };
+    }
+    
+    return { isValid: true, errorMessage: '' };
   }
 
   // Critical beforeSubmit hook - required by FormHandlerCore
@@ -198,8 +223,10 @@ if (typeof FormValidationExtension === 'undefined') {
           value = $field.is(':checked') ? $field.val() : '';
         }
         
-        if (!value || value.trim() === '') {
-          this.markFieldInvalid($field, this.getRequiredFieldMessage($field));
+        const validationResult = this.performFieldValidation($field);
+        
+        if (!validationResult.isValid) {
+          this.markFieldInvalid($field, validationResult.errorMessage);
           isValid = false;
           errorCount++;
         } else {
@@ -207,24 +234,21 @@ if (typeof FormValidationExtension === 'undefined') {
         }
       });
 
-      // Validate specific field types
-      form.find('input[type="email"]').each((index, field) => {
+      // Validate all fields with content, regardless of required status
+      form.find('input, textarea, select').each((index, field) => {
         const $field = $(field);
-        const value = $field.val();
+        const fieldType = $field.attr('type');
         
-        if (value && !this.isValidEmail(value)) {
-          this.markFieldInvalid($field, this.getEmailValidationMessage());
-          isValid = false;
-          errorCount++;
-        }
-      });
-
-      form.find('input[type="tel"], input[name*="phone"]').each((index, field) => {
-        const $field = $(field);
-        const value = $field.val();
+        // Skip radio buttons (already handled above)
+        if (fieldType === 'radio') return;
         
-        if (value && !this.isValidPhone(value)) {
-          this.markFieldInvalid($field, this.getPhoneValidationMessage());
+        // Skip if already processed as required field
+        if ($field.attr('required') !== undefined) return;
+        
+        const validationResult = this.performFieldValidation($field);
+        
+        if (!validationResult.isValid) {
+          this.markFieldInvalid($field, validationResult.errorMessage);
           isValid = false;
           errorCount++;
         }
@@ -248,7 +272,41 @@ if (typeof FormValidationExtension === 'undefined') {
       return ['Form not found'];
     }
 
-    // Collect all validation errors with field information
+    // First, validate all fields and mark them appropriately
+    form.find('input, textarea, select').each((index, field) => {
+      const $field = $(field);
+      const fieldType = $field.attr('type');
+      
+      // Handle radio buttons with special logic
+      if (fieldType === 'radio') {
+        const name = $field.attr('name');
+        if (processedRadioGroups.has(name)) {
+          return; // Skip - already processed this radio group
+        }
+        processedRadioGroups.add(name);
+        
+        const $radioGroup = form.find(`input[type="radio"][name="${name}"]`);
+        const isRequired = $radioGroup.filter('[required]').length > 0;
+        const isAnySelected = $radioGroup.is(':checked');
+        
+        if (isRequired && !isAnySelected) {
+          $radioGroup.each((i, radio) => {
+            this.markFieldInvalid($(radio), this.getRequiredFieldMessage($(radio)));
+          });
+        }
+        return;
+      }
+      
+      // Validate regular fields using centralized logic
+      const validationResult = this.performFieldValidation($field);
+      if (!validationResult.isValid) {
+        this.markFieldInvalid($field, validationResult.errorMessage);
+      } else {
+        this.markFieldValid($field);
+      }
+    });
+
+    // Now collect all fields marked as invalid
     form.find('.is-invalid').each((index, field) => {
       const $field = $(field);
       const fieldType = $field.attr('type');
@@ -259,10 +317,13 @@ if (typeof FormValidationExtension === 'undefined') {
       // Handle radio button groups - only add one error per group
       if (fieldType === 'radio') {
         const name = $field.attr('name');
-        if (processedRadioGroups.has(name)) {
-          return; // Skip - already processed this radio group
+        // Check if we already added an error for this radio group
+        const existingError = errors.find(error => 
+          error.fieldId && error.fieldId.includes(name) && fieldType === 'radio'
+        );
+        if (existingError) {
+          return; // Skip - already have error for this radio group
         }
-        processedRadioGroups.add(name);
         
         // Get the fieldset legend or first radio button's label for group name
         const $fieldset = $field.closest('fieldset');
@@ -274,7 +335,6 @@ if (typeof FormValidationExtension === 'undefined') {
           }
         }
         
-        // Use the first radio button's ID for linking
         errors.push({
           fieldId: fieldId,
           fieldName: groupName,

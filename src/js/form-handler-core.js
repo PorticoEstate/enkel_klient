@@ -37,9 +37,24 @@ class FormHandler {
   loadExtensions() {
     console.log('🔍 Loading extensions. extensionOptions:', this.extensionOptions);
     console.log('🔍 Available extensions:', Object.keys(FormHandler.extensions || {}));
+    
+    // Define hook registration order to ensure validation runs before confirmation
+    const extensionOrder = ['validation', 'accessibility', 'autoSave', 'fileUpload', 'confirmation'];
+    
+    // Load extensions in correct order first
+    extensionOrder.forEach(extensionName => {
+      if (this.extensionOptions[extensionName]) {
+        console.log(`🔍 Loading extension: ${extensionName} with options:`, this.extensionOptions[extensionName]);
+        this.loadExtension(extensionName, this.extensionOptions[extensionName]);
+      }
+    });
+    
+    // Load any remaining extensions not in the predefined order
     Object.keys(this.extensionOptions).forEach(extensionName => {
-      console.log(`🔍 Loading extension: ${extensionName} with options:`, this.extensionOptions[extensionName]);
-      this.loadExtension(extensionName, this.extensionOptions[extensionName]);
+      if (!extensionOrder.includes(extensionName)) {
+        console.log(`🔍 Loading extension: ${extensionName} with options:`, this.extensionOptions[extensionName]);
+        this.loadExtension(extensionName, this.extensionOptions[extensionName]);
+      }
     });
   }
 

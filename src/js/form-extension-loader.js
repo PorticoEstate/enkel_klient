@@ -6,6 +6,7 @@
 class FormExtensionLoader {
   constructor() {
     this.loadedExtensions = new Set();
+    this.loadedDependencies = new Set();
     this.configurationSources = new Map(); // Cache for loaded configurations
     this.extensionPaths = {
       validation: '/src/js/extensions/form-validation.js',
@@ -14,6 +15,60 @@ class FormExtensionLoader {
       accessibility: '/src/js/extensions/form-accessibility.js',
       confirmation: '/src/js/extensions/form-confirmation.js',
     };
+    
+    // Define dependencies for extensions
+    this.extensionDependencies = {
+      fileUpload: [
+        '/src/js/file-upload/js/vendor/jquery.ui.widget.js',
+        '/src/js/file-upload/js/jquery.iframe-transport.js',
+        '/src/js/file-upload/js/jquery.fileupload.js',
+        '/src/js/file-upload/js/jquery.fileupload-process.js',
+        '/src/js/file-upload/js/jquery.fileupload-validate.js'
+      ]
+    };
+  }
+
+  /**
+   * Load dependencies for an extension
+   * @param {string} extensionName - Name of the extension
+   * @returns {Promise} Promise that resolves when all dependencies are loaded
+   */
+  async loadDependencies(extensionName) {
+    const dependencies = this.extensionDependencies[extensionName];
+    if (!dependencies || dependencies.length === 0) {
+      return Promise.resolve();
+    }
+
+    // Load dependencies sequentially to ensure proper order
+    for (const url of dependencies) {
+      await this.loadDependency(url);
+    }
+  }
+
+  /**
+   * Load a single dependency (script)
+   * @param {string} url - URL of the dependency
+   * @returns {Promise} Promise that resolves when dependency is loaded
+   */
+  async loadDependency(url) {
+    if (this.loadedDependencies.has(url)) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = url;
+      script.onload = () => {
+        this.loadedDependencies.add(url);
+        console.log(`✅ Loaded dependency: ${url}`);
+        resolve();
+      };
+      script.onerror = () => {
+        console.error(`❌ Failed to load dependency: ${url}`);
+        reject(new Error(`Failed to load dependency ${url}`));
+      };
+      document.head.appendChild(script);
+    });
   }
 
   /**
@@ -35,6 +90,9 @@ class FormExtensionLoader {
     if (this.loadedExtensions.has(extensionName)) {
       return Promise.resolve();
     }
+
+    // Load dependencies first
+    await this.loadDependencies(extensionName);
 
     const path = this.extensionPaths[extensionName];
     if (!path) {
@@ -255,9 +313,8 @@ class FormExtensionLoader {
    */
   async loadConfigFromJavaScriptFile(formId) {
     const configPaths = [
-      `/config/forms/${formId}.js`,
-      `/src/js/config/${formId}-config.js`,
-      `/src/js/config/forms/${formId}.js`
+      `/src/js/config/forms/${formId}.js`,
+      `/src/js/config/${formId}-config.js`
     ];
 
     for (const path of configPaths) {

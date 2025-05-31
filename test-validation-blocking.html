@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation Test - Helpdesk Form</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Validation Test - Helpdesk Form</h1>
+        
+        <form id="helpdesk" method="post" action="#" enctype="multipart/form-data" role="form" novalidate>
+            <div class="form-group">
+                <label for="phone">
+                    Phone Number
+                    <span class="required-field" aria-hidden="true">*</span>
+                </label>
+                <input type="text" id="phone" name="phone" class="form-control" required>
+                <div id="phone-error" class="invalid-feedback"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">
+                    Email
+                    <span class="required-field" aria-hidden="true">*</span>
+                </label>
+                <input type="email" id="email" name="email" class="form-control" required>
+                <div id="email-error" class="invalid-feedback"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">
+                    Subject
+                    <span class="required-field" aria-hidden="true">*</span>
+                </label>
+                <input type="text" id="subject" name="subject" class="form-control" required>
+                <div id="subject-error" class="invalid-feedback"></div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Submit (should be blocked if fields empty)</button>
+        </form>
+        
+        <div id="debug-output" class="mt-4">
+            <h3>Debug Information:</h3>
+            <div id="debug-log"></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Global variables to match production
+        var strBaseURL = 'http://127.0.0.1:8210';
+        
+        function log(message) {
+            const debugLog = document.getElementById('debug-log');
+            debugLog.innerHTML += '<p>' + new Date().toLocaleTimeString() + ': ' + message + '</p>';
+            console.log(message);
+        }
+        
+        // Override console.log to also display in debug area
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            log(args.join(' '));
+        };
+        
+        log('Starting validation test...');
+    </script>
+    
+    <!-- Core system files -->
+    <script src="./src/js/form-handler-core.js"></script>
+    <script src="./src/js/form-extension-loader.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            log('DOM ready, initializing form...');
+            
+            if (typeof formExtensionLoader !== 'undefined') {
+                log('FormExtensionLoader found, using quickSetup...');
+                formExtensionLoader.quickSetup('helpdesk', 'simple').then(handler => {
+                    log('✅ Form initialized successfully');
+                    log('Extensions loaded: ' + Array.from(handler.extensions.keys()).join(', '));
+                    
+                    // Test submission
+                    $('#helpdesk').on('submit', function(e) {
+                        log('🔍 Form submission attempted');
+                        // Don't prevent default here - let FormHandler handle it
+                    });
+                    
+                }).catch(error => {
+                    log('❌ Failed to initialize FormHandler: ' + error.message);
+                });
+            } else {
+                log('❌ FormExtensionLoader not available');
+            }
+        });
+    </script>
+</body>
+</html>

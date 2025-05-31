@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test File Upload Dependencies</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>File Upload Dependencies Test</h1>
+    <form id="test-form">
+        <div>
+            <label for="test-file">Select File:</label>
+            <input type="file" id="test-file" name="test-file">
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="log"></div>
+
+    <script>
+        function log(message) {
+            console.log(message);
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += '<div>' + message + '</div>';
+        }
+        
+        // Redirect console.log to our log function for visibility
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            log(args.join(' '));
+        };
+        
+        const originalError = console.error;
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            log('ERROR: ' + args.join(' '));
+        };
+    </script>
+
+    <!-- Load core form system -->
+    <script src="/home/hc483/enkel_klient/src/js/form-handler-core.js"></script>
+    <script src="/home/hc483/enkel_klient/src/js/form-extension-loader.js"></script>
+
+    <script>
+        // Test the file upload extension loading
+        async function testFileUploadExtension() {
+            try {
+                log('🔄 Testing file upload extension loading...');
+                
+                // Create extension loader instance
+                const loader = new FormExtensionLoader();
+                
+                // Try to load file upload extension (which should load dependencies first)
+                log('Loading fileUpload extension...');
+                await loader.loadExtension('fileUpload');
+                
+                log('✅ File upload extension loaded successfully!');
+                
+                // Check if $.blueimp is now available
+                if (typeof $ !== 'undefined' && $.blueimp && $.blueimp.fileupload) {
+                    log('✅ $.blueimp.fileupload is available!');
+                    log('jQuery File Upload version: ' + ($.blueimp.fileupload.prototype.version || 'unknown'));
+                } else {
+                    log('❌ $.blueimp.fileupload is not available');
+                }
+                
+                // Try to initialize file upload on our test input
+                log('Attempting to initialize file upload widget...');
+                $('#test-file').fileupload({
+                    url: '/upload',
+                    dataType: 'json',
+                    done: function (e, data) {
+                        log('File upload completed!');
+                    }
+                });
+                log('✅ File upload widget initialized successfully!');
+                
+            } catch (error) {
+                log('❌ Error loading file upload extension: ' + error.message);
+                console.error('Full error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        $(document).ready(function() {
+            log('Page loaded, starting test...');
+            testFileUploadExtension();
+        });
+    </script>
+</body>
+</html>

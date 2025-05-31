@@ -52,7 +52,21 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
   }
   
   handleConfirmationBeforeSubmit(formData) {
-    // This is called AFTER validation passes
+    // CRITICAL: First check if form is valid before showing confirmation
+    const validationExtension = this.formHandler.getExtension('validation');
+    if (validationExtension && typeof validationExtension.isValid === 'function') {
+      const isValid = validationExtension.isValid();
+      console.log('🔍 Confirmation extension: Form validation result:', isValid);
+      
+      if (!isValid) {
+        console.log('❌ Confirmation extension: Form has validation errors, not showing summary');
+        // Let validation extension handle error display
+        return false; // Block submission due to validation errors
+      }
+    }
+    
+    // Form is valid, proceed with confirmation logic
+    console.log('✅ Confirmation extension: Form is valid, proceeding with confirmation');
     this.formData = this.collectFormData();
     
     // Check if form has files that need two-phase submission

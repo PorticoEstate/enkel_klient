@@ -398,17 +398,7 @@
 	</script>
 
 	{% if saved != 1 %}
-		<!-- MIGRATED TO CLEAN ARCHITECTURE: Reduced from 1,950+ lines to ~620 lines -->
-		
-		<!-- CLEAN ARCHITECTURE: Core form handler + extension system -->
-		<script src="{{ base_path }}/src/js/form-handler-core.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/form-extension-loader.js?n={{ cache_refresh_token }}"></script>
-
-		<!-- Load only needed extensions (75% reduction in code) -->
-		<script src="{{ base_path }}/src/js/extensions/form-validation.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/extensions/form-accessibility.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/extensions/form-autosave.js?n={{ cache_refresh_token }}"></script>
-		<script src="{{ base_path }}/src/js/extensions/form-confirmation.js?n={{ cache_refresh_token }}"></script>
+		<!-- MIGRATED TO CLEAN ARCHITECTURE: Dynamic extension loading -->
 		
 		<!-- Location and autocomplete functionality -->
 		<script src="{{ base_path }}/src/js/autocomplete/autoComplete.js?n={{ cache_refresh_token }}"></script>
@@ -416,22 +406,14 @@
 			<script src="{{ base_path }}/src/js/location.js?n={{ cache_refresh_token }}"></script>
 		{% endif %}
 
-		<!-- External libraries for enhanced functionality -->
-		<!-- jQuery UI Core and Widget Factory - needed for file upload -->
-		<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
-		
 		<!-- Flatpickr for enhanced datepicker (loaded dynamically by migrated script) -->
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 		
-		{% if enable_fileupload == 1 %}
-			<!-- File upload dependencies and extension -->
-			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload.js?n={{ cache_refresh_token }}"></script>
-			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-process.js?n={{ cache_refresh_token }}"></script>
-			<script src="{{ base_path }}/src/js/file-upload/js/jquery.fileupload-validate.js?n={{ cache_refresh_token }}"></script>
-			<script src="{{ base_path }}/src/js/extensions/file-upload.js?n={{ cache_refresh_token }}"></script>
-		{% endif %}
+		<!-- CLEAN ARCHITECTURE: Core system with dynamic extension loading -->
+		<script src="{{ base_path }}/src/js/form-handler-core.js?n={{ cache_refresh_token }}"></script>
+		<script src="{{ base_path }}/src/js/form-extension-loader.js?n={{ cache_refresh_token }}"></script>
 		
-		<!-- MIGRATED: Clean invoice request form handler with datepicker and rich text -->
+		<!-- MIGRATED: Clean invoice request form handler with dynamic extension loading -->
 		<script src="{{ base_path }}/src/js/invoicerequest-migrated.js?n={{ cache_refresh_token }}"></script>
 	{% endif %}
 {% endblock %}

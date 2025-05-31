@@ -26,6 +26,7 @@ function getFormConfig(formId) {
             wcagCompliant: true,
             validateOnBlur: true,
             showInlineErrors: true,
+            blockInvalidSubmission: true, // CRITICAL: Block form submission if validation fails
             customValidators: {
                 phone: {
                     pattern: /^[\+]?[0-9\s\-\(\)]{8,15}$/,

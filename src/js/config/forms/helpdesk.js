@@ -13,7 +13,7 @@ function getFormConfig(formId) {
         // File upload configuration
         fileUpload: {
             required: false,
-            allowedFileTypes: ['.pdf', '.doc', '.docx', '.jpg', '.png', '.txt'],
+            allowedFileTypes: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png'],
             maxFileSizeMB: 10,
             maxFiles: 5,
             dragDropEnabled: true,

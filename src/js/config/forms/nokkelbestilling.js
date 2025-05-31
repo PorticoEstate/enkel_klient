@@ -27,12 +27,12 @@ function getFormConfig(formId) {
         // File upload configuration for key orders (optional)
         fileUpload: {
             required: false, // Key orders typically don't require files
-            allowedFileTypes: ['.pdf', '.doc', '.docx', '.jpg', '.png'],
+            allowedFileTypes: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png'],
             maxFileSizeMB: 10,
             maxFiles: 3,
             customMessages: {
                 dragDropText: "Drop supporting documents here or click to browse (optional)",
-                allowedTypesText: "Accepted formats: PDF, Word, Images"
+                allowedTypesText: "Accepted formats: PDF, Word, Excel, Images"
             }
         },
 

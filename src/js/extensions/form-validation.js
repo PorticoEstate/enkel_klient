@@ -337,7 +337,7 @@ if (typeof FormValidationExtension === 'undefined') {
     // Create error summary with clickable links
     const errorList = errors.map(error => {
       if (typeof error === 'object' && error.fieldId) {
-        return `<li><a href="#${error.fieldId}" onclick="document.getElementById('${error.fieldId}').focus(); return false;">${error.fullMessage}</a></li>`;
+        return `<li><a href="#${error.fieldId}" class="error-link" data-field-id="${error.fieldId}">${error.fullMessage}</a></li>`;
       } else {
         // Fallback for string errors
         return `<li>${error}</li>`;
@@ -355,6 +355,16 @@ if (typeof FormValidationExtension === 'undefined') {
 
     // Insert at top of form
     this.formHandler.getForm().prepend($errorSummary);
+    
+    // Add click handlers for error summary links
+    $errorSummary.find('.error-link').on('click', (e) => {
+      e.preventDefault();
+      const fieldId = $(e.target).data('field-id');
+      if (fieldId) {
+        console.log(`🔗 Error summary link clicked for field: ${fieldId}`);
+        this.focusField(fieldId);
+      }
+    });
     
     // Focus on error summary for accessibility
     $errorSummary.focus();
@@ -446,6 +456,58 @@ if (typeof FormValidationExtension === 'undefined') {
       $('body').append($status);
     }
     $status.text(message);
+  }
+
+  /**
+   * Smart focus function that handles enhanced editors
+   * @param {string} fieldId - The ID of the field to focus
+   */
+  focusField(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (!field) {
+      console.warn(`Field with ID "${fieldId}" not found`);
+      return false;
+    }
+
+    // Check if this is a textarea that has been enhanced with Quill editor
+    if (field.tagName === 'TEXTAREA') {
+      // Look for Quill editor container
+      const $textarea = $(field);
+      const $quillContainer = $textarea.siblings('.ql-container');
+      
+      if ($quillContainer.length) {
+        console.log(`📝 Focusing Quill editor for textarea: ${fieldId}`);
+        // Focus the Quill editor
+        const $editor = $quillContainer.find('.ql-editor');
+        if ($editor.length) {
+          $editor[0].focus();
+          return true;
+        }
+      }
+      
+      // Check for other common editor patterns
+      // CKEditor
+      const $ckeditor = $textarea.siblings('.cke');
+      if ($ckeditor.length) {
+        console.log(`📝 Focusing CKEditor for textarea: ${fieldId}`);
+        if (window.CKEDITOR && window.CKEDITOR.instances[fieldId]) {
+          window.CKEDITOR.instances[fieldId].focus();
+          return true;
+        }
+      }
+      
+      // TinyMCE
+      if (window.tinymce && window.tinymce.get(fieldId)) {
+        console.log(`📝 Focusing TinyMCE editor for textarea: ${fieldId}`);
+        window.tinymce.get(fieldId).focus();
+        return true;
+      }
+    }
+
+    // Default focus for regular fields
+    console.log(`📝 Focusing regular field: ${fieldId}`);
+    field.focus();
+    return true;
   }
   
     setupLocationValidator() {

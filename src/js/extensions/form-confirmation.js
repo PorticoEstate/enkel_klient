@@ -271,7 +271,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
           <div class="form-summary-item" data-field-name="${name}">
             <dt>${label}:</dt>
             <dd>
-              <span class="field-value">${this.escapeHtml(value)}</span>
+              <span class="field-value">${this.formatFieldValue(value)}</span>
               <button type="button" class="btn-edit-field" data-field="${name}" data-field-id="${fieldId}">
                 <span class="edit-icon">✎</span> ${editButtonText}
               </button>
@@ -365,10 +365,179 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     return fallback;
   }
   
+  /**
+   * Format a field value for display, detecting and handling HTML content
+   * @param {string} value - The field value to format
+   * @returns {string} - Properly formatted value for display
+   */
+  formatFieldValue(value) {
+    if (!value || typeof value !== 'string') {
+      return this.escapeHtml(String(value || ''));
+    }
+    
+    // Check if this looks like HTML content (from rich text editor)
+    if (this.isHtmlContent(value)) {
+      // Format as HTML with proper sanitization and styling
+      return this.formatHtmlContent(value);
+    } else {
+      // Treat as plain text and escape it
+      return this.escapeHtml(value);
+    }
+  }
+  
   escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+  
+  /**
+   * Detect if a string contains HTML content
+   * @param {string} str - The string to check
+   * @returns {boolean} - True if the string appears to contain HTML
+   */
+  isHtmlContent(str) {
+    if (!str || typeof str !== 'string') return false;
+    
+    // Check for common HTML patterns
+    const htmlPatterns = [
+      /<[a-z][\s\S]*>/i,           // Basic HTML tags
+      /&[a-z]+;/i,                 // HTML entities
+      /<\/[a-z]+>/i,               // Closing tags
+      /<br\s*\/?>/i,               // Line breaks
+      /<p[\s>]/i,                  // Paragraphs
+      /<div[\s>]/i,                // Divs
+      /<span[\s>]/i,               // Spans
+      /<strong[\s>]/i,             // Strong/bold
+      /<em[\s>]/i,                 // Emphasis/italic
+      /<ul[\s>]/i,                 // Lists
+      /<ol[\s>]/i,                 // Ordered lists
+      /<li[\s>]/i,                 // List items
+      /<h[1-6][\s>]/i,             // Headers
+      /<a[\s>]/i,                  // Links
+    ];
+    
+    // Also check if it looks like Quill editor content
+    const quillPatterns = [
+      /<p><br><\/p>/,              // Empty Quill paragraph
+      /class="ql-/,                // Quill CSS classes
+      /<p>.*<\/p>/,                // Paragraph content from Quill
+    ];
+    
+    return htmlPatterns.some(pattern => pattern.test(str)) || 
+           quillPatterns.some(pattern => pattern.test(str));
+  }
+  
+  /**
+   * Format HTML content for display in the form summary
+   * @param {string} htmlContent - The HTML content to format
+   * @returns {string} - Safely formatted HTML for display
+   */
+  formatHtmlContent(htmlContent) {
+    if (!htmlContent || typeof htmlContent !== 'string') return '';
+    
+    // Create a temporary div to work with the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    // Remove potentially dangerous elements and attributes
+    this.sanitizeHtmlContent(tempDiv);
+    
+    // Apply formatting for better readability in summary
+    this.enhanceHtmlForSummary(tempDiv);
+    
+    return tempDiv.innerHTML;
+  }
+  
+  /**
+   * Sanitize HTML content by removing dangerous elements and attributes
+   * @param {Element} container - The container element to sanitize
+   */
+  sanitizeHtmlContent(container) {
+    // Remove script tags and other dangerous elements
+    const dangerousElements = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button'];
+    dangerousElements.forEach(tagName => {
+      const elements = container.querySelectorAll(tagName);
+      elements.forEach(el => el.remove());
+    });
+    
+    // Remove dangerous attributes
+    const dangerousAttrs = ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit'];
+    const allElements = container.querySelectorAll('*');
+    allElements.forEach(el => {
+      dangerousAttrs.forEach(attr => {
+        if (el.hasAttribute(attr)) {
+          el.removeAttribute(attr);
+        }
+      });
+      
+      // Remove href attributes that could be dangerous
+      if (el.hasAttribute('href')) {
+        const href = el.getAttribute('href');
+        if (href.startsWith('javascript:') || href.startsWith('data:')) {
+          el.removeAttribute('href');
+        }
+      }
+    });
+  }
+  
+  /**
+   * Enhance HTML content for better display in the form summary
+   * @param {Element} container - The container element to enhance
+   */
+  enhanceHtmlForSummary(container) {
+    // Add styling classes for better presentation
+    const styleMap = {
+      'p': 'summary-paragraph',
+      'h1, h2, h3, h4, h5, h6': 'summary-heading',
+      'ul, ol': 'summary-list',
+      'li': 'summary-list-item',
+      'strong, b': 'summary-bold',
+      'em, i': 'summary-italic',
+      'a': 'summary-link',
+      'blockquote': 'summary-quote'
+    };
+    
+    Object.keys(styleMap).forEach(selector => {
+      const elements = container.querySelectorAll(selector);
+      elements.forEach(el => {
+        el.classList.add(styleMap[selector]);
+      });
+    });
+    
+    // Handle empty paragraphs from Quill
+    const emptyPs = container.querySelectorAll('p');
+    emptyPs.forEach(p => {
+      if (p.innerHTML === '<br>' || p.innerHTML.trim() === '') {
+        p.style.display = 'none';
+      }
+    });
+    
+    // Limit content length for summary display
+    this.truncateContentIfNeeded(container);
+  }
+  
+  /**
+   * Truncate content if it's too long for the summary display
+   * @param {Element} container - The container element to potentially truncate
+   */
+  truncateContentIfNeeded(container) {
+    const maxLength = 500; // Maximum characters to show in summary
+    const textContent = container.textContent || '';
+    
+    if (textContent.length > maxLength) {
+      // Find a good place to cut off
+      const truncatedText = textContent.substring(0, maxLength);
+      const lastSpaceIndex = truncatedText.lastIndexOf(' ');
+      const cutPoint = lastSpaceIndex > maxLength * 0.8 ? lastSpaceIndex : maxLength;
+      
+      // Create a truncated version
+      container.innerHTML = this.escapeHtml(textContent.substring(0, cutPoint)) + 
+        `<span class="content-truncated">... <button type="button" class="btn-show-full-content">Show full content</button></span>`;
+      
+      // Store the original content for expansion
+      container.setAttribute('data-full-content', container.innerHTML);
+    }
   }
   
   setupSummaryEvents($modal, hasPhases) {

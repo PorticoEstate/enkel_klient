@@ -180,6 +180,10 @@ return [
         'language_norwegian' => 'Norsk',
         'language_english' => 'English',
         'form_errors_with_submission' => 'Det var feil med innsendingen din:',
+        
+        // Autosave file info area translations
+        'previously_selected_files' => 'Tidligere valgte filer:',
+        'files_auto_remove_info' => 'Filer vil automatisk bli fjernet fra denne listen når du velger dem igjen.',
     ],
     'landing' => [
         'title' => 'Velkommen til Bergen kommune, etat for boligforvaltning',

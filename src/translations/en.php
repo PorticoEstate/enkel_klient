@@ -181,6 +181,10 @@ return [
         'language_norwegian' => 'Norsk',
         'language_english' => 'English',
         'form_errors_with_submission' => 'There were errors with your submission:',
+        
+        // Autosave file info area translations
+        'previously_selected_files' => 'Previously selected files:',
+        'files_auto_remove_info' => 'Files will be automatically removed from this list when you select them again.',
     ],
     'landing' => [
         'title' => 'Welcome to Bergen Municipality, Housing Department',

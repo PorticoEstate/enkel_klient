@@ -132,10 +132,25 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   setupAutoSave() {
     const form = this.formHandler.getForm();
     
-    // Save on form changes
+    // Save on form changes (general)
     form.on('input change', this.debounce(() => {
       this.saveData();
     }, 1000));
+
+    // Immediate save for file inputs (no debounce needed)
+    // But exclude file inputs that have the FileUploadExtension handling them
+    form.on('change', 'input[type="file"]', (e) => {
+      const $target = $(e.target);
+      
+      // Check if this file input is being handled by FileUploadExtension
+      if ($target.data('file-upload-extension')) {
+        console.log(`📁 File input ${e.target.name} is handled by FileUploadExtension, skipping autosave`);
+        return;
+      }
+      
+      console.log(`📁 File input changed, saving immediately: ${e.target.name}`);
+      this.saveData();
+    });
 
     // Periodic save
     this.saveInterval = setInterval(() => {
@@ -145,6 +160,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
 
   saveData() {
     const formData = this.serializeForm();
+    
+    // Log file metadata being saved
+    if (formData._fileMetadata && Object.keys(formData._fileMetadata).length > 0) {
+      console.log('💾 Saving file metadata:', formData._fileMetadata);
+    }
     
     // Debug radio buttons specifically since they can be problematic
     const radioValues = Object.keys(formData).filter(key => {
@@ -197,6 +217,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     }
     
     localStorage.setItem(this.options.storageKey, JSON.stringify(formData));
+    console.log(`💾 Saved form data to localStorage key: ${this.options.storageKey}`);
   }
 
   restoreData(isRetry = false) {
@@ -754,7 +775,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         infoArea.empty();
         
         // Add header with icon (fallback to text if FontAwesome not available)
-        infoArea.append('<h6><span class="fas fa-history" aria-hidden="true"></span> Previously selected files:</h6>');
+        infoArea.append(`<h6><span class="fas fa-history" aria-hidden="true"></span> ${this.getTranslation('autosave.previously_selected_files', 'Previously selected files:')}</h6>`);
         
         // Add file list
         const fileList = $('<ul class="mb-1"></ul>');
@@ -785,7 +806,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         this.setupFileChangeListener(fileInput, fieldName, infoArea);
         
         // Add note
-        infoArea.append('<p class="small mb-0 mt-2">Files will be automatically removed from this list when you select them again.</p>');
+        infoArea.append(`<p class="small mb-0 mt-2">${this.getTranslation('autosave.files_auto_remove_info', 'Files will be automatically removed from this list when you select them again.')}</p>`);
         
         console.log(`✅ Restored metadata for ${files.length} file(s) in field: ${fieldName}`);
       });
@@ -804,69 +825,103 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   setupFileChangeListener(fileInput, fieldName, infoArea) {
     const storageKey = this.options.storageKey;
     
-    fileInput.on('change', () => {
-      console.log(`📁 File input changed for field: ${fieldName}`);
+    console.log(`🔧 Setting up file change listener for field: ${fieldName}`);
+    
+    // Check if we already have an autosave listener on this input
+    if (fileInput.data('autosave-listener-attached')) {
+      console.log(`⚠️ Autosave listener already attached to ${fieldName}, skipping`);
+      return;
+    }
+    
+    // Mark this input as having an autosave listener
+    fileInput.data('autosave-listener-attached', true);
+    
+    fileInput.on('change.autosave', () => {
+      console.log(`📁 Autosave file input changed for field: ${fieldName}`);
       
-      const selectedFiles = Array.from(fileInput[0].files || []);
-      if (selectedFiles.length === 0) {
-        console.log(`ℹ️ No files selected for ${fieldName}`);
-        return;
-      }
-      
-      console.log(`📁 User selected ${selectedFiles.length} new file(s) for ${fieldName}`);
-      
-      try {
-        const savedData = localStorage.getItem(storageKey);
-        if (!savedData) return;
+      // Small delay to let other extensions (like FileUploadExtension) process first
+      setTimeout(() => {
+        const selectedFiles = Array.from(fileInput[0].files || []);
+        if (selectedFiles.length === 0) {
+          console.log(`ℹ️ No files selected for ${fieldName}`);
+          return;
+        }
         
-        const data = JSON.parse(savedData);
-        if (!data._fileMetadata || !data._fileMetadata[fieldName]) return;
-        
-        const savedFiles = data._fileMetadata[fieldName];
-        let removedFiles = [];
-        let remainingFiles = [];
-        
-        // Check each saved file against newly selected files
-        savedFiles.forEach(savedFile => {
-          const isReselected = selectedFiles.some(newFile => 
-            newFile.name === savedFile.name && 
-            newFile.size === savedFile.size
-          );
-          
-          if (isReselected) {
-            removedFiles.push(savedFile);
-            console.log(`🗑️ Removing previously selected file: ${savedFile.name}`);
-          } else {
-            remainingFiles.push(savedFile);
-          }
+        console.log(`📁 User selected ${selectedFiles.length} new file(s) for ${fieldName}:`);
+        selectedFiles.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
         });
         
-        if (removedFiles.length > 0) {
-          // Update the saved data
-          if (remainingFiles.length > 0) {
-            data._fileMetadata[fieldName] = remainingFiles;
-            localStorage.setItem(storageKey, JSON.stringify(data));
-            
-            // Update the display
-            this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
-            
-            console.log(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
-          } else {
-            // No files left, remove the entire metadata for this field
-            delete data._fileMetadata[fieldName];
-            localStorage.setItem(storageKey, JSON.stringify(data));
-            
-            // Remove the entire info area
-            infoArea.fadeOut(300, function() {
-              $(this).remove();
-            });
-            
-            console.log(`✅ All previously selected files have been re-selected, removing info area`);
+        try {
+          const savedData = localStorage.getItem(storageKey);
+          if (!savedData) {
+            console.log(`⚠️ No saved data found in localStorage for key: ${storageKey}`);
+            return;
           }
+          
+          const data = JSON.parse(savedData);
+          if (!data._fileMetadata || !data._fileMetadata[fieldName]) {
+            console.log(`⚠️ No file metadata found for field: ${fieldName}`);
+            return;
+          }
+          
+          const savedFiles = data._fileMetadata[fieldName];
+          console.log(`📦 Found ${savedFiles.length} previously saved files for ${fieldName}:`);
+          savedFiles.forEach((file, index) => {
+            console.log(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
+          });
+          
+          let removedFiles = [];
+          let remainingFiles = [];
+          
+          // Check each saved file against newly selected files
+          savedFiles.forEach(savedFile => {
+            const isReselected = selectedFiles.some(newFile => 
+              newFile.name === savedFile.name && 
+              newFile.size === savedFile.size
+            );
+            
+            if (isReselected) {
+              removedFiles.push(savedFile);
+              console.log(`🗑️ Removing previously selected file: ${savedFile.name}`);
+            } else {
+              remainingFiles.push(savedFile);
+              console.log(`📋 Keeping file in list: ${savedFile.name}`);
+            }
+          });
+          
+          console.log(`📊 Result: ${removedFiles.length} files to remove, ${remainingFiles.length} files to keep`);
+          
+          if (removedFiles.length > 0) {
+            // Update the saved data
+            if (remainingFiles.length > 0) {
+              data._fileMetadata[fieldName] = remainingFiles;
+              localStorage.setItem(storageKey, JSON.stringify(data));
+              
+              // Update the display
+              this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
+              
+              console.log(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
+            } else {
+              // No files left, remove the entire metadata for this field
+              delete data._fileMetadata[fieldName];
+              localStorage.setItem(storageKey, JSON.stringify(data));
+              
+              // Remove the entire info area
+              infoArea.fadeOut(300, function() {
+                $(this).remove();
+              });
+              
+              console.log(`✅ All previously selected files have been re-selected, removing info area`);
+            }
+          } else {
+            console.log(`ℹ️ No matching files found to remove from the list`);
+          }
+        } catch (error) {
+          console.warn('❌ Error updating file metadata on file change:', error);
+          console.error(error);
         }
-      } catch (error) {
-        console.warn('Error updating file metadata on file change:', error);
-      }
+      }, 100); // Small delay to let other extensions process first
     });
   }
   
@@ -914,6 +969,37 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     } catch (error) {
       console.warn('Error updating file metadata display:', error);
     }
+  }
+
+  clearSavedData() {
+    console.log('🗑️ Clearing autosaved data from localStorage');
+    localStorage.removeItem(this.options.storageKey);
+  }
+
+  /**
+   * Get a translation from the preloaded translations object
+   * @param {string} key - The translation key (e.g., 'autosave.previously_selected_files')
+   * @param {string} fallback - Fallback text if translation is not found
+   * @returns {string} The translated text or fallback
+   */
+  getTranslation(key, fallback) {
+    // Try to get translation from global translations object
+    if (typeof window.translations !== 'undefined') {
+      const keys = key.split('.');
+      let value = window.translations;
+      
+      for (const k of keys) {
+        if (value && typeof value === 'object' && value.hasOwnProperty(k)) {
+          value = value[k];
+        } else {
+          return fallback;
+        }
+      }
+      
+      return typeof value === 'string' ? value : fallback;
+    }
+    
+    return fallback;
   }
 
   // Cleanup

@@ -388,6 +388,9 @@ if (typeof FileUploadExtension === 'undefined') {
       // Update count first while the element still exists but is marked as deleted
       this.updateFileCount();
       
+      // Notify autosave extension about file deletion to immediately update metadata
+      this.notifyAutosaveFileDeleted(file);
+      
       // Then remove from DOM
       fileItem.remove();
       
@@ -476,28 +479,30 @@ if (typeof FileUploadExtension === 'undefined') {
     
     console.log('FileUploadExtension: File input found:', fileInput.length);
     console.log('FileUploadExtension: File select button found:', fileSelectBtn.length);
+    console.log('FileUploadExtension: Button element type:', fileSelectBtn.prop('tagName'));
+    console.log('FileUploadExtension: Button is label?', fileSelectBtn.is('label'));
+    
+    // Debug file input properties
+    if (fileInput.length > 0) {
+      const input = fileInput[0];
+      console.log('FileUploadExtension: File input ID:', input.id);
+      console.log('FileUploadExtension: File input name:', input.name);
+      console.log('FileUploadExtension: File input type:', input.type);
+      console.log('FileUploadExtension: File input disabled:', input.disabled);
+      console.log('FileUploadExtension: File input style.display:', input.style.display);
+      console.log('FileUploadExtension: File input style.visibility:', input.style.visibility);
+      console.log('FileUploadExtension: File input offsetWidth:', input.offsetWidth);
+      console.log('FileUploadExtension: File input offsetHeight:', input.offsetHeight);
+    }
     
     if (fileInput.length === 0 || fileSelectBtn.length === 0) {
       console.warn('FileUploadExtension: File select button or file input not found');
       return;
     }
     
-    // Check if the button is already a label (preferred approach)
+    // Check if the button is already a label (old template approach)
     if (fileSelectBtn.is('label')) {
       console.log('FileUploadExtension: ✅ Using label approach - direct file selection enabled');
-      
-      // For label-based approach, we just need to ensure the change event works
-      fileInput.on('change.fileUploadExt', (e) => {
-        console.log('FileUploadExtension: File input change event triggered');
-        console.log('FileUploadExtension: Number of files selected:', e.target.files.length);
-        
-        if (e.target.files.length > 0) {
-          console.log('FileUploadExtension: ✅ File selection successful!');
-          for (let i = 0; i < e.target.files.length; i++) {
-            console.log(`FileUploadExtension: File ${i + 1}:`, e.target.files[i].name);
-          }
-        }
-      });
       
       // Add keyboard support for the label (Enter/Space)
       fileSelectBtn.on('keydown.fileUploadExt', (e) => {
@@ -510,53 +515,94 @@ if (typeof FileUploadExtension === 'undefined') {
       });
       
     } else {
-      // Legacy button approach (fallback for templates not yet updated to use labels)
-      console.log('FileUploadExtension: Using legacy button approach');
+      // Button approach (recommended for accessibility - no duplicate labels)
+      console.log('FileUploadExtension: ✅ Using button approach (WCAG compliant)');
       
-      // Remove any existing handlers first
-      fileSelectBtn.off('click.fileUploadExt keydown.fileUploadExt');
+      // Remove any existing handlers first to avoid duplicates
+      fileSelectBtn.off('.fileUploadExt');
       
-      // Add the click handler
+      // Simple, direct approach - this should work in all modern browsers
       fileSelectBtn.on('click.fileUploadExt', (e) => {
         console.log('FileUploadExtension: File select button clicked');
         e.preventDefault();
+        e.stopPropagation();
         
-        try {
-          fileInput[0].click();
-          console.log('FileUploadExtension: Direct click triggered');
-        } catch (error) {
-          console.error('FileUploadExtension: Error triggering file input click:', error);
+        const input = fileInput[0];
+        if (input) {
+          console.log('FileUploadExtension: Triggering file input click...');
+          
+          // Ensure input is enabled and not hidden by display:none
+          input.disabled = false;
+          input.style.display = '';
+          
+          // Direct click - this is the most reliable method
+          input.click();
+          
+          console.log('FileUploadExtension: ✅ File input click triggered');
+        } else {
+          console.error('FileUploadExtension: File input element not found');
         }
       });
       
-      // Add keyboard handler
+      // Add keyboard handler - simply trigger the button click
       fileSelectBtn.on('keydown.fileUploadExt', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          console.log('FileUploadExtension: File select button activated via keyboard');
+          console.log('FileUploadExtension: File select button activated via keyboard:', e.key);
           e.preventDefault();
+          e.stopPropagation();
           
-          try {
-            fileInput[0].click();
-            console.log('FileUploadExtension: File input click triggered via keyboard');
-          } catch (error) {
-            console.error('FileUploadExtension: Error triggering file input click via keyboard:', error);
-          }
+          // Trigger the button's click event
+          fileSelectBtn.trigger('click.fileUploadExt');
         }
       });
       
-      // File input change event
-      fileInput.on('change.fileUploadExt', (e) => {
-        console.log('FileUploadExtension: File input change event triggered');
-        console.log('FileUploadExtension: Number of files selected:', e.target.files.length);
-        
-        if (e.target.files.length > 0) {
-          console.log('FileUploadExtension: ✅ File selection successful!');
-          for (let i = 0; i < e.target.files.length; i++) {
-            console.log(`FileUploadExtension: File ${i + 1}:`, e.target.files[i].name);
-          }
-        }
+      // Add focus/blur handlers for better UX
+      fileSelectBtn.on('focus.fileUploadExt', () => {
+        console.log('FileUploadExtension: File select button focused');
+      });
+      
+      fileSelectBtn.on('blur.fileUploadExt', () => {
+        console.log('FileUploadExtension: File select button blurred');
       });
     }
+    
+    // File input change event (applies to both approaches)
+    // Remove any existing handlers first to avoid duplicates
+    fileInput.off('change.fileUploadExt');
+    
+    fileInput.on('change.fileUploadExt', (e) => {
+      console.log('FileUploadExtension: File input change event triggered');
+      console.log('FileUploadExtension: Number of files selected:', e.target.files ? e.target.files.length : 0);
+      
+      if (e.target.files && e.target.files.length > 0) {
+        console.log('FileUploadExtension: ✅ File selection successful!');
+        for (let i = 0; i < e.target.files.length; i++) {
+          console.log(`FileUploadExtension: File ${i + 1}:`, e.target.files[i].name, `(${e.target.files[i].size} bytes)`);
+        }
+        
+        // Trigger the jQuery fileupload add event manually if needed
+        // This ensures the files are processed through our validation pipeline
+        try {
+          const data = {
+            files: Array.from(e.target.files),
+            originalEvent: e
+          };
+          
+          // Check if jQuery fileupload is handling this automatically
+          const fileuploadData = fileInput.data('blueimp-fileupload');
+          if (fileuploadData) {
+            console.log('FileUploadExtension: jQuery fileupload plugin will handle the files automatically');
+          } else {
+            console.log('FileUploadExtension: Manually processing files through validation');
+            this.handleFilesAdded(data);
+          }
+        } catch (error) {
+          console.error('FileUploadExtension: Error processing selected files:', error);
+        }
+      } else {
+        console.log('FileUploadExtension: No files selected or files array is empty');
+      }
+    });
     
     console.log('FileUploadExtension: File select button setup complete');
   }
@@ -641,11 +687,25 @@ if (typeof FileUploadExtension === 'undefined') {
     // Only add click handler if we're not using a label-based file selection
     const fileSelectBtn = this.$form.find('.file-select-btn, #file-select-btn');
     if (!fileSelectBtn.is('label')) {
+      console.log('FileUploadExtension: Adding drop area click handler');
       dropArea.on('click.fileUploadExt keydown.fileUploadExt', (e) => {
-        if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
-          e.preventDefault();
-          console.log('FileUploadExtension: Drop area activated, triggering file select');
-          fileInput[0].click();
+        // Only trigger if the click/keydown is directly on the drop area, not on child elements
+        if (e.target === dropArea[0] || $(e.target).is('#upload-instructions')) {
+          if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('FileUploadExtension: Drop area activated, triggering file select');
+            
+            try {
+              const input = fileInput[0];
+              if (input && typeof input.click === 'function') {
+                input.click();
+                console.log('FileUploadExtension: ✅ File input triggered from drop area');
+              }
+            } catch (error) {
+              console.error('FileUploadExtension: Error triggering file input from drop area:', error);
+            }
+          }
         }
       });
     } else {
@@ -756,6 +816,21 @@ if (typeof FileUploadExtension === 'undefined') {
     } catch (error) {
       console.error('FileUploadExtension: Error getting translation for key:', key, error);
       return fallback;
+    }
+  }
+  
+  notifyAutosaveFileDeleted(file) {
+    try {
+      // Get the autosave extension
+      const autosaveExtension = this.formHandler.getExtension('autoSave');
+      if (autosaveExtension && typeof autosaveExtension.removeFileFromMetadata === 'function') {
+        console.log(`FileUploadExtension: Notifying autosave about deleted file: ${file.name}`);
+        autosaveExtension.removeFileFromMetadata(file);
+      } else {
+        console.log('FileUploadExtension: Autosave extension not found or removeFileFromMetadata method not available');
+      }
+    } catch (error) {
+      console.warn('FileUploadExtension: Error notifying autosave about file deletion:', error);
     }
   }
   }

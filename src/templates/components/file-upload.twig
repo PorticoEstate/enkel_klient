@@ -7,12 +7,12 @@
 				<p id="upload-instructions">{{ __('upload_instructions') }}</p>
 				<div class="fileupload-buttonbar" role="group" aria-labelledby="upload-instructions">
 					<div class="fileupload-buttons">
-						<!-- Accessible file upload button with direct input wrapping -->
-						<label for="fileupload" class="btn btn-success file-select-btn" id="file-select-btn" role="button" tabindex="0">
+						<!-- Accessible file upload button that triggers the hidden file input -->
+						<button type="button" class="btn btn-success file-select-btn" id="file-select-btn" aria-describedby="fileuploadHelp fileupload-keyboard-hint">
 							<i class="fas fa-plus" aria-hidden="true"></i>
 							<span>{{ __('add_files') }}</span>
-						</label>
-						<input id="fileupload" tabindex="-1" type="file" name="files[]" multiple data-droparea="drop-area" style="position: absolute; left: -9999px; opacity: 0.01; width: 1px; height: 1px;">
+						</button>
+						<input id="fileupload" tabindex="-1" type="file" name="files[]" multiple data-droparea="drop-area" style="position: absolute; left: -9999px; opacity: 0; width: 0; height: 0; overflow: hidden;" aria-labelledby="fileupload-label">
 						<small id="fileupload-keyboard-hint" class="form-text text-muted d-block mt-1">
 							{{ __('press_enter_to_select_files') }} 
 							<span>{{ __('keyboard_access_hint') }}</span>

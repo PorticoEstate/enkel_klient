@@ -812,11 +812,13 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         console.log(`🔄 Restoring metadata for field: ${fieldName}, ${files.length} file(s)`);
         
         // Find the file input - try multiple approaches for array notation
-        let fileInput = form.find(`[name="${fieldName}"]`);
+        // Escape square brackets in field names for CSS selectors
+        const escapedFieldName = fieldName.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+        let fileInput = form.find(`[name="${escapedFieldName}"]`);
         
         // If not found by exact name, try finding by ID
         if (!fileInput.length) {
-          fileInput = form.find(`#${fieldName}`);
+          fileInput = form.find(`#${escapedFieldName}`);
           console.log(`🔍 Trying to find file input by ID: ${fieldName}`);
         }
         
@@ -1102,6 +1104,130 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     }
     localStorage.removeItem(this.options.storageKey);
   }
+  
+  /**
+   * Remove a specific file from the autosave metadata immediately
+   * Called by FileUploadExtension when a file is deleted via the UI
+   * @param {Object} deletedFile - The file object that was deleted
+   */
+  removeFileFromMetadata(deletedFile) {
+    try {
+      console.log(`🗑️ FormAutoSaveExtension: Removing file from metadata: ${deletedFile.name}`);
+      
+      const savedData = localStorage.getItem(this.options.storageKey);
+      if (!savedData) {
+        console.log('⚠️ No autosave data found in localStorage');
+        return;
+      }
+      
+      const data = JSON.parse(savedData);
+      if (!data._fileMetadata) {
+        console.log('⚠️ No file metadata found in autosave data');
+        return;
+      }
+      
+      let filesRemoved = 0;
+      let fieldsUpdated = [];
+      
+      // Check all file metadata fields for this file
+      Object.keys(data._fileMetadata).forEach(fieldName => {
+        const files = data._fileMetadata[fieldName];
+        if (!Array.isArray(files)) return;
+        
+        // Find and remove the deleted file from this field's metadata
+        const originalLength = files.length;
+        data._fileMetadata[fieldName] = files.filter(file => {
+          // Match by name and size for accuracy
+          const isMatch = file.name === deletedFile.name && file.size === deletedFile.size;
+          if (isMatch) {
+            console.log(`🎯 Found matching file in field ${fieldName}: ${file.name}`);
+            filesRemoved++;
+          }
+          return !isMatch;
+        });
+        
+        // Check if this field was affected
+        if (data._fileMetadata[fieldName].length !== originalLength) {
+          fieldsUpdated.push(fieldName);
+          
+          // If no files remain in this field, remove the field entirely
+          if (data._fileMetadata[fieldName].length === 0) {
+            delete data._fileMetadata[fieldName];
+            console.log(`🧹 Removed empty metadata field: ${fieldName}`);
+            
+            // Also remove the visual display
+            this.removeFileMetadataDisplay(fieldName);
+          } else {
+            // Update the visual display with remaining files
+            this.updateExistingFileMetadataDisplay(fieldName, data._fileMetadata[fieldName]);
+          }
+        }
+      });
+      
+      // Save the updated data back to localStorage
+      localStorage.setItem(this.options.storageKey, JSON.stringify(data));
+      
+      console.log(`✅ Removed ${filesRemoved} instance(s) of file "${deletedFile.name}" from ${fieldsUpdated.length} field(s): ${fieldsUpdated.join(', ')}`);
+      
+    } catch (error) {
+      console.error('❌ Error removing file from autosave metadata:', error);
+    }
+  }
+
+  /**
+   * Remove the file metadata display for a specific field
+   * @param {string} fieldName - The name of the field
+   */
+  removeFileMetadataDisplay(fieldName) {
+    try {
+      const form = this.formHandler.getForm();
+      // Escape square brackets in field names for CSS selectors
+      const escapedFieldName = fieldName.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      const fileInput = form.find(`[name="${escapedFieldName}"], #${escapedFieldName}`);
+      
+      if (fileInput.length) {
+        const fieldContainer = fileInput.closest('.form-group, .custom-file, .file-upload-container, .file-input-container');
+        const infoArea = fieldContainer.find('.autosave-file-info');
+        
+        if (infoArea.length) {
+          infoArea.fadeOut(300, function() {
+            $(this).remove();
+            console.log(`🗑️ Removed file metadata display for field: ${fieldName}`);
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Error removing file metadata display:', error);
+    }
+  }
+
+  /**
+   * Update the existing file metadata display with remaining files
+   * @param {string} fieldName - The name of the field
+   * @param {Array} remainingFiles - The remaining files to display
+   */
+  updateExistingFileMetadataDisplay(fieldName, remainingFiles) {
+    try {
+      const form = this.formHandler.getForm();
+      // Escape square brackets in field names for CSS selectors
+      const escapedFieldName = fieldName.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      const fileInput = form.find(`[name="${escapedFieldName}"], #${escapedFieldName}`);
+      
+      if (fileInput.length) {
+        const fieldContainer = fileInput.closest('.form-group, .custom-file, .file-upload-container, .file-input-container');
+        const infoArea = fieldContainer.find('.autosave-file-info');
+        
+        if (infoArea.length && remainingFiles.length > 0) {
+          this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
+          console.log(`🔄 Updated file metadata display for field: ${fieldName} with ${remainingFiles.length} remaining file(s)`);
+        }
+      }
+    } catch (error) {
+      console.warn('Error updating existing file metadata display:', error);
+    }
+  }
+
+  // ...existing code...
 }
 
 // Register the extension (only if not already registered)

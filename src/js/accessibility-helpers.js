@@ -3,6 +3,9 @@
  * WCAG 2.1 compliant utilities for enhancing user experience with assistive technologies
  */
 
+// Prevent redeclaration if this script is loaded multiple times
+if (typeof window.SCREEN_READER === 'undefined') {
+
 /**
  * Global constants for screen reader announcements
  */
@@ -1007,3 +1010,9 @@ if (typeof window !== 'undefined')
 		initAccessibility();
 	});
 }
+
+// Make SCREEN_READER and ARIA available globally and close the redeclaration guard
+window.SCREEN_READER = SCREEN_READER;
+window.ARIA = ARIA;
+
+} // End of redeclaration guard

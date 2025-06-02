@@ -44,17 +44,51 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         console.log('✅ Verifying restoration success');
         this.checkRestorationSuccess();
       }, 2000);
-
+      
       // Setup form submission handler to clear localStorage on successful submit
       this.setupSubmitHandler();
     };
     
-    // Wait for DOM to be ready before setting up autosave
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupAndRestore);
-    } else {
-      // DOM is already ready, set up immediately
+    // Setup autosave functionality immediately if form is ready
+    if (this.formHandler.getForm && this.formHandler.getForm().length) {
       setupAndRestore();
+    } else {
+      // Wait a bit if form isn't ready yet
+      setTimeout(setupAndRestore, 100);
+    }
+  }
+  
+  /**
+   * Handle complex radio button names (with array notation) by adding data attributes
+   * This ensures radio buttons with names like "values_attribute[3][value][]" can be properly autosaved
+   */
+  handleComplexRadioNames() {
+    try {
+      const form = this.formHandler.getForm();
+      if (!form || !form.length) {
+        console.warn('Form not found for handling complex radio names');
+        return;
+      }
+
+      // Find all radio buttons with complex array notation names
+      const radioButtons = form.find('input[type="radio"]');
+      radioButtons.each((index, radio) => {
+        const $radio = $(radio);
+        const name = $radio.attr('name');
+        
+        // Check if this radio button has a complex array notation name
+        if (name && (name.includes('[') || name.includes(']'))) {
+          // Check if it already has a data-autosave-key attribute
+          if (!$radio.attr('data-autosave-key')) {
+            // Generate a safe key for autosave purposes
+            const autosaveKey = `radio_${name.replace(/[\[\]]/g, '_')}`;
+            $radio.attr('data-autosave-key', autosaveKey);
+            console.log(`📻 Added autosave key "${autosaveKey}" to radio button with complex name: ${name}`);
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('Error handling complex radio names:', error);
     }
   }
   
@@ -75,6 +109,24 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         return true;
       });
     }
+  }
+
+  /**
+   * Debounce utility function to limit how often a function can be called
+   * @param {Function} func - The function to debounce
+   * @param {number} wait - The number of milliseconds to delay
+   * @returns {Function} - The debounced function
+   */
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
   }
 
   setupAutoSave() {
@@ -554,6 +606,87 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   }
   
   /**
+   * Restore content to a Quill editor
+   * @param {jQuery} field - The field element
+   * @param {string} content - The content to restore
+   * @param {boolean} isRetry - Whether this is a retry attempt
+   */
+  restoreQuillContent(field, content, isRetry = false) {
+    try {
+      const fieldId = field.attr('id');
+      if (!fieldId) {
+        console.warn('Field ID not found for Quill restoration');
+        return;
+      }
+      
+      console.log(`📝 Attempting to restore Quill content for field: ${fieldId}`);
+      
+      // Try multiple methods to find the Quill editor instance
+      let quillInstance = null;
+      
+      // Method 1: Check if Quill is attached to the field element
+      if (field[0].quill) {
+        quillInstance = field[0].quill;
+        console.log('✅ Found Quill instance on field element');
+      }
+      
+      // Method 2: Look for global Quill instances
+      if (!quillInstance && window.Quill && window.Quill.instances) {
+        quillInstance = window.Quill.instances.find(q => 
+          q.container && (
+            q.container.id === `quill-${fieldId}` ||
+            q.container.parentElement === field[0]
+          )
+        );
+        if (quillInstance) {
+          console.log('✅ Found Quill instance in global instances');
+        }
+      }
+      
+      // Method 3: Try to find by quill container selector
+      if (!quillInstance) {
+        const quillContainer = $(`#quill-${fieldId}, .quill-${fieldId}`);
+        if (quillContainer.length && quillContainer[0].quill) {
+          quillInstance = quillContainer[0].quill;
+          console.log('✅ Found Quill instance on container element');
+        }
+      }
+      
+      // If we found a Quill instance, set the content
+      if (quillInstance) {
+        // Set the HTML content
+        quillInstance.root.innerHTML = content;
+        
+        // Also set the hidden field value
+        field.val(content);
+        
+        console.log(`✅ Restored Quill content for ${fieldId}`);
+      } else {
+        console.warn(`❌ Could not find Quill instance for field: ${fieldId}`);
+        
+        // Fallback: set the field value directly
+        field.val(content);
+        
+        // Also try to set content in any editor container
+        const editorContainer = $(`#quill-${fieldId} .ql-editor`);
+        if (editorContainer.length) {
+          editorContainer.html(content);
+          console.log(`📝 Set content directly in editor container for ${fieldId}`);
+        }
+      }
+    } catch (error) {
+      console.warn(`Error restoring Quill content:`, error);
+      
+      // Fallback: just set the field value
+      try {
+        field.val(content);
+      } catch (fallbackError) {
+        console.warn('Fallback field.val() also failed:', fallbackError);
+      }
+    }
+  }
+  
+  /**
    * Create visual indicators for previously selected files
    * File inputs can't be programmatically set, but we can show what was selected
    * @param {Object} fileMetadata - Metadata about previously selected files
@@ -648,88 +781,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         
         infoArea.append(fileList);
         
-        // Create a button to clear the saved file data if needed
-        const clearButton = $('<button type="button" class="btn btn-sm btn-outline-secondary mt-2">Clear saved file info</button>');
-        
-        // Store reference to FormAutoSaveExtension instance and storageKey
-        const storageKey = this.options.storageKey;
-        
-        clearButton.on('click', function() {
-          // Show button is processing
-          const originalText = clearButton.text();
-          clearButton.prop('disabled', true).text('Clearing...');
-          console.log(`🔄 Clear button clicked for field: ${fieldName}`);
-          
-          // Ensure we complete the operation regardless of errors
-          // Using setTimeout to ensure the UI updates first
-          setTimeout(() => {
-            // Get current data and remove just this field's file metadata
-            try {
-              console.log(`🔍 Looking for data in localStorage with key: ${storageKey}`);
-              const savedData = localStorage.getItem(storageKey);
-              console.log(`📦 Found data: ${savedData ? 'yes' : 'no'}`);
-              
-              let cleared = false;
-              
-              if (savedData) {
-                try {
-                  const data = JSON.parse(savedData);
-                  console.log(`🔍 Data structure:`, Object.keys(data));
-                  
-                  // Check if metadata exists for this field
-                  const hasMetadata = data._fileMetadata && data._fileMetadata[fieldName];
-                  console.log(`📁 Metadata for ${fieldName} exists: ${hasMetadata ? 'yes' : 'no'}`);
-                  
-                  if (hasMetadata) {
-                    // Remove this field's metadata
-                    delete data._fileMetadata[fieldName];
-                    
-                    // Save updated data back to localStorage
-                    localStorage.setItem(storageKey, JSON.stringify(data));
-                    console.log(`🗑️ Cleared saved file metadata for: ${fieldName}`);
-                    cleared = true;
-                  }
-                } catch (parseError) {
-                  console.warn('Error parsing saved data:', parseError);
-                }
-              }
-              
-              if (cleared) {
-                console.log(`✅ Successfully cleared metadata for: ${fieldName}`);
-                // Show success briefly before removing
-                clearButton.removeClass('btn-outline-secondary').addClass('btn-success').text('Cleared!');
-                
-                // Remove the info area after a short delay
-                setTimeout(() => {
-                  infoArea.fadeOut(300, function() {
-                    $(this).remove();
-                  });
-                }, 800);
-              } else {
-                // No metadata found for this field, but not an error
-                console.log(`ℹ️ No saved file metadata found for: ${fieldName}`);
-                clearButton.removeClass('btn-outline-secondary').addClass('btn-warning').text('Nothing to clear');
-                
-                // Reset button after a delay
-                setTimeout(() => {
-                  console.log(`🔄 Resetting button for: ${fieldName}`);
-                  clearButton.removeClass('btn-warning').addClass('btn-outline-secondary').text(originalText).prop('disabled', false);
-                }, 1500);
-              }
-            } catch (e) {
-              // Show error and restore button
-              console.warn('Error clearing file metadata:', e);
-              clearButton.removeClass('btn-outline-secondary').addClass('btn-danger').text('Error!');
-              setTimeout(() => {
-                clearButton.removeClass('btn-danger').addClass('btn-outline-secondary').text(originalText).prop('disabled', false);
-              }, 1500);
-            }
-          }, 10); // Small delay to ensure UI updates
-        });
-        infoArea.append(clearButton);
+        // Set up file change listener to automatically remove matched files from the list
+        this.setupFileChangeListener(fileInput, fieldName, infoArea);
         
         // Add note
-        infoArea.append('<p class="small mb-0 mt-2">Please select these files again if needed.</p>');
+        infoArea.append('<p class="small mb-0 mt-2">Files will be automatically removed from this list when you select them again.</p>');
         
         console.log(`✅ Restored metadata for ${files.length} file(s) in field: ${fieldName}`);
       });
@@ -740,202 +796,123 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   }
   
   /**
-   * Restore content to a Quill editor
-   * @param {jQuery} field - The hidden textarea or input field associated with the Quill editor
-   * @param {string} content - The HTML content to restore
-   * @param {boolean} isRetry - Whether this is a retry attempt
+   * Set up file change listener to automatically remove matched files from the previously selected list
+   * @param {jQuery} fileInput - The file input element
+   * @param {string} fieldName - The name of the field
+   * @param {jQuery} infoArea - The info area containing the previously selected files list
    */
-  /**
-   * Optimized method to restore content to Quill editors
-   * Focus on what's proven to work based on testing
-   * @param {jQuery} field - The hidden textarea or input field associated with the Quill editor
-   * @param {string} content - The HTML content to restore
-   * @param {boolean} isRetry - Whether this is a retry attempt
-   */
-  restoreQuillContent(field, content, isRetry = false) {
-    try {
-      if (!content) {
-        console.log('No content to restore to Quill editor');
+  setupFileChangeListener(fileInput, fieldName, infoArea) {
+    const storageKey = this.options.storageKey;
+    
+    fileInput.on('change', () => {
+      console.log(`📁 File input changed for field: ${fieldName}`);
+      
+      const selectedFiles = Array.from(fileInput[0].files || []);
+      if (selectedFiles.length === 0) {
+        console.log(`ℹ️ No files selected for ${fieldName}`);
         return;
       }
       
-      const fieldId = field.attr('id');
-      console.log(`🔄 Restoring Quill content for field: ${fieldId}, content length: ${content.length}`);
+      console.log(`📁 User selected ${selectedFiles.length} new file(s) for ${fieldName}`);
       
-      // Always set the value on the hidden input/textarea
-      field.val(content);
-      
-      // Find the editor container - focus on fastest and most reliable method first
-      let editorContainer = $(`#quill-${fieldId} .ql-editor`);
-      
-      if (!editorContainer.length) {
-        // Try the next most reliable method
-        editorContainer = field.closest('.form-group, .quill-container').find('.ql-editor');
-      }
-      
-      if (editorContainer.length) {
-        console.log(`📝 Found Quill editor container for ${fieldId}`);
+      try {
+        const savedData = localStorage.getItem(storageKey);
+        if (!savedData) return;
         
-        // The key optimizations that make content visible:
+        const data = JSON.parse(savedData);
+        if (!data._fileMetadata || !data._fileMetadata[fieldName]) return;
         
-        // 1. First try the quillInstances registry (most reliable method)
-        if (window.quillInstances && window.quillInstances[fieldId]) {
-          console.log(`🔍 Setting content via quillInstances registry`);
-          try {
-            // Use dangerouslyPasteHTML for proper formatting
-            window.quillInstances[fieldId].clipboard.dangerouslyPasteHTML(content);
-            
-            // CRITICAL: Also set root.innerHTML directly - this is the key to making content visible
-            window.quillInstances[fieldId].root.innerHTML = content;
-          } catch (e) {
-            console.warn(`API error: ${e.message}`);
+        const savedFiles = data._fileMetadata[fieldName];
+        let removedFiles = [];
+        let remainingFiles = [];
+        
+        // Check each saved file against newly selected files
+        savedFiles.forEach(savedFile => {
+          const isReselected = selectedFiles.some(newFile => 
+            newFile.name === savedFile.name && 
+            newFile.size === savedFile.size
+          );
+          
+          if (isReselected) {
+            removedFiles.push(savedFile);
+            console.log(`🗑️ Removing previously selected file: ${savedFile.name}`);
+          } else {
+            remainingFiles.push(savedFile);
           }
-        } 
-        // 2. Fallback to legacy quill object
-        else if (window.quill && window.quill[fieldId]) {
-          console.log(`🔍 Setting content via legacy quill object`);
-          try {
-            window.quill[fieldId].clipboard.dangerouslyPasteHTML(content);
-            window.quill[fieldId].root.innerHTML = content; 
-          } catch (e) {
-            console.warn(`API error: ${e.message}`);
-          }
-        }
-        
-        // 3. As a final fallback, set HTML directly
-        // Even if the API methods worked, we'll do this to ensure content appears
-        editorContainer.html(content);
-        
-        // 4. Force a visual refresh by hiding and showing
-        setTimeout(() => {
-          editorContainer.hide().show(0);
-        }, 10);
-        
-        // 5. Trigger validation events
-        field.trigger('change');
-        
-        console.log(`✅ Quill content restoration completed for ${fieldId}`);
-        return true;
-      } else {
-        console.log(`⚠️ Editor container not found immediately for ${fieldId}`);
-        
-        // If this is the first attempt, schedule a retry
-        if (!isRetry) {
-          console.log(`⏱️ Scheduling retry after delay`);
-          setTimeout(() => {
-            this.restoreQuillContent(field, content, true);
-          }, 1000);
-        } 
-        // Final emergency update for retry attempts
-        else {
-          setTimeout(() => {
-            const quillDiv = $(`#quill-${fieldId}`);
-            if (quillDiv.length) {
-              const editorDiv = quillDiv.find('.ql-editor');
-              if (editorDiv.length) {
-                console.log(`🚨 Emergency direct update for ${fieldId}`);
-                editorDiv.html(content);
-                editorDiv.hide().show(0);
-              }
-            }
-          }, 500);
-        }
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ Error restoring Quill editor content:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Helper method to safely handle input names with array notation
-   * This addresses issues with complex names like values_attribute[2][value][]
-   * Works for both radio buttons and checkboxes
-   */
-  handleComplexRadioNames() {
-    try {
-      const form = this.formHandler.getForm();
-      
-      // Find all radio buttons and checkboxes with array notation in names
-      const complexRadios = form.find('input[type="radio"][name*="["]');
-      const complexCheckboxes = form.find('input[type="checkbox"][name*="["]');
-      
-      if (complexRadios.length === 0 && complexCheckboxes.length === 0) {
-        console.log('No complex input names found, skipping special handling');
-        return;
-      }
-      
-      console.log(`🔍 Found ${complexRadios.length} radio buttons and ${complexCheckboxes.length} checkboxes with complex names`);
-      
-      // Process radio buttons first
-      const radioGroups = {};
-      complexRadios.each(function() {
-        const name = $(this).attr('name');
-        if (!radioGroups[name]) {
-          radioGroups[name] = [];
-        }
-        radioGroups[name].push($(this));
-      });
-      
-      console.log(`📻 Identified ${Object.keys(radioGroups).length} radio groups with complex names`);
-      
-      // Add data attributes to radio buttons
-      Object.keys(radioGroups).forEach(groupName => {
-        // Create a safe, unique key for localStorage
-        // Replace array brackets with underscores for safe serialization
-        const safeKey = `radio_${groupName.replace(/[\[\]]/g, '_')}`;
-        console.log(`📻 Adding data attribute for complex radio group: ${groupName} -> ${safeKey}`);
-        
-        // Add data attribute to each radio in the group
-        radioGroups[groupName].forEach(radio => {
-          radio.attr('data-autosave-key', safeKey);
-          radio.attr('data-original-name', groupName);
         });
         
-        // Also create a mapping function we can use during restoration
-        this.mapRadioName = this.mapRadioName || new Map();
-        this.mapRadioName.set(safeKey, groupName);
-      });
-      
-      // Now process checkboxes
-      complexCheckboxes.each(function() {
-        const name = $(this).attr('name');
-        const safeKey = `checkbox_${name.replace(/[\[\]]/g, '_')}`;
-        console.log(`☑️ Adding data attribute for complex checkbox: ${name} -> ${safeKey}`);
-        
-        // Add data attributes for serialization and restoration
-        $(this).attr('data-autosave-key', safeKey);
-        $(this).attr('data-original-name', name);
-      });
-      
-      console.log('✅ Complex input name handling setup complete');
-    } catch (e) {
-      console.warn('❌ Error handling complex input names:', e);
-    }
+        if (removedFiles.length > 0) {
+          // Update the saved data
+          if (remainingFiles.length > 0) {
+            data._fileMetadata[fieldName] = remainingFiles;
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            
+            // Update the display
+            this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
+            
+            console.log(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
+          } else {
+            // No files left, remove the entire metadata for this field
+            delete data._fileMetadata[fieldName];
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            
+            // Remove the entire info area
+            infoArea.fadeOut(300, function() {
+              $(this).remove();
+            });
+            
+            console.log(`✅ All previously selected files have been re-selected, removing info area`);
+          }
+        }
+      } catch (error) {
+        console.warn('Error updating file metadata on file change:', error);
+      }
+    });
   }
-
-  debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-
+  
   /**
-   * Clear saved form data from localStorage
+   * Update the display of file metadata without recreating the entire info area
+   * @param {jQuery} infoArea - The info area to update
+   * @param {string} fieldName - The name of the field
+   * @param {Array} files - The remaining files to display
    */
-  clearSavedData() {
+  updateFileMetadataDisplay(infoArea, fieldName, files) {
     try {
-      localStorage.removeItem(this.options.storageKey);
-      console.log(`🧹 Cleared autosaved data for ${this.options.storageKey}`);
+      // Find and update the file list
+      const fileList = infoArea.find('ul');
+      
+      if (fileList.length === 0) {
+        console.warn('File list not found in info area');
+        return;
+      }
+      
+      // Clear and rebuild the list
+      fileList.empty();
+      
+      files.forEach(file => {
+        // Format file size with proper units
+        let sizeStr;
+        if (file.size < 1024) {
+          sizeStr = `${file.size} bytes`;
+        } else if (file.size < 1024 * 1024) {
+          sizeStr = `${(file.size / 1024).toFixed(1)} KB`;
+        } else {
+          sizeStr = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+        }
+          
+        // Add file with icon based on type if possible
+        let icon = 'fas fa-file';
+        if (file.type.includes('image')) icon = 'fas fa-file-image';
+        else if (file.type.includes('pdf')) icon = 'fas fa-file-pdf';
+        else if (file.type.includes('word')) icon = 'fas fa-file-word';
+        else if (file.type.includes('excel') || file.type.includes('sheet')) icon = 'fas fa-file-excel';
+        
+        fileList.append(`<li><span class="${icon}" aria-hidden="true"></span> ${file.name} <span class="text-muted">(${sizeStr})</span></li>`);
+      });
+      
+      console.log(`📝 Updated file list display with ${files.length} remaining file(s)`);
     } catch (error) {
-      console.warn('Error clearing autosaved data:', error);
+      console.warn('Error updating file metadata display:', error);
     }
   }
 

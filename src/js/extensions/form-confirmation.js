@@ -93,33 +93,33 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const hasFileInputs = this.$form.find('input[type="file"]').length > 0;
     const hasFileUploader = window.FileUploader && this.$form.find('#fileupload, .fileupload').length > 0;
     
-    // Check if there are actually files to upload
-    let hasFilesToUpload = false;
-    if (hasFileInputs) {
-      this.$form.find('input[type="file"]').each(function() {
-        if (this.files && this.files.length > 0) {
-          hasFilesToUpload = true;
-          return false; // break
-        }
-      });
-    }
+    // Use the centralized file counting method which respects UI deletions
+    const fileCount = this.getFileCount();
+    const hasFilesToUpload = fileCount > 0;
     
-    // Check if FileUploader has pending files
-    if (hasFileUploader && window.fileUploaderInstance) {
-      try {
-        if (typeof window.fileUploaderInstance.getPendingCount === 'function') {
-          hasFilesToUpload = hasFilesToUpload || window.fileUploaderInstance.getPendingCount() > 0;
-        }
-      } catch (e) {
-        console.log('Could not check FileUploader pending count:', e);
-      }
-    }
+    console.log('shouldUseTwoPhaseSubmission check:', {
+      hasFileInputs,
+      hasFileUploader,
+      fileCount,
+      hasFilesToUpload,
+      result: (hasFileInputs || hasFileUploader) && hasFilesToUpload
+    });
     
     return (hasFileInputs || hasFileUploader) && hasFilesToUpload;
   }
   
   getFileCount() {
-    // Try to get file count from FileUploader first
+    // Try to get file count from FileUploadExtension first (most accurate)
+    const fileUploadExt = this.formHandler.getExtension('fileUpload');
+    if (fileUploadExt && typeof fileUploadExt.getFileCount === 'function') {
+      try {
+        return fileUploadExt.getFileCount();
+      } catch (e) {
+        console.warn('Error getting file count from FileUploadExtension:', e);
+      }
+    }
+    
+    // Try to get file count from FileUploader instance
     if (window.fileUploaderInstance && typeof window.fileUploaderInstance.getPendingCount === 'function') {
       try {
         return window.fileUploaderInstance.getPendingCount();
@@ -128,7 +128,13 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       }
     }
     
-    // Fallback: check file input directly
+    // Check for active file items in the UI first (respects deletions)
+    const fileItemCount = this.$form.find('.file-item:not(.done):not(.deleted)').length;
+    if (fileItemCount > 0) {
+      return fileItemCount;
+    }
+    
+    // Fallback: check file input directly (only if no UI file items exist)
     let count = 0;
     this.$form.find('input[type="file"]').each(function() {
       if (this.files) {

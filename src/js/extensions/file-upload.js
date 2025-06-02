@@ -198,7 +198,7 @@ if (typeof FileUploadExtension === 'undefined') {
   }
   
   getPendingCount() {
-    return this.$form.find('.file-item:not(.done)').length;
+    return this.$form.find('.file-item:not(.done):not(.deleted)').length;
   }
   
   getFileCount() {
@@ -381,15 +381,32 @@ if (typeof FileUploadExtension === 'undefined') {
     
     // Add delete handler
     fileItem.find('.delete').on('click', () => {
-      fileItem.remove();
+      // Mark as deleted before removing to ensure counting methods see the change
+      fileItem.addClass('deleted');
+      console.log(`FileUploadExtension: Marked file ${file.name} as deleted`);
+      
+      // Update count first while the element still exists but is marked as deleted
       this.updateFileCount();
+      
+      // Then remove from DOM
+      fileItem.remove();
+      
+      // Clear file input if no files remain
+      const remainingFiles = this.$form.find('.file-item:not(.deleted)').length;
+      if (remainingFiles === 0) {
+        const fileInput = this.$form.find('input[type="file"]');
+        if (fileInput.length) {
+          fileInput.val(''); // Clear the file input
+          console.log('FileUploadExtension: Cleared file input after deleting all files');
+        }
+      }
     });
     
     console.log(`FileUploadExtension: File ${file.name} added to queue with ID ${fileId}`);
   }
   
   updateFileCount() {
-    const fileCount = this.$form.find('.file-item').length;
+    const fileCount = this.$form.find('.file-item:not(.deleted)').length;
     const counter = this.$form.find('#files-count');
     if (counter.length) {
       counter.text(fileCount);

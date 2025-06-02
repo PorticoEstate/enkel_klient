@@ -104,6 +104,12 @@ if (typeof FormValidationExtension === 'undefined') {
    * @returns {object} - {isValid: boolean, errorMessage: string}
    */
   performFieldValidation($field) {
+    // Safety check: ensure $field is a valid jQuery object
+    if (!$field || !$field.length || typeof $field.attr !== 'function') {
+      console.warn('performFieldValidation called with invalid field:', $field);
+      return { isValid: true, errorMessage: '' };
+    }
+    
     const value = $field.val();
     const fieldType = $field.attr('type');
     const isRequired = $field.attr('required') !== undefined;

@@ -258,6 +258,7 @@ return [
         'message_help' => 'Ikke skriv inn sensitiv informasjon her.',
         'open_date_picker' => 'Åpne datovelger',
         'click_or_press_enter_to_select_date' => 'Klikk eller trykk Enter for å velge dato',
+        'click_or_press_enter_space_down_arrow_to_open_calendar' => 'Klikk eller trykk Enter, mellomrom eller ned-pil for å åpne kalender',
     ],
     'inspection_1' => [
         'form_header' => 'Skjema for brannforebyggende tilsyn på kommunal eiendom',

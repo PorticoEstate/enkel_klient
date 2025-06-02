@@ -259,6 +259,7 @@ return [
         'message_help' => 'Do not enter sensitive information here.',
         'open_date_picker' => 'Open date picker',
         'click_or_press_enter_to_select_date' => 'Click or press Enter to select date',
+        'click_or_press_enter_space_down_arrow_to_open_calendar' => 'Click or press Enter, Space, or Down arrow to open calendar',
     ],
     'inspection_1' => [
         'form_header' => 'Form for fire prevention inspection on municipal property',

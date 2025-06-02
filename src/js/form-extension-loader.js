@@ -9,21 +9,21 @@ class FormExtensionLoader {
     this.loadedDependencies = new Set();
     this.configurationSources = new Map(); // Cache for loaded configurations
     this.extensionPaths = {
-      validation: '/src/js/extensions/form-validation.js',
-      autoSave: '/src/js/extensions/form-autosave.js', 
-      fileUpload: '/src/js/extensions/file-upload.js',
-      accessibility: '/src/js/extensions/form-accessibility.js',
-      confirmation: '/src/js/extensions/form-confirmation.js',
+      validation: `${window.strBaseURL || ''}/src/js/extensions/form-validation.js`,
+      autoSave: `${window.strBaseURL || ''}/src/js/extensions/form-autosave.js`, 
+      fileUpload: `${window.strBaseURL || ''}/src/js/extensions/file-upload.js`,
+      accessibility: `${window.strBaseURL || ''}/src/js/extensions/form-accessibility.js`,
+      confirmation: `${window.strBaseURL || ''}/src/js/extensions/form-confirmation.js`,
     };
     
     // Define dependencies for extensions
     this.extensionDependencies = {
       fileUpload: [
-        '/src/js/file-upload/js/vendor/jquery.ui.widget.js',
-        '/src/js/file-upload/js/jquery.iframe-transport.js',
-        '/src/js/file-upload/js/jquery.fileupload.js',
-        '/src/js/file-upload/js/jquery.fileupload-process.js',
-        '/src/js/file-upload/js/jquery.fileupload-validate.js'
+        `${window.strBaseURL || ''}/src/js/file-upload/js/vendor/jquery.ui.widget.js`,
+        `${window.strBaseURL || ''}/src/js/file-upload/js/jquery.iframe-transport.js`,
+        `${window.strBaseURL || ''}/src/js/file-upload/js/jquery.fileupload.js`,
+        `${window.strBaseURL || ''}/src/js/file-upload/js/jquery.fileupload-process.js`,
+        `${window.strBaseURL || ''}/src/js/file-upload/js/jquery.fileupload-validate.js`
       ]
     };
   }
@@ -313,8 +313,8 @@ class FormExtensionLoader {
    */
   async loadConfigFromJavaScriptFile(formId) {
     const configPaths = [
-      `/src/js/config/forms/${formId}.js`,
-      `/src/js/config/${formId}-config.js`
+      `${window.strBaseURL || ''}/src/js/config/forms/${formId}.js`,
+      `${window.strBaseURL || ''}/src/js/config/${formId}-config.js`
     ];
 
     for (const path of configPaths) {

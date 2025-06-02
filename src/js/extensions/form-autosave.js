@@ -20,6 +20,9 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     // Save the load time to calculate elapsed time for debugging
     this.loadTime = new Date();
     
+    // Flag to prevent immediate file metadata clearing after page load
+    this.justLoaded = true;
+    
     const setupAndRestore = () => {
       // Handle complex radio button names first
       this.handleComplexRadioNames();
@@ -44,6 +47,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         console.log('✅ Verifying restoration success');
         this.checkRestorationSuccess();
       }, 2000);
+      
+      // Clear the "just loaded" flag after restoration is complete
+      setTimeout(() => {
+        this.justLoaded = false;
+        console.log('🔓 Autosave now fully active - file metadata changes will be tracked');
+      }, 3000);
       
       // Setup form submission handler to clear localStorage on successful submit
       this.setupSubmitHandler();
@@ -149,6 +158,10 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       }
       
       console.log(`📁 File input changed, saving immediately: ${e.target.name}`);
+      
+      // Mark that this file input was actively changed by user
+      $target.data('user-changed', true);
+      
       this.saveData();
     });
 
@@ -164,6 +177,8 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     // Log file metadata being saved
     if (formData._fileMetadata && Object.keys(formData._fileMetadata).length > 0) {
       console.log('💾 Saving file metadata:', formData._fileMetadata);
+    } else if (this.justLoaded) {
+      console.log('⏸️ Skipping file metadata update - page just loaded');
     }
     
     // Debug radio buttons specifically since they can be problematic
@@ -237,7 +252,24 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         
         const data = JSON.parse(saved);
         console.log('📦 Data structure:', Object.keys(data));
+        
+        // Always attempt to populate the form
         this.populateForm(data, isRetry);
+        
+        // Force file metadata restoration if present, even if no other fields
+        if (data._fileMetadata && Object.keys(data._fileMetadata).length > 0) {
+          console.log('📁 Ensuring file metadata is restored...');
+          setTimeout(() => {
+            // Check if file info areas exist, if not restore them
+            const existingFileInfos = $('.autosave-file-info');
+            if (existingFileInfos.length === 0) {
+              console.log('🔄 File metadata not found in DOM, restoring...');
+              this.restoreFileMetadata(data._fileMetadata);
+            } else {
+              console.log('✅ File metadata already in DOM');
+            }
+          }, 100);
+        }
       }
     } catch (error) {
       console.warn('❌ Error restoring autosave data:', error);
@@ -258,6 +290,20 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       if (!savedData) return;
       
       const data = JSON.parse(savedData);
+      
+      // Check if we have file metadata that needs to be restored
+      if (data._fileMetadata && Object.keys(data._fileMetadata).length > 0) {
+        console.log('🔄 Checking file metadata restoration...');
+        
+        // Check if file metadata was already restored
+        const existingFileInfos = $('.autosave-file-info');
+        if (existingFileInfos.length === 0) {
+          console.log('⚠️ File metadata not restored yet, forcing restoration...');
+          this.restoreFileMetadata(data._fileMetadata);
+        } else {
+          console.log('✅ File metadata appears to be already restored');
+        }
+      }
       
       // For each field we tried to restore, verify if content is visible
       this.restoredFields.forEach(fieldId => {
@@ -329,6 +375,10 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       fileInputs.forEach(input => {
         console.log(`📁 File input: name=${input.name}, id=${input.id}, files=${input.files?.length || 0}`);
         
+        const metadataKey = input.name || input.id || `file_input_${fileInputs.indexOf(input)}`;
+        const $input = $(input);
+        const userChanged = $input.data('user-changed');
+        
         // Check if this input has files selected
         if (input.files && input.files.length > 0) {
           console.log(`✅ Input ${input.name} has ${input.files.length} file(s) selected`);
@@ -345,8 +395,31 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             console.log(`📄 File: ${file.name}, size: ${file.size} bytes`);
           }
           
-          // Store metadata for this input
-          data._fileMetadata[input.name] = fileInfo;
+          // Store metadata for this input - use a clean key for array notation
+          data._fileMetadata[metadataKey] = fileInfo;
+          console.log(`💾 Stored file metadata under key: ${metadataKey}`);
+        } else {
+          // If no files are selected, only clear metadata if user actively changed the input
+          // OR if we're past the initial load period
+          if (userChanged || !this.justLoaded) {
+            // User intentionally cleared the files or enough time has passed
+            console.log(`🗑️ File input ${metadataKey} cleared by user or post-load`);
+            // Don't store anything - let existing metadata be preserved
+          } else {
+            // Page just loaded and input is empty - preserve existing metadata
+            try {
+              const existingSaved = localStorage.getItem(this.options.storageKey);
+              if (existingSaved) {
+                const existingData = JSON.parse(existingSaved);
+                if (existingData._fileMetadata && existingData._fileMetadata[metadataKey]) {
+                  console.log(`📋 Preserving existing file metadata for ${metadataKey} (page just loaded)`);
+                  data._fileMetadata[metadataKey] = existingData._fileMetadata[metadataKey];
+                }
+              }
+            } catch (e) {
+              console.warn('Error preserving existing file metadata:', e);
+            }
+          }
         }
       });
       
@@ -426,7 +499,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         // Handle file inputs - we already processed them above
         const field = form.querySelector(`[name="${key}"]`);
         if (field && (field.type === 'file' || key.includes('files[') || key.startsWith('files'))) {
-          console.log(`⏩ Skipping file field ${key} in form data`);
+          console.log(`⏩ Skipping file field ${key} in form data (already processed in metadata)`);
           continue; // Skip storing file in data object
         }
         
@@ -738,11 +811,31 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         
         console.log(`🔄 Restoring metadata for field: ${fieldName}, ${files.length} file(s)`);
         
-        // Find the file input - try both by name and by ID
+        // Find the file input - try multiple approaches for array notation
         let fileInput = form.find(`[name="${fieldName}"]`);
+        
+        // If not found by exact name, try finding by ID
         if (!fileInput.length) {
           fileInput = form.find(`#${fieldName}`);
           console.log(`🔍 Trying to find file input by ID: ${fieldName}`);
+        }
+        
+        // If still not found, try to match against all file inputs
+        if (!fileInput.length) {
+          const allFileInputs = form.find('input[type="file"]');
+          allFileInputs.each(function() {
+            const input = $(this);
+            const inputName = input.attr('name') || input.attr('id') || '';
+            
+            // Check if this could be the matching input
+            if (inputName === fieldName || 
+                inputName.replace(/\[\]/g, '') === fieldName.replace(/\[\]/g, '') ||
+                input.attr('id') === fieldName) {
+              fileInput = input;
+              console.log(`🎯 Found matching file input: ${inputName} for key: ${fieldName}`);
+              return false; // Break the each loop
+            }
+          });
         }
         
         if (!fileInput.length) {

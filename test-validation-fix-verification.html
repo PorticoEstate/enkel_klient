@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation Fix Verification</title>
+    <link href="vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .console-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1rem;
+            margin-top: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Validation Fix Verification Test</h1>
+        <p>This test verifies that the validation extension handles fields without name attributes properly.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <form id="test-form" data-form-type="inspection_1" novalidate>
+                    <div class="form-group mb-3">
+                        <label for="field-with-name" class="form-label">Field with name (Required) *</label>
+                        <input type="text" id="field-with-name" name="field_with_name" class="form-control" required />
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="field-no-name" class="form-label">Field without name (Required) *</label>
+                        <input type="text" id="field-no-name" class="form-control" required />
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="phone-with-name" class="form-label">Phone with name (Required) *</label>
+                        <input type="tel" id="phone-with-name" name="phone" class="form-control" required />
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="phone-no-name" class="form-label">Phone without name (Required) *</label>
+                        <input type="tel" id="phone-no-name" class="form-control" required />
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Test Submit</button>
+                    <button type="button" class="btn btn-secondary" id="test-validation">Test Validation</button>
+                    <button type="button" class="btn btn-info" id="fill-fields">Fill Fields</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="console-output" class="console-output">🔄 Initializing validation fix verification test...\n</div>
+    </div>
+
+    <!-- Dependencies -->
+    <script src="vendor/components/jquery/jquery.min.js"></script>
+    <script>
+        var strBaseURL = window.location.origin;
+        var translations = {
+            form_validation_errors: "Please fix the following errors:",
+            invalid_email: "Please enter a valid email address",
+            invalid_phone: "Please enter a valid phone number",
+            field_required: "This field is required"
+        };
+    </script>
+    
+    <!-- Form system -->
+    <script src="src/js/accessibility-helpers.js"></script>
+    <script src="src/js/form-handler-core.js"></script>
+    <script src="src/js/form-extension-loader.js"></script>
+    <script src="src/js/extensions/form-validation.js"></script>
+    
+    <script>
+        let formHandler = null;
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const consoleOutput = document.getElementById('console-output');
+            consoleOutput.textContent += `${timestamp}: ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            console.log(message);
+        }
+        
+        $(document).ready(function() {
+            log('📋 Starting validation fix verification test...');
+            
+            // Test form extension loading
+            try {
+                if (typeof FormExtensionLoader === 'undefined') {
+                    log('❌ FormExtensionLoader not available');
+                    return;
+                }
+                
+                if (typeof FormValidationExtension === 'undefined') {
+                    log('❌ FormValidationExtension not available');
+                    return;
+                }
+                
+                log('✅ Dependencies loaded');
+                
+                // Create form handler with validation
+                FormExtensionLoader.quickSetup('inspection_1', 'test-form').then(handler => {
+                    formHandler = handler;
+                    log('✅ FormHandler initialized with validation extension');
+                    
+                    const validationExt = formHandler.getExtension('validation');
+                    if (validationExt) {
+                        log('✅ Validation extension loaded successfully');
+                        
+                        // Test manual validation button
+                        document.getElementById('test-validation').addEventListener('click', function() {
+                            log('🧪 Testing manual validation...');
+                            testValidation();
+                        });
+                        
+                        // Test fill fields button
+                        document.getElementById('fill-fields').addEventListener('click', function() {
+                            log('📝 Filling test fields...');
+                            fillFields();
+                        });
+                        
+                        // Test individual field validation
+                        testIndividualFields();
+                        
+                    } else {
+                        log('❌ Validation extension not loaded');
+                    }
+                }).catch(error => {
+                    log('❌ Error initializing FormHandler: ' + error.message);
+                    console.error(error);
+                });
+                
+            } catch (error) {
+                log('❌ Error during initialization: ' + error.message);
+                console.error(error);
+            }
+        });
+        
+        function testValidation() {
+            try {
+                log('🔍 Testing form validation...');
+                const validationExt = formHandler.getExtension('validation');
+                
+                if (!validationExt) {
+                    log('❌ Validation extension not found');
+                    return;
+                }
+                
+                const isValid = validationExt.beforeSubmit();
+                log('📋 Form validation result: ' + (isValid ? 'VALID' : 'INVALID'));
+                
+                if (!isValid) {
+                    const errors = validationExt.getErrors();
+                    log('📝 Found ' + errors.length + ' validation errors:');
+                    errors.forEach(error => {
+                        log('  - ' + error.fullMessage);
+                    });
+                } else {
+                    log('✅ All fields valid');
+                }
+                
+            } catch (error) {
+                log('❌ Error during validation test: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        function testIndividualFields() {
+            try {
+                log('🔍 Testing individual field validation...');
+                const validationExt = formHandler.getExtension('validation');
+                
+                if (!validationExt) {
+                    log('❌ Validation extension not found');
+                    return;
+                }
+                
+                // Test field with name
+                const fieldWithName = document.getElementById('field-with-name');
+                log('🧪 Testing field with name...');
+                const result1 = validationExt.validateField(fieldWithName);
+                log('  - Field with name validation: ' + (result1 ? 'VALID' : 'INVALID'));
+                
+                // Test field without name
+                const fieldNoName = document.getElementById('field-no-name');
+                log('🧪 Testing field without name...');
+                const result2 = validationExt.validateField(fieldNoName);
+                log('  - Field without name validation: ' + (result2 ? 'VALID' : 'INVALID'));
+                
+                // Test phone field with name
+                const phoneWithName = document.getElementById('phone-with-name');
+                log('🧪 Testing phone field with name...');
+                const result3 = validationExt.validateField(phoneWithName);
+                log('  - Phone with name validation: ' + (result3 ? 'VALID' : 'INVALID'));
+                
+                // Test phone field without name
+                const phoneNoName = document.getElementById('phone-no-name');
+                log('🧪 Testing phone field without name...');
+                const result4 = validationExt.validateField(phoneNoName);
+                log('  - Phone without name validation: ' + (result4 ? 'VALID' : 'INVALID'));
+                
+                log('✅ Individual field validation tests completed without errors');
+                
+            } catch (error) {
+                log('❌ Error during individual field validation: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        function fillFields() {
+            log('📝 Filling fields with test data...');
+            document.getElementById('field-with-name').value = 'Test Value';
+            document.getElementById('field-no-name').value = 'Another Test Value';
+            document.getElementById('phone-with-name').value = '12345678';
+            document.getElementById('phone-no-name').value = '87654321';
+            log('✅ Fields filled');
+        }
+    </script>
+</body>
+</html>

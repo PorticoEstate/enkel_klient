@@ -129,7 +129,8 @@ if (typeof FormValidationExtension === 'undefined') {
       };
     }
     
-    if ((fieldType === 'tel' || $field.attr('name').includes('phone')) && !this.isValidPhone(value)) {
+    const fieldName = $field.attr('name') || '';
+    if ((fieldType === 'tel' || fieldName.includes('phone')) && !this.isValidPhone(value)) {
       return {
         isValid: false,
         errorMessage: this.getPhoneValidationMessage()
@@ -187,8 +188,8 @@ if (typeof FormValidationExtension === 'undefined') {
         const $field = $(field);
         const name = $field.attr('name');
         
-        // Skip if we've already processed this radio group
-        if (processedRadioGroups.has(name)) {
+        // Skip if name is missing or we've already processed this radio group
+        if (!name || processedRadioGroups.has(name)) {
           return;
         }
         processedRadioGroups.add(name);
@@ -280,8 +281,8 @@ if (typeof FormValidationExtension === 'undefined') {
       // Handle radio buttons with special logic
       if (fieldType === 'radio') {
         const name = $field.attr('name');
-        if (processedRadioGroups.has(name)) {
-          return; // Skip - already processed this radio group
+        if (!name || processedRadioGroups.has(name)) {
+          return; // Skip - already processed this radio group or missing name
         }
         processedRadioGroups.add(name);
         
@@ -317,6 +318,9 @@ if (typeof FormValidationExtension === 'undefined') {
       // Handle radio button groups - only add one error per group
       if (fieldType === 'radio') {
         const name = $field.attr('name');
+        if (!name) {
+          return; // Skip radio buttons without names
+        }
         // Check if we already added an error for this radio group
         const existingError = errors.find(error => 
           error.fieldId && error.fieldId.includes(name) && fieldType === 'radio'

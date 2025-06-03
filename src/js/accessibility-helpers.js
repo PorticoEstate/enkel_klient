@@ -545,6 +545,9 @@ function initAccessibility()
 
 	// Set up interactive regions (accordions, tabs, etc.)
 	setupInteractiveRegions();
+
+	// Initialize text spacing based on saved preference
+	initializeTextSpacing();
 }
 
 /**
@@ -802,13 +805,28 @@ function setupLanguageChangeObserver()
 }
 
 /**
- * Adds language-specific keyboard shortcuts for language switching
- * Alt+N for Norwegian, Alt+E for English
+ * Adds keyboard shortcuts for language switching and text-spacing features
+ * Language shortcuts: Alt+N for Norwegian, Alt+E for English
+ * Text-spacing shortcuts: Alt+T to toggle text-spacing, Alt+R to reset
  *
  * @returns {void}
  */
 function addLanguageKeyboardShortcuts()
 {
+	// Announce available keyboard shortcuts on page load
+	setTimeout(() => {
+		const currentLang = document.documentElement.lang || SCREEN_READER.LANGUAGES.NO;
+		let shortcutMessage;
+		
+		if (currentLang === SCREEN_READER.LANGUAGES.EN) {
+			shortcutMessage = 'Keyboard shortcuts available: Alt+N for Norwegian, Alt+E for English, Alt+T to toggle text spacing, Alt+R to reset text spacing';
+		} else {
+			shortcutMessage = 'Tastatursnarveier tilgjengelig: Alt+N for norsk, Alt+E for engelsk, Alt+T for å slå på/av tekstmellomrom, Alt+R for å tilbakestille tekstmellomrom';
+		}
+		
+		announceToScreenReader(shortcutMessage, SCREEN_READER.PRIORITY.POLITE, 3000);
+	}, 2000);
+
 	document.addEventListener('keydown', (e) =>
 	{
 		// Alt+N for Norwegian
@@ -818,6 +836,17 @@ function addLanguageKeyboardShortcuts()
 			if (noLink && noLink.href)
 			{
 				e.preventDefault();
+				const currentLang = document.documentElement.lang || SCREEN_READER.LANGUAGES.NO;
+				
+				// Announce the language switch action
+				if (currentLang === SCREEN_READER.LANGUAGES.EN) {
+					announceToScreenReader('Switching to Norwegian...', SCREEN_READER.PRIORITY.ASSERTIVE, 2000, 'en');
+				} else {
+					announceToScreenReader('Bytter til norsk...', SCREEN_READER.PRIORITY.ASSERTIVE, 2000, 'no');
+				}
+				
+				// Use the existing language change announcement function
+				announceLangChange('no');
 				window.location.href = noLink.href;
 			}
 		}
@@ -829,8 +858,33 @@ function addLanguageKeyboardShortcuts()
 			if (enLink && enLink.href)
 			{
 				e.preventDefault();
+				const currentLang = document.documentElement.lang || SCREEN_READER.LANGUAGES.NO;
+				
+				// Announce the language switch action
+				if (currentLang === SCREEN_READER.LANGUAGES.EN) {
+					announceToScreenReader('Switching to English...', SCREEN_READER.PRIORITY.ASSERTIVE, 2000, 'en');
+				} else {
+					announceToScreenReader('Bytter til engelsk...', SCREEN_READER.PRIORITY.ASSERTIVE, 2000, 'no');
+				}
+				
+				// Use the existing language change announcement function
+				announceLangChange('en');
 				window.location.href = enLink.href;
 			}
+		}
+
+		// Alt+T for text-spacing toggle
+		if (e.altKey && e.key === 't')
+		{
+			e.preventDefault();
+			toggleTextSpacing();
+		}
+
+		// Alt+R for reset text-spacing
+		if (e.altKey && e.key === 'r')
+		{
+			e.preventDefault();
+			resetTextSpacing();
 		}
 	});
 }
@@ -958,6 +1012,120 @@ function announceLangChange(lang)
 	}
 }
 
+/**
+ * Toggles enhanced text spacing for improved readability (WCAG 2.1 Success Criterion 1.4.12)
+ * Increases line height, letter spacing, word spacing, and paragraph spacing
+ * @returns {void}
+ */
+function toggleTextSpacing()
+{
+	const currentLang = document.documentElement.lang || SCREEN_READER.LANGUAGES.NO;
+	const body = document.body;
+	
+	if (body.classList.contains('enhanced-text-spacing'))
+	{
+		// Remove enhanced spacing
+		body.classList.remove('enhanced-text-spacing');
+		localStorage.setItem('textSpacingEnabled', 'false');
+		
+		// Announce the action
+		if (currentLang === SCREEN_READER.LANGUAGES.EN) {
+			announceToScreenReader('Text spacing disabled', SCREEN_READER.PRIORITY.POLITE);
+		} else {
+			announceToScreenReader('Tekstmellomrom deaktivert', SCREEN_READER.PRIORITY.POLITE);
+		}
+	} else
+	{
+		// Add enhanced spacing
+		body.classList.add('enhanced-text-spacing');
+		localStorage.setItem('textSpacingEnabled', 'true');
+		
+		// Add CSS styles if not already present
+		addTextSpacingStyles();
+		
+		// Announce the action
+		if (currentLang === SCREEN_READER.LANGUAGES.EN) {
+			announceToScreenReader('Text spacing enabled for improved readability', SCREEN_READER.PRIORITY.POLITE);
+		} else {
+			announceToScreenReader('Tekstmellomrom aktivert for bedre lesbarhet', SCREEN_READER.PRIORITY.POLITE);
+		}
+	}
+}
+
+/**
+ * Resets text spacing to default values
+ * @returns {void}
+ */
+function resetTextSpacing()
+{
+	const currentLang = document.documentElement.lang || SCREEN_READER.LANGUAGES.NO;
+	const body = document.body;
+	
+	body.classList.remove('enhanced-text-spacing');
+	localStorage.setItem('textSpacingEnabled', 'false');
+	
+	// Announce the action
+	if (currentLang === SCREEN_READER.LANGUAGES.EN) {
+		announceToScreenReader('Text spacing reset to default', SCREEN_READER.PRIORITY.POLITE);
+	} else {
+		announceToScreenReader('Tekstmellomrom tilbakestilt til standard', SCREEN_READER.PRIORITY.POLITE);
+	}
+}
+
+/**
+ * Adds CSS styles for enhanced text spacing
+ * Implements WCAG 2.1 Success Criterion 1.4.12 requirements
+ * @returns {void}
+ */
+function addTextSpacingStyles()
+{
+	// Check if styles already exist
+	if (document.getElementById('enhanced-text-spacing-styles')) return;
+	
+	const style = document.createElement('style');
+	style.id = 'enhanced-text-spacing-styles';
+	style.textContent = `
+		.enhanced-text-spacing * {
+			line-height: 1.5 !important;
+			letter-spacing: 0.12em !important;
+			word-spacing: 0.16em !important;
+		}
+		
+		.enhanced-text-spacing p {
+			margin-bottom: 2em !important;
+		}
+		
+		.enhanced-text-spacing h1,
+		.enhanced-text-spacing h2,
+		.enhanced-text-spacing h3,
+		.enhanced-text-spacing h4,
+		.enhanced-text-spacing h5,
+		.enhanced-text-spacing h6 {
+			margin-bottom: 1em !important;
+		}
+		
+		.enhanced-text-spacing li {
+			margin-bottom: 0.5em !important;
+		}
+	`;
+	
+	document.head.appendChild(style);
+}
+
+/**
+ * Initializes text spacing based on saved preference
+ * @returns {void}
+ */
+function initializeTextSpacing()
+{
+	const textSpacingEnabled = localStorage.getItem('textSpacingEnabled');
+	if (textSpacingEnabled === 'true')
+	{
+		document.body.classList.add('enhanced-text-spacing');
+		addTextSpacingStyles();
+	}
+}
+
 // Export functions if module exports is defined
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
 {
@@ -998,7 +1166,13 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
 		// Language-related functions
 		enhanceLanguageElements,
 		setupLanguageChangeObserver,
-		addLanguageKeyboardShortcuts
+		addLanguageKeyboardShortcuts,
+
+		// Text spacing functions
+		toggleTextSpacing,
+		resetTextSpacing,
+		addTextSpacingStyles,
+		initializeTextSpacing
 	};
 }
 

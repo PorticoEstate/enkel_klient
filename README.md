@@ -1,634 +1,697 @@
-# PHP Slim + Twig Web Application Setup Guide
+# EnkelKlient - Modern Web Forms Platform
 
-**Coding Style:**  
-Use **Allman Style** for all PHP and JavaScript code. This means opening braces are placed on a new line.
+EnkelKlient is a clean, accessible web forms platform built with modern architecture principles. The system features a comprehensive internationalization framework, robust debugging capabilities, and WCAG 3.3.4 compliant forms for municipal services.
 
-**Documentation Style:**
-Use **Markdown** for all documentation. Use **GitHub Flavored Markdown** for code blocks.
-Use **HTML5** for all HTML code. Use **HTML5** syntax for all HTML5 elements.
-This guide describes how to create a PHP web application from scratch using Slim Framework and Twig templating. The application will include a landing page, a navigation menu, a form, and a list of items.
+## 🚀 Key Features
 
----
+- **🌐 Multilingual Support**: Complete Norwegian/English translation system
+- **🐛 Advanced Debug System**: Persistent debugging with source file identification
+- **♿ Accessibility First**: WCAG 3.3.4 compliant with screen reader support
+- **⌨️ Keyboard Shortcuts**: Alt+N/E for language switching, Alt+T/R for text spacing
+- **🔧 Extension Architecture**: Modular form system with clean separation of concerns
+- **💾 Auto-Save**: Persistent form drafts with localStorage integration
+- **📱 Responsive Design**: Mobile-first approach with modern UI components
 
-## 1. Prerequisites
+## 📋 Table of Contents
 
-- Linux OS with bash shell
-- PHP (>=8.0)
-- Composer (PHP dependency manager)
-- Docker & Docker Compose (recommended for local development)
-- Git (optional, for version control)
-
----
-
-## 2. Project Structure
-
-Create the following directory structure:
-
-```
-project-root/
-│
-├── composer.json
-├── composer.lock
-├── Dockerfile
-├── docker-compose.yml
-├── index.php
-├── README.md
-├── logs/
-├── public/
-├── src/
-│   ├── configs/
-│   ├── Controller/
-│   ├── css/
-│   ├── icon/
-│   ├── js/
-│   ├── routes/
-│   ├── Service/
-│   ├── templates/
-│   └── translations/
-└── vendor/
-```
+1. [🚀 Quick Start](#-quick-start)
+2. [🌐 Translation System](#-translation-system)
+3. [⌨️ Keyboard Shortcuts](#️-keyboard-shortcuts)
+4. [🐛 Debug System](#-debug-system)
+5. [🏗️ Form Architecture](#️-form-architecture)
+6. [💻 Development Guide](#-development-guide)
+7. [📚 API Reference](#-api-reference)
 
 ---
 
-## 3. Initialize Composer and Install Dependencies
+## 🚀 Quick Start
+
+### Prerequisites
+
+- PHP 8.0+
+- Composer
+- Docker & Docker Compose (recommended)
+
+### Installation
 
 ```bash
-composer init
-composer require slim/slim:"^4.0" slim/psr7 twig/twig slim/twig-view
+# Clone and setup
+git clone <repository-url> enkel_klient
+cd enkel_klient
+composer install
+
+# Start development environment
+docker-compose up --build
+
+# Or run locally
+php -S localhost:8080 -t public
+```
+
+### Project Structure
+
+```text
+enkel_klient/
+├── src/
+│   ├── js/
+│   │   ├── base.js              # Core system & debug
+│   │   ├── extensions/          # Modular form components
+│   │   │   ├── form-validation.js
+│   │   │   ├── form-autosave.js
+│   │   │   ├── form-confirmation.js
+│   │   │   └── file-upload.js
+│   │   └── accessibility-helpers.js
+│   ├── translations/
+│   │   ├── en.php              # English translations
+│   │   └── no.php              # Norwegian translations
+│   └── templates/
+│       └── components/
+│           └── translations.twig  # Translation bridge
+└── public/
 ```
 
 ---
 
-## 4. Docker Setup (Optional)
+## 🌐 Translation System
 
-**Dockerfile**
-```Dockerfile
-FROM php:8.2-apache
-RUN docker-php-ext-install pdo pdo_pgsql
-COPY . /var/www/html/
-WORKDIR /var/www/html
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN composer install
-```
+EnkelKlient includes a comprehensive translation system supporting Norwegian (no) and English (en) with automatic language detection and persistence.
 
-**docker-compose.yml**
-```yaml
-version: '3.8'
-services:
-  web:
-    build: .
-    ports:
-      - "8080:80"
-    volumes:
-      - .:/var/www/html
-    environment:
-      - APACHE_DOCUMENT_ROOT=/var/www/html/public
-```
+### Features
 
----
+- **Automatic Language Detection**: Based on browser settings and user preferences
+- **Real-time Language Switching**: Alt+N (Norwegian) / Alt+E (English) keyboard shortcuts
+- **Screen Reader Support**: Language-specific announcements for accessibility
+- **Persistent Preferences**: Language choice saved across sessions
+- **Nested Translation Keys**: Organized by form type and component
 
-## 5. Application Entry Point
+### Translation Structure
 
-**index.php** (in project root or `public/`):
+#### Backend (PHP)
 
-- Bootstrap Slim app
-- Set up Twig as the view renderer
-- Register routes
-
-Example:
 ```php
-<?php
-require __DIR__ . '/vendor/autoload.php';
+// src/translations/en.php
+return [
+    'common' => [
+        'field_required' => 'is required',
+        'invalid_email' => 'Please enter a valid email address',
+        'invalid_phone' => 'Please enter a valid phone number',
+    ],
+    'helpdesk' => [
+        'form_header' => 'Form for reporting errors and deficiencies',
+        'title' => 'Errors and deficiencies',
+        'description' => 'Report errors and deficiencies for property or tenancy.',
+    ],
+    'form_confirmation' => [
+        'review_title' => 'Review your information',
+        'submit_button' => 'Submit form',
+    ]
+];
+```
 
-use Slim\Factory\AppFactory;
-use Slim\Views\Twig;
-use Slim\Views\TwigMiddleware;
+#### Frontend (JavaScript)
 
-$app = AppFactory::create();
-$twig = Twig::create(__DIR__ . '/src/templates', ['cache' => false]);
-$app->add(TwigMiddleware::create($app, $twig));
+```javascript
+// Translations automatically available in JavaScript
+window.translations = {
+    field_required: "is required",
+    form_confirmation: {
+        review_title: "Review your information",
+        submit_button: "Submit form"
+    },
+    file_upload: {
+        file_too_large: "File is too large. Maximum size is {maxSize}MB",
+        allowed_types: "Allowed file types: {types}"
+    }
+};
 
-// Register routes
-(require __DIR__ . '/src/routes/web.php')($app);
+// Using translations in JavaScript
+const message = translations.form_confirmation.review_title;
+const errorMsg = translations.file_upload.file_too_large
+    .replace('{maxSize}', '10');
+```
 
-$app->run();
+### Adding New Translations
+
+1. **Add to PHP files**:
+
+   ```php
+   // src/translations/en.php & no.php
+   'new_form' => [
+       'title' => 'New Form Title',
+       'description' => 'Form description text'
+   ]
+   ```
+
+2. **Use in templates**:
+
+   ```twig
+   {{ __('title', 'new_form') }}
+   {{ __('description', 'new_form') }}
+   ```
+
+3. **Access in JavaScript**:
+
+   ```javascript
+   const title = translations.new_form?.title || 'Fallback title';
+   ```
+
+### Language Switching
+
+#### Manual Control
+
+```javascript
+// Switch language programmatically
+document.documentElement.lang = 'en'; // or 'no'
+
+// Announce change to screen readers
+announceLangChange('en');
+```
+
+#### Keyboard Shortcuts
+
+- **Alt+N**: Switch to Norwegian
+- **Alt+E**: Switch to English
+
+#### URL Parameters
+
+```text
+# Set language via URL
+/?lang=en
+/?lang=no
 ```
 
 ---
 
-## 6. Routing
+## ⌨️ Keyboard Shortcuts
 
-**src/routes/web.php**
-```php
-<?php
-use Slim\App;
-use App\Controller\LandingController;
-use App\Controller\FormController;
-use App\Controller\ListController;
+EnkelKlient provides comprehensive keyboard shortcuts for improved accessibility and productivity, with full screen reader support.
 
-return function (App $app) {
-    $app->get('/', [LandingController::class, 'index']);
-    $app->get('/form', [FormController::class, 'show']);
-    $app->post('/form', [FormController::class, 'submit']);
-    $app->get('/list', [ListController::class, 'index']);
-    $app->get('/entity/{id}', [FormController::class, 'view']);
+### Available Shortcuts
+
+#### Language Switching
+- **Alt+N**: Switch to Norwegian (Norsk)
+- **Alt+E**: Switch to English
+
+#### Text Accessibility
+- **Alt+T**: Toggle enhanced text spacing (WCAG 2.1 Success Criterion 1.4.12)
+- **Alt+R**: Reset text spacing to default
+
+#### Standard Navigation
+- **Tab**: Navigate through interactive elements
+- **Shift+Tab**: Navigate backwards through interactive elements
+- **Enter**: Activate buttons and submit forms
+- **Space**: Activate buttons and checkboxes
+- **Arrow Keys**: Navigate within menus, tabs, and radio button groups
+
+### Features
+
+#### Automatic Announcement
+- **Available shortcuts announced on page load** (2 seconds after initialization)
+- **Language-specific announcements**: Shortcuts are announced in the current page language
+- **Screen reader feedback**: Each shortcut action provides audio feedback
+
+#### Language Switching Behavior
+```javascript
+// Alt+N for Norwegian
+if (e.altKey && e.key === 'n') {
+    // Announces: "Switching to Norwegian..." or "Bytter til norsk..."
+    // Triggers language change with proper screen reader feedback
+}
+
+// Alt+E for English  
+if (e.altKey && e.key === 'e') {
+    // Announces: "Switching to English..." or "Bytter til engelsk..."
+    // Triggers language change with proper screen reader feedback
+}
+```
+
+#### Text Spacing Features
+```javascript
+// Alt+T for toggle
+if (e.altKey && e.key === 't') {
+    // Toggles enhanced text spacing
+    // Announces: "Text spacing enabled" or "Tekstmellomrom aktivert"
+    // Implements WCAG 2.1 requirements:
+    // - Line height: 1.5
+    // - Letter spacing: 0.12em
+    // - Word spacing: 0.16em
+}
+
+// Alt+R for reset
+if (e.altKey && e.key === 'r') {
+    // Resets to default spacing
+    // Announces: "Text spacing reset to default" or "Tekstmellomrom tilbakestilt"
+}
+```
+
+### Implementation Details
+
+#### Screen Reader Announcements
+```javascript
+// Shortcuts announced on page load
+setTimeout(() => {
+    const currentLang = document.documentElement.lang || 'no';
+    let shortcutMessage;
+    
+    if (currentLang === 'en') {
+        shortcutMessage = 'Keyboard shortcuts available: Alt+N for Norwegian, Alt+E for English, Alt+T to toggle text spacing, Alt+R to reset text spacing';
+    } else {
+        shortcutMessage = 'Tastatursnarveier tilgjengelig: Alt+N for norsk, Alt+E for engelsk, Alt+T for å slå på/av tekstmellomrom, Alt+R for å tilbakestille tekstmellomrom';
+    }
+    
+    announceToScreenReader(shortcutMessage, 'polite', 3000);
+}, 2000);
+```
+
+#### Persistent Preferences
+- **Language choice**: Saved across sessions
+- **Text spacing**: Remembered using localStorage
+- **Auto-restoration**: Settings applied automatically on page load
+
+#### WCAG Compliance
+- **Success Criterion 2.1.1**: Keyboard accessible
+- **Success Criterion 2.1.2**: No keyboard trap
+- **Success Criterion 1.4.12**: Text spacing (enhanced mode)
+- **Success Criterion 3.3.4**: Error prevention (language switching confirmations)
+
+### Accessibility Benefits
+
+#### For Screen Reader Users
+- **Clear announcements** for all shortcut actions
+- **Language-specific feedback** in appropriate language
+- **Progress indicators** during language switching
+- **Immediate confirmation** of setting changes
+
+#### For Motor Impaired Users
+- **Single-key combinations** (Alt + letter)
+- **No complex key sequences** required
+- **Consistent shortcut patterns**
+- **Alternative to mouse-based controls**
+
+#### For Cognitive Accessibility
+- **Predictable shortcuts** across all pages
+- **Audio confirmation** of actions
+- **Visual feedback** for text spacing changes
+- **Consistent behavior** throughout the application
+
+### Testing Shortcuts
+
+```javascript
+// Test keyboard shortcuts programmatically
+document.dispatchEvent(new KeyboardEvent('keydown', {
+    altKey: true,
+    key: 'n'  // Test Norwegian switch
+}));
+
+document.dispatchEvent(new KeyboardEvent('keydown', {
+    altKey: true, 
+    key: 't'  // Test text spacing toggle
+}));
+```
+
+---
+
+## 🐛 Debug System
+
+The debug system provides comprehensive logging with source file identification and persistent settings across page reloads.
+
+### Debug Features
+
+- **5 Debug Levels**: error, warn, info, debug, trace
+- **Source File Tracking**: Shows actual caller file instead of `base.js`
+- **Persistent Settings**: Debug level saved to localStorage
+- **URL Parameter Control**: Enable/disable via URL
+- **Stack Trace Analysis**: Advanced caller identification
+
+### Usage
+
+#### URL Parameter Control
+
+```text
+# Enable debug with specific level
+/?debug=trace
+/?debug=info
+/?debug=debug
+
+# Clear debug settings
+/?debug=clear
+
+# Enable with default level
+/?debug=1
+/?debug=true
+```
+
+#### JavaScript API
+
+```javascript
+// Set debug level
+Debug.setLevel('debug');
+
+// Log at different levels
+Debug.error('Critical error occurred');
+Debug.warn('Warning: deprecated function');
+Debug.info('Form initialized successfully');
+Debug.debug('Processing user input', formData);
+Debug.trace('Detailed execution flow', callStack);
+
+// Get current settings
+Debug.getLevel();        // Returns current level
+Debug.isEnabled();       // Returns boolean
+
+// Persistence management
+Debug.saveToLocalStorage();    // Manual save
+Debug.clearFromLocalStorage(); // Manual clear
+```
+
+#### Debug Output
+
+Debug messages include source file and line number:
+
+```text
+[EnkelKlient] [DEBUG] 2025-01-03T15:52:58.557Z 📁 Form validation started [from: form-validation.js:156]
+[EnkelKlient] [INFO] 2025-01-03T15:52:58.612Z ✅ Auto-save enabled [from: form-autosave.js:89]
+[EnkelKlient] [TRACE] 2025-01-03T15:52:58.734Z 🔍 File upload initialized [from: file-upload.js:234]
+```
+
+#### Implementation Details
+
+The debug system uses advanced stack trace parsing:
+
+```javascript
+function getCallerInfo() {
+    const stack = new Error().stack;
+    const lines = stack.split('\n');
+    
+    // Skip base.js frames to find actual caller
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.includes('base.js') && line.includes('.js')) {
+            return parseStackLine(line);
+        }
+    }
+}
+```
+
+### Debug Levels
+
+1. **error** (0): Critical errors only
+2. **warn** (1): Warnings and errors
+3. **info** (2): General information, warnings, and errors
+4. **debug** (3): Debug messages and above
+5. **trace** (4): All messages including detailed execution traces
+
+---
+
+## 🏗️ Form Architecture
+
+EnkelKlient uses a modular extension system where each form component is a self-contained module.
+
+### Extension System
+
+#### Core Extensions
+
+1. **FormValidationExtension**: Real-time form validation
+2. **FormAutoSaveExtension**: Automatic draft saving
+3. **FormConfirmationExtension**: WCAG 3.3.4 error prevention
+4. **FileUploadExtension**: Multi-file upload with progress
+5. **AccessibilityHelpers**: Screen reader support
+
+#### Extension Registration
+
+```javascript
+// Register an extension
+ExtensionManager.register('MyFormExtension', {
+    init() {
+        Debug.info('MyFormExtension initialized');
+        this.bindEvents();
+    },
+    
+    bindEvents() {
+        // Event handling logic
+    },
+    
+    getTranslation(key, fallback) {
+        // Translation helper
+        return window.translations[key] || fallback;
+    }
+});
+
+// Initialize all extensions
+ExtensionManager.initializeAll();
+```
+
+### Form Implementation Pattern
+
+```javascript
+const HelpdeskFormHandler = {
+    init() {
+        Debug.info('Helpdesk form initializing');
+        this.bindEvents();
+        this.setupValidation();
+        this.enableAutoSave();
+    },
+    
+    bindEvents() {
+        $('#helpdesk-form').on('submit', this.handleSubmit.bind(this));
+    },
+    
+    handleSubmit(e) {
+        e.preventDefault();
+        if (this.validateForm()) {
+            this.submitForm();
+        }
+    },
+    
+    validateForm() {
+        const validation = ExtensionManager.get('FormValidationExtension');
+        return validation ? validation.validateForm() : true;
+    },
+    
+    enableAutoSave() {
+        const autoSave = ExtensionManager.get('FormAutoSaveExtension');
+        if (autoSave) {
+            autoSave.enable();
+        }
+    }
+};
+
+// Register with extension system
+ExtensionManager.register('HelpdeskFormHandler', HelpdeskFormHandler);
+```
+
+### WCAG 3.3.4 Compliance
+
+All forms implement error prevention through:
+
+- **Form Summary**: Review before submission
+- **Confirmation Dialogs**: Explicit submit confirmation
+- **Auto-Save**: Prevent data loss
+- **Real-time Validation**: Immediate feedback
+- **Screen Reader Support**: Comprehensive ARIA labels
+
+---
+
+## 💻 Development Guide
+
+### Adding a New Form
+
+1. **Create form JavaScript file**:
+
+   ```javascript
+   // src/js/my-new-form.js
+   const MyNewFormHandler = {
+       init() {
+           Debug.info('MyNewForm initialized');
+           this.setupTranslations();
+           this.bindEvents();
+       },
+       
+       setupTranslations() {
+           this.translations = window.translations.my_new_form || {};
+       },
+       
+       bindEvents() {
+           // Form-specific event handling
+       }
+   };
+   
+   ExtensionManager.register('MyNewFormHandler', MyNewFormHandler);
+   ```
+
+2. **Add translations**:
+
+   ```php
+   // src/translations/en.php & no.php
+   'my_new_form' => [
+       'title' => 'My New Form',
+       'submit_button' => 'Submit Form'
+   ]
+   ```
+
+3. **Create template with translation bridge**:
+
+   ```twig
+   {% include 'components/translations.twig' with {'formType': 'my_new_form'} %}
+   <script src="js/my-new-form.js"></script>
+   ```
+
+### Translation Best Practices
+
+- **Use nested keys** for organization: `form_name.field_name`
+- **Include context** in key names: `error_required_field` vs `required`
+- **Provide fallbacks** in JavaScript: `translations.key || 'Default text'`
+- **Test both languages** thoroughly
+- **Use placeholders** for dynamic content: `'Hello {name}'`
+
+### Debug Integration
+
+```javascript
+// Add debug statements for troubleshooting
+Debug.debug('Form field updated', { field: fieldName, value: fieldValue });
+Debug.trace('Validation result', validationResults);
+
+// Error handling with debug output
+try {
+    this.processFormData();
+} catch (error) {
+    Debug.error('Form processing failed', error);
+    throw error;
+}
+```
+
+### Accessibility Guidelines
+
+- **Always provide** `aria-label` or `aria-describedby`
+- **Test with screen readers** (NVDA, JAWS, VoiceOver)
+- **Use semantic HTML** elements
+- **Provide keyboard navigation**
+- **Include language attributes** for mixed-language content
+
+---
+
+## 📚 API Reference
+
+### Debug API
+
+```javascript
+// Core debug methods
+Debug.setLevel(level)           // Set debug level
+Debug.getLevel()                // Get current level
+Debug.isEnabled()               // Check if debug is enabled
+Debug.saveToLocalStorage()      // Persist settings
+Debug.clearFromLocalStorage()   // Clear settings
+
+// Logging methods
+Debug.error(message, ...args)   // Log error level
+Debug.warn(message, ...args)    // Log warning level
+Debug.info(message, ...args)    // Log info level
+Debug.debug(message, ...args)   // Log debug level
+Debug.trace(message, ...args)   // Log trace level
+```
+
+### Extension Manager API
+
+```javascript
+// Extension management
+ExtensionManager.register(name, extension)  // Register extension
+ExtensionManager.get(name)                  // Get extension instance
+ExtensionManager.initializeAll()           // Initialize all extensions
+ExtensionManager.getRegistered()           // List all registered extensions
+```
+
+### Translation API
+
+```javascript
+// Access translations
+window.translations.key                     // Direct access
+window.translations.form_name.field_name    // Nested access
+
+// Extension translation helper
+extension.getTranslation(key, fallback)     // With fallback
+```
+
+### Accessibility API
+
+```javascript
+// Screen reader announcements
+announceToScreenReader(message, priority, timeout, lang)
+
+// Language switching
+announceLangChange(lang)                    // Announce language change
+setupLanguageChangeObserver()              // Setup language observer
+addLanguageKeyboardShortcuts()             // Enable Alt+N/Alt+E shortcuts
+```
+
+---
+
+## 🔧 Configuration
+
+### Form Configuration
+
+```javascript
+// Per-form configuration
+window.formConfigs = {
+    'helpdesk': {
+        form_summary_on_submit: true,
+        confirmation_dialog_enabled: true,
+        auto_save_enabled: true,
+        enable_fileupload: true
+    },
+    'inspection': {
+        form_summary_on_submit: true,
+        confirmation_dialog_enabled: true,
+        auto_save_enabled: true,
+        enable_fileupload: true
+    }
 };
 ```
 
----
+### Debug Configuration
 
-## 7. Controllers
-
-Create controllers in `src/Controller/`:
-
-- `LandingController.php`
-- `FormController.php`
-- `ListController.php`
-
-Example for `FormController.php`:
-```php
-<?php
-namespace App\Controller;
-
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use Slim\Views\Twig;
-
-class FormController {
-    public function show(Request $request, Response $response, $args) {
-        return Twig::fromRequest($request)->render($response, 'form.twig');
-    }
-
-    public function submit(Request $request, Response $response, $args) {
-        $data = $request->getParsedBody();
-        // Validate and process $data
-        return Twig::fromRequest($request)->render($response, 'form.twig', [
-            'success' => true,
-            'data' => $data
-        ]);
-    }
-}
+```javascript
+// Debug persistence settings
+localStorage.setItem('enkel_debug', 'true');
+localStorage.setItem('enkel_debug_level', 'debug');
 ```
 
 ---
 
-## 8. Templates (Twig)
+## 🧪 Testing
 
-Place Twig templates in `src/templates/`:
+### Manual Testing Checklist
 
-- `layout.twig` (base layout with menu)
-- `landing.twig` (landing page)
-- `form.twig` (form page)
-- `list.twig` (list of items)
-- `head.twig` (HTML head section)
-- `error.twig` (error handling)
+- [ ] Test both Norwegian and English languages
+- [ ] Verify debug output shows correct source files
+- [ ] Test keyboard navigation (Tab, Enter, Arrow keys)
+- [ ] Test keyboard shortcuts (Alt+N, Alt+E, Alt+T, Alt+R)
+- [ ] Verify screen reader announcements
+- [ ] Test auto-save functionality
+- [ ] Validate form submission flow
+- [ ] Check accessibility compliance (WCAG 3.3.4)
 
-Example for `form.twig`:
-```twig
-{% extends "layout.twig" %}
-{% block content %}
-<h2>Example Form</h2>
-{% if success %}
-    <div class="alert alert-success">Form submitted successfully!</div>
-{% endif %}
-<form method="post" action="/form">
-    <label>Name: <input type="text" name="name" value="{{ data.name|default('') }}"></label><br>
-    <label>Email: <input type="email" name="email" value="{{ data.email|default('') }}"></label><br>
-    <button type="submit">Submit</button>
-</form>
-{% endblock %}
+### Debug Testing
+
+```javascript
+// Enable comprehensive debugging
+Debug.setLevel('trace');
+
+// Test debug persistence
+localStorage.clear();
+window.location.href = '/?debug=info';
+// Verify debug level persists after page reload
 ```
 
 ---
 
-## 9. Static Assets
+## 🏆 Project Statistics
 
-- Place CSS in `src/css/`
-- Place JS in `src/js/`
-- Place icons/images in `src/icon/` and `src/css/images/`
-
----
-
-## 10. Logging
-
-- Configure logging to write to the `logs/` directory.
+- **🌐 Languages**: 2 (Norwegian, English)
+- **📝 Forms**: 4 main forms (helpdesk, inspection, key ordering, invoice)
+- **🧩 Extensions**: 5 core extensions
+- **⌨️ Keyboard Shortcuts**: 4 main shortcuts (Alt+N, Alt+E, Alt+T, Alt+R)
+- **♿ WCAG Level**: AA compliant (3.3.4 Error Prevention)
+- **📊 Translation Keys**: 300+ organized keys
+- **🐛 Debug Levels**: 5 comprehensive levels
 
 ---
 
-## 11. Documentation
-
-- Write usage and setup instructions in `README.md`.
-
----
-
-## 12. Running the Application
-
-- If using Docker:
-  ```bash
-  docker-compose up --build
-  ```
-- If running locally:
-  ```bash
-  php -S localhost:8080 -t public
-  ```
-
----
-
-## 13. Implementing a Simple Form
-
-- Route: `/form`
-- Controller: `FormController.php`
-- Template: `form.twig`
-- Functionality:
-  - GET: Show form (e.g., name, email)
-  - POST: Validate and process input, then show confirmation or errors
-
----
-
-## 14. Extending the Application
-
-- Add more controllers and routes for additional forms and lists.
-- Use Twig templates for all views.
-- Add authentication, database integration, and other features as needed.
-
----
-
-## 15. Configurable Entity Attributes and Dynamic Forms
-
-To support entities with configurable attributes (in addition to a mandatory `id`), follow these steps:
-
-### 15.1. Define Attribute Configuration
-
-In your controller (or a config file), define an array describing each attribute:
-
-```php
-$entityAttributes = [
-    [
-        'name' => 'id',
-        'datatype' => 'integer',
-        'description' => 'Unique identifier',
-        'form_name' => 'ID',
-        'html_element' => 'hidden'
-    ],
-    [
-        'name' => 'title',
-        'datatype' => 'text',
-        'description' => 'Short title',
-        'form_name' => 'Title',
-        'html_element' => 'textfield'
-    ],
-    [
-        'name' => 'description',
-        'datatype' => 'long_text',
-        'description' => 'Detailed description',
-        'form_name' => 'Description',
-        'html_element' => 'textarea'
-    ],
-    [
-        'name' => 'due_date',
-        'datatype' => 'date',
-        'description' => 'Due date',
-        'form_name' => 'Due Date',
-        'html_element' => 'datepicker'
-    ]
-];
-```
-
-- `datatype`: e.g., integer, text, long_text, date
-- `name`: internal name
-- `description`: help text or tooltip
-- `form_name`: label in the form
-- `html_element`: textfield, textarea, datepicker, hidden, etc.
-
-### 15.1.1. Recommended Additional Qualities for `$entityAttributes`
-
-To make your entities and forms more robust and flexible, consider adding these qualities to each attribute definition:
-
-- `required` (bool): Whether the field is mandatory.
-- `default` (mixed): Default value if not set.
-- `readonly` (bool): If true, field is shown but not editable.
-- `options` (array): For select/radio fields, the available choices.
-- `validation` (string/array): Validation rules or regex pattern.
-- `min`, `max`, `length` (int): For numeric or text fields, min/max values or length.
-- `placeholder` (string): Placeholder text for form fields.
-- `help_text` (string): Additional help or tooltip for the user.
-- `visible` (bool): Whether the field should be shown in the form or list.
-- `unique` (bool): Whether the value must be unique in the database.
-- `sortable` (bool): If the field can be used for sorting in lists.
-- `searchable` (bool): If the field can be used in search/filtering.
-- `form_order` (int): To control the order of fields in the form.
-- `list_order` (int): To control the order of fields in list views.
-- `css_class` (string): Custom CSS class for styling the field.
-
-**Example attribute with extended qualities:**
-
-```php
-[
-    'name' => 'priority',
-    'datatype' => 'integer',
-    'description' => 'Priority (1-5)',
-    'form_name' => 'Priority',
-    'html_element' => 'textfield',
-    'required' => true,
-    'default' => 1,
-    'min' => 1,
-    'max' => 5,
-    'placeholder' => 'Enter priority (1-5)',
-    'help_text' => 'Set the priority for this task.',
-    'visible' => true,
-    'unique' => false,
-    'sortable' => true,
-    'searchable' => true,
-    'form_order' => 4,
-    'list_order' => 2,
-    'css_class' => 'priority-field'
-]
-```
-
-### 15.1.2. Defining Entity Relations for Automatic Query Building
-
-To enable automatic rule-based query building with JOINs on related tables, define each entity in a dedicated Model (e.g., in `src/Model/`). Each model should include:
-- Custom attributes (as described above)
-- Relations to other entities (one-to-one, one-to-many, many-to-many)
-
-**Recommended structure for a model:**
-
-```php
-$projectModel = [
-    'attributes' => [
-        // ...attribute definitions as above...
-    ],
-    'relations' => [
-        [
-            'type' => 'one_to_many',
-            'entity' => 'Task',
-            'local_key' => 'id',
-            'foreign_key' => 'project_id',
-            'label' => 'Tasks'
-        ],
-        // Add more relations as needed
-    ]
-];
-
-$taskModel = [
-    'attributes' => [
-        // ...attribute definitions as above...
-    ],
-    'relations' => [
-        [
-            'type' => 'many_to_one',
-            'entity' => 'Project',
-            'local_key' => 'project_id',
-            'foreign_key' => 'id',
-            'label' => 'Project'
-        ],
-        [
-            'type' => 'many_to_many',
-            'entity' => 'User',
-            'pivot_table' => 'task_user',
-            'local_key' => 'task_id',
-            'foreign_key' => 'user_id',
-            'label' => 'Assigned Users'
-        ]
-    ]
-];
-```
-
-**Relation types:**
-- `one_to_one`
-- `one_to_many`
-- `many_to_one`
-- `many_to_many`
-
-**How to use:**
-- Store each entity model in a separate file in `src/Model/` (e.g., `ProjectModel.php`, `TaskModel.php`).
-- Use the `relations` array to automatically build JOINs or subqueries in your queries.
-- Use the `relations` definition to generate select fields, multi-selects, or related entity lists in your forms and views.
-
-This approach allows you to:
-- Keep all entity metadata (attributes and relations) in one place
-- Build dynamic queries and forms based on the model definition
-- Easily extend your application with new entities and relationships
-
-### 15.2. Dynamic Form Rendering in Controller
-
-- Pass the `$entityAttributes` array to the Twig template.
-- On POST, validate each field based on its datatype.
-
-### 15.3. Dynamic Form Rendering in Twig
-
-Example for `form.twig`:
-
-```twig
-<form method="post">
-    {% for attr in entityAttributes %}
-        {% if attr.html_element == 'hidden' %}
-            <input type="hidden" name="{{ attr.name }}" value="{{ data[attr.name]|default('') }}">
-        {% elseif attr.html_element == 'textfield' %}
-            <label>{{ attr.form_name }}: <input type="text" name="{{ attr.name }}" value="{{ data[attr.name]|default('') }}"></label>
-        {% elseif attr.html_element == 'textarea' %}
-            <label>{{ attr.form_name }}:<br>
-                <textarea name="{{ attr.name }}">{{ data[attr.name]|default('') }}</textarea>
-            </label>
-        {% elseif attr.html_element == 'datepicker' %}
-            <label>{{ attr.form_name }}: <input type="date" name="{{ attr.name }}" value="{{ data[attr.name]|default('') }}"></label>
-        {% endif %}
-        <small>{{ attr.description }}</small><br>
-    {% endfor %}
-    <button type="submit">Submit</button>
-</form>
-```
-
-### 15.4. Example Usage
-
-- Define the attribute configuration in your controller.
-- Pass it to the Twig template along with any form data.
-- Render the form fields dynamically as shown above.
-- On form submission, validate and process each field according to its datatype.
-
----
-
-## 15.5. Example: Multiple Entity Types with Configurable Attributes
-
-Suppose you have two entity types: `Project` and `Task`. Each has its own set of attributes and corresponding views, add/edit, and list pages.
-
-
-### Routing Example
-
-Add routes for each entity type in `src/routes/web.php`:
-
-```php
-// Project routes
-$app->get('/projects', [ProjectController::class, 'list']);
-$app->get('/project/add', [ProjectController::class, 'add']);
-$app->post('/project/add', [ProjectController::class, 'add']);
-$app->get('/project/{id}', [ProjectController::class, 'view']);
-$app->get('/project/{id}/edit', [ProjectController::class, 'edit']);
-$app->post('/project/{id}/edit', [ProjectController::class, 'edit']);
-
-// Task routes
-$app->get('/tasks', [TaskController::class, 'list']);
-$app->get('/task/add', [TaskController::class, 'add']);
-$app->post('/task/add', [TaskController::class, 'add']);
-$app->get('/task/{id}', [TaskController::class, 'view']);
-$app->get('/task/{id}/edit', [TaskController::class, 'edit']);
-$app->post('/task/{id}/edit', [TaskController::class, 'edit']);
-```
-
-### Controller Example
-
-Each controller (e.g., `ProjectController`, `TaskController`) should:
-- Use its own `$entityAttributes` array
-- Pass the attributes to the Twig template for dynamic form rendering
-- Implement `list`, `add`, `edit`, and `view` methods
-
-### Twig Templates
-
-- Create separate Twig templates for each entity type (e.g., `project_form.twig`, `project_list.twig`, `project_view.twig`, `task_form.twig`, etc.)
-- Use the dynamic form rendering pattern from above, passing the appropriate `$entityAttributes` for each entity type
-
----
-
-## 16. Adding PostgreSQL as Database Backend
-
-### 16.1. Update Docker Compose
-
-Add a PostgreSQL service to your `docker-compose.yml`:
-
-```yaml
-services:
-  web:
-    # ...existing config...
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: myapp
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-volumes:
-  db_data:
-```
-
-### 16.2. Install PHP PostgreSQL Extension
-
-In your `Dockerfile`, add:
-
-```Dockerfile
-RUN docker-php-ext-install pdo_pgsql
-```
-
-### 16.3. Configure Database Connection
-
-Add your database connection settings to a config file (e.g., `src/configs/env-eksempel` or `.env`):
-
-```
-DB_DRIVER=pgsql
-DB_HOST=db
-DB_PORT=5432
-DB_DATABASE=myapp
-DB_USERNAME=myuser
-DB_PASSWORD=mypassword
-```
-
-Use a library like `pdo` or `doctrine/dbal` for database access in your PHP code.
-
----
-
-## 17. Managing Access Control (ACL)
-
-### 17.1. Define Rights as Bitmask Constants
-
-Define rights as bitmask constants in your PHP code:
-
-```php
-const ACL_READ = 1;    // 0001
-const ACL_ADD = 2;     // 0010
-const ACL_EDIT = 4;    // 0100
-const ACL_DELETE = 8;  // 1000
-```
-
-### 17.2. Define Roles and Permissions Using Bitmask
-
-- Assign a bitmask value for each route and role, combining rights as needed.
-- Store roles/permissions in a config file, database, or as PHP arrays.
-
-Example:
-
-```php
-$acl = [
-    'admin' => [
-        '*' => ACL_READ | ACL_ADD | ACL_EDIT | ACL_DELETE
-    ],
-    'user' => [
-        '/' => ACL_READ,
-        '/form' => ACL_READ | ACL_ADD,
-        '/list' => ACL_READ,
-        '/entity/{id}' => ACL_READ | ACL_EDIT,
-    ],
-    'guest' => [
-        '/' => ACL_READ,
-        '/list' => ACL_READ
-    ]
-];
-```
-
-### 17.3. Middleware for ACL with Bitmask Checking
-
-- Implement a Slim middleware to check the user's role and allowed rights for the requested route and HTTP method.
-- Map HTTP methods to bitmask rights:
-  - GET → ACL_READ
-  - POST → ACL_ADD
-  - PUT/PATCH → ACL_EDIT
-  - DELETE → ACL_DELETE
-- Use bitwise AND to check if the right is granted.
-
-Example:
-
-```php
-// In your middleware
-$role = $_SESSION['role'] ?? 'guest';
-$path = $request->getUri()->getPath();
-$method = $request->getMethod();
-$actionMap = [
-    'GET' => ACL_READ,
-    'POST' => ACL_ADD,
-    'PUT' => ACL_EDIT,
-    'PATCH' => ACL_EDIT,
-    'DELETE' => ACL_DELETE
-];
-$requiredRight = $actionMap[$method] ?? 0;
-$allowed = $acl[$role][$path] ?? $acl[$role]['*'] ?? 0;
-if (($allowed & $requiredRight) === 0) {
-    return $response->withStatus(403);
-}
-```
-
-### 17.4. Assign Roles
-
-- Assign roles to users at login or registration.
-- Store the role in the session or JWT token.
-
----
-
-## 18. Form Validation
-
-The application includes a reusable form validation framework that standardizes validation across all forms. 
-
-### 18.1 Key Features
-
-- Consistent validation behavior across all forms
-- Real-time client-side validation
-- Accessibility support for screen readers
-- Specialized validation for common field types (phone, email, location)
-
-### 18.2 Implementation
-
-- The core validation logic is in `src/js/form-validator.js`
-- Each form includes this shared validator
-- See the detailed [Form Validation Documentation](docs/form-validation.md)
-
----
+*EnkelKlient - Modern, accessible, multilingual web forms for municipal services.*

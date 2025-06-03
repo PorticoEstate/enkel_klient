@@ -886,6 +886,39 @@ window.location.href = '/?debug=info';
 
 ---
 
+## 🔗 Relationship to PorticoEstate-v2
+
+This project (EnkelKlient) serves as a modern frontend for selected modules and workflows of the [PorticoEstate-v2](https://github.com/PorticoEstate/PorticoEstate-v2) property management system. It provides a user-friendly, accessible, and mobile-ready interface for forms and processes that are powered by the PorticoEstate-v2 backend. Data submitted through EnkelKlient forms is processed and stored by PorticoEstate-v2 APIs and services.
+
+---
+
+## 📤 Two-Phase Form Submission (with File Attachments)
+
+EnkelKlient supports a robust two-phase form submission process for forms that include file uploads:
+
+1. **Phase 1: Submit Form Data**
+   - The user reviews and submits all non-file form fields.
+   - The form data is sent to the backend and a record is created (with a unique ID).
+   - After successful submission, the form fields are locked to prevent further editing.
+
+2. **Phase 2: Upload Files**
+   - The user uploads any required files, which are attached to the previously created record.
+   - File uploads are tracked with progress indicators and error handling.
+   - Only after all files are uploaded is the submission process considered complete.
+
+**Why two phases?**
+- This approach ensures that form data is never lost due to file upload errors or interruptions.
+- It allows for better error handling, user feedback, and compliance with accessibility standards.
+- Users can retry file uploads without re-entering all form data.
+
+**User Experience:**
+- The UI guides users through both phases, showing clear progress and locking fields after Phase 1.
+- If no files are attached, the form is submitted in a single step.
+
+For technical details, see `src/js/extensions/form-confirmation.js` and the [docs/](docs/) folder.
+
+---
+
 ## 🧑‍💻 Quickstart Guide for New Developers
 
 Welcome to EnkelKlient! This guide will help you get started quickly and explains how to add new forms, translations, and features.

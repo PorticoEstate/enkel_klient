@@ -39,7 +39,10 @@ elseif (isset($_SESSION['lang']))
 // Create PHP-DI ContainerBuilder
 $containerBuilder = new ContainerBuilder();
 
-// Add container definitions
+// Enable autowiring
+$containerBuilder->useAutowiring(true);
+
+// Add container definitions for services that require parameters
 $containerBuilder->addDefinitions([
 	Twig::class => function ()
 	{
@@ -95,58 +98,8 @@ $containerBuilder->addDefinitions([
 		return new Translator($lang);
 	},
 
-	// Controller definitions
-	\App\Controller\LandingController::class => function ($container)
-	{
-		return new \App\Controller\LandingController(
-			$container->get(Twig::class),
-			$container->get(ApiClient::class)
-		);
-	},
-
-	\App\Controller\NokkelbestillingController::class => function ($container)
-	{
-		return new \App\Controller\NokkelbestillingController(
-			$container->get(Twig::class),
-			$container->get(ApiClient::class)
-		);
-	},
-
-	\App\Controller\HelpdeskController::class => function ($container)
-	{
-		return new \App\Controller\HelpdeskController(
-			$container->get(Twig::class),
-			$container->get(ApiClient::class)
-		);
-	},
-
-	\App\Controller\Inspection1Controller::class => function ($container)
-	{
-		return new \App\Controller\Inspection1Controller(
-			$container->get(Twig::class),
-			$container->get(ApiClient::class)
-		);
-	},
-	
-	\App\Controller\InvoicerequestController::class => function ($container)
-	{
-		return new \App\Controller\InvoicerequestController(
-			$container->get(Twig::class),
-			$container->get(ApiClient::class)
-		);
-	},
-	
-	// My Cases controller
-	\App\Controller\MyCasesController::class => function ($container)
-	{
-		return new \App\Controller\MyCasesController(
-			$container->get(Twig::class),
-			$container->get(ApiClient::class)
-		);
-	},
-	\App\Helper\ErrorHandler::class => function ($container)
-	{
-		return new \App\Helper\ErrorHandler($container->get(Twig::class));
+	App\Helper\ErrorHandler::class => function ($container) {
+		return new App\Helper\ErrorHandler($container->get(Twig::class));
 	},
 ]);
 

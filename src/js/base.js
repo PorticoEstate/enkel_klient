@@ -24,14 +24,100 @@ const Debug = (() => {
         return isEnabled && LOG_LEVELS[level] <= LOG_LEVELS[logLevel];
     }
     
+    // Helper function to parse a single stack line
+    function parseStackLine(line) {
+        // Pattern 1: "at functionName (file.js:line:column)"
+        let match = line.match(/at\s+([^\s]+)\s+\(([^:]+):(\d+):(\d+)\)/);
+        if (match) {
+            const [, fnName, filePath, lineNum] = match;
+            const fileName = filePath ? filePath.split('/').pop() : 'unknown';
+            return { fileName, line: lineNum, function: fnName };
+        }
+        
+        // Pattern 2: "at file.js:line:column"
+        match = line.match(/at\s+([^:]+):(\d+):(\d+)/);
+        if (match) {
+            const [, filePath, lineNum] = match;
+            const fileName = filePath ? filePath.split('/').pop() : 'unknown';
+            return { fileName, line: lineNum, function: 'anonymous' };
+        }
+        
+        // Pattern 3: Chrome format: "at https://example.com/file.js:line:column"
+        match = line.match(/at\s+(?:https?:\/\/[^\/]+)?\/([^:]+):(\d+):(\d+)/);
+        if (match) {
+            const [, filePath, lineNum] = match;
+            const fileName = filePath ? filePath.split('/').pop() : 'unknown';
+            return { fileName, line: lineNum, function: 'anonymous' };
+        }
+        
+        // Pattern 4: Last attempt - just try to find any file:line pattern
+        match = line.match(/([^\/\s]+\.js):(\d+)/);
+        if (match) {
+            const [, fileName, lineNum] = match;
+            return { fileName, line: lineNum, function: 'anonymous' };
+        }
+        
+        // If no pattern matches, return unknown
+        return { fileName: 'unknown', line: '?', function: 'unknown' };
+    }
+    
+    function getCallerInfo() {
+        try {
+            // Create an error to capture the stack
+            const err = new Error();
+            const stack = err.stack.split('\n');
+            
+            // Find the first stack frame that is NOT from base.js
+            // We need to skip the first few frames:
+            // 0: Error constructor
+            // 1: getCallerInfo (this function)
+            // 2: formatMessage
+            // 3: debug/info/warn/error method
+            // 4: actual caller (what we want)
+            
+            for (let i = 0; i < stack.length; i++) {
+                const line = stack[i].trim();
+                
+                // Skip empty lines
+                if (!line) continue;
+                
+                // Skip lines that don't contain file information
+                if (!line.includes('.js')) continue;
+                
+                // Skip lines from base.js (this file)
+                if (line.includes('base.js')) continue;
+                
+                // Skip Error constructor lines
+                if (line.includes('Error')) continue;
+                
+                // This should be our caller - extract file and line info
+                const result = parseStackLine(line);
+                if (result.fileName !== 'unknown') {
+                    return result;
+                }
+            }
+            
+            // Fallback to unknown if we can't find anything
+            return { fileName: 'unknown', line: '?', function: 'unknown' };
+            
+        } catch (e) {
+            console.warn('Error getting caller info:', e);
+            return { fileName: 'unknown', line: '?', function: 'unknown' };
+        }
+    }
+    
     function formatMessage(level, message, data) {
         const timestamp = new Date().toISOString();
+        const caller = getCallerInfo();
+        
+        // Include caller info in the message itself so it's always visible
+        const enhancedMessage = `${message} [from: ${caller.fileName}:${caller.line}]`;
         const prefix = `${logPrefix} [${level.toUpperCase()}] ${timestamp}`;
         
         if (data !== undefined) {
-            return [prefix, message, data];
+            return [prefix, enhancedMessage, data];
         }
-        return [prefix, message];
+        return [prefix, enhancedMessage];
     }
     
     // Public API
@@ -140,7 +226,9 @@ const Debug = (() => {
          */
         dump(label, data) {
             if (shouldLog('debug')) {
-                console.group(`${logPrefix} [DUMP] ${label}`);
+                const caller = getCallerInfo();
+                const prefix = `${logPrefix} [DUMP] ${label} (${caller.fileName}:${caller.line})`;
+                console.group(prefix);
                 console.log(data);
                 console.groupEnd();
             }
@@ -191,13 +279,16 @@ const Debug = (() => {
                 try {
                     localStorage.removeItem('enkel_debug');
                     localStorage.removeItem('enkel_debug_level');
+                    // Use raw console.log since we need this message whether debug is enabled or not
                     console.log('[EnkelKlient] Debug settings cleared from localStorage');
                     return true;
                 } catch (e) {
+                    // Use raw console.warn since we need this message whether debug is enabled or not
                     console.warn('[EnkelKlient] Could not clear debug settings from localStorage:', e);
                     return false;
                 }
             }
+            // Use raw console.warn since we need this message whether debug is enabled or not
             console.warn('[EnkelKlient] localStorage not available');
             return false;
         }
@@ -220,8 +311,10 @@ const Debug = (() => {
                     try {
                         localStorage.removeItem('enkel_debug');
                         localStorage.removeItem('enkel_debug_level');
+                        // Using raw console.log since Debug might be disabled
                         console.log('[EnkelKlient] Debug mode cleared from localStorage');
                     } catch (e) {
+                        // Using raw console.warn since Debug might be disabled
                         console.warn('[EnkelKlient] Could not clear debug settings from localStorage:', e);
                     }
                 }

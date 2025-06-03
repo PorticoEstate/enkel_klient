@@ -22,6 +22,7 @@ EnkelKlient is a clean, accessible web forms platform built with modern architec
 6. [🏗️ Form Architecture](#️-form-architecture)
 7. [💻 Development Guide](#-development-guide)
 8. [📚 API Reference](#-api-reference)
+9. [🧑‍💻 Quickstart Guide for New Developers](#-quickstart-guide-for-new-developers)
 
 ---
 
@@ -710,45 +711,16 @@ All forms implement error prevention through:
 
 ### Adding a New Form
 
-1. **Create form JavaScript file**:
-
-   ```javascript
-   // src/js/my-new-form.js
-   const MyNewFormHandler = {
-       init() {
-           Debug.info('MyNewForm initialized');
-           this.setupTranslations();
-           this.bindEvents();
-       },
-       
-       setupTranslations() {
-           this.translations = window.translations.my_new_form || {};
-       },
-       
-       bindEvents() {
-           // Form-specific event handling
-       }
-   };
-   
-   ExtensionManager.register('MyNewFormHandler', MyNewFormHandler);
-   ```
-
-2. **Add translations**:
-
-   ```php
-   // src/translations/en.php & no.php
-   'my_new_form' => [
-       'title' => 'My New Form',
-       'submit_button' => 'Submit Form'
-   ]
-   ```
-
-3. **Create template with translation bridge**:
-
-   ```twig
-   {% include 'components/translations.twig' with {'formType': 'my_new_form'} %}
-   <script src="js/my-new-form.js"></script>
-   ```
+1. **Create a form configuration:**
+   - Add a new config file in `src/configs/` (e.g., `myform.php`).
+   - Define your form fields, validation rules, and settings in this file.
+2. **Create a template:**
+   - Add a new Twig template in `src/templates/` or `src/templates/components/`.
+   - Reference your form fields using the configuration keys.
+3. **Register the form route:**
+   - Add a new route in `src/routes/` to serve your form.
+4. **(Optional) Add a controller:**
+   - If your form needs custom logic, add a controller in `src/Controller/`.
 
 ### Translation Best Practices
 
@@ -911,3 +883,91 @@ window.location.href = '/?debug=info';
 ---
 
 *EnkelKlient - Modern, accessible, multilingual web forms for municipal services.*
+
+---
+
+## 🧑‍💻 Quickstart Guide for New Developers
+
+Welcome to EnkelKlient! This guide will help you get started quickly and explains how to add new forms, translations, and features.
+
+### 1. Project Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url> enkel_klient
+   cd enkel_klient
+   ```
+2. **Install dependencies:**
+   ```bash
+   composer install
+   ```
+3. **Start the development environment:**
+   ```bash
+   docker-compose up --build
+   # Or run locally
+   php -S localhost:8080 -t public
+   ```
+
+### 2. Adding a New Form
+
+1. **Create a form configuration:**
+   - Add a new config file in `src/configs/` (e.g., `myform.php`).
+   - Define your form fields, validation rules, and settings in this file.
+2. **Create a template:**
+   - Add a new Twig template in `src/templates/` or `src/templates/components/`.
+   - Reference your form fields using the configuration keys.
+3. **Register the form route:**
+   - Add a new route in `src/routes/` to serve your form.
+4. **(Optional) Add a controller:**
+   - If your form needs custom logic, add a controller in `src/Controller/`.
+
+### 3. Adding a New Translation
+
+1. **Edit translation files:**
+   - Open `src/translations/en.php` and `src/translations/no.php`.
+   - Add your new keys under the appropriate section (e.g., `'myform' => ['title' => 'My Form Title']`).
+2. **Use translations in templates:**
+   - In Twig: `{{ __('title', 'myform') }}`
+   - In PHP: `__('title', 'myform')`
+   - In JavaScript: `translations.myform.title`
+3. **Validate translations:**
+   - Run:
+     ```bash
+     php scripts/validate-translation-keys.php
+     ```
+   - Fix any missing or unused keys as reported.
+
+### 4. Adding a New Feature or Extension
+
+1. **Create a new extension module:**
+   - Add a JS file in `src/js/extensions/` (e.g., `my-feature.js`).
+   - Export your feature as a module or function.
+2. **Integrate with the form system:**
+   - Import and register your extension in the main form handler or relevant entry point.
+3. **Document your feature:**
+   - Add usage instructions and configuration options to the documentation.
+4. **Test your feature:**
+   - Add or update tests in `tests/` as needed.
+
+### 5. Useful Scripts
+
+- **Extract translation keys:**
+  ```bash
+  php scripts/extract-translation-keys.php
+  ```
+- **Validate translation keys:**
+  ```bash
+  php scripts/validate-translation-keys.php
+  ```
+- **Cleanup unused translation keys:**
+  ```bash
+  php scripts/cleanup-unused-translation-keys.php
+  ```
+- **Add missing translation keys:**
+  ```bash
+  php scripts/add-missing-translation-keys.php
+  ```
+
+---
+
+For more details, see the [docs/](docs/) folder and inline comments in the codebase.

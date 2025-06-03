@@ -187,7 +187,7 @@ function quilljs_textarea(elem = null, options = null)
 				$(editorDiv).attr('data-quill-id', elemId);
 				
 				// Log that we've registered this Quill instance
-				console.log(`📝 Quill editor registered with ID: ${elemId}`);
+				Debug.debug(`📝 Quill editor registered with ID: ${elemId}`);
 			}
 
 			// Set up ARIA states for accessibility
@@ -268,7 +268,7 @@ function quilljs_textarea(elem = null, options = null)
 			});
 		} catch (err)
 		{
-			console.warn("Failed to initialize Quill editor for element:", elemId, err);
+			Debug.warn("Failed to initialize Quill editor for element:", elemId, err);
 		}
 	});
 
@@ -747,7 +747,7 @@ $(document).ready(function ()
 		}
 	} catch (err)
 	{
-		console.warn("Error initializing Quill editor for message:", err);
+		Debug.warn("Error initializing Quill editor for message:", err);
 	}
 
 	// Handle tab key navigation properly within the editor

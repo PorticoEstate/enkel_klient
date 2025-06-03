@@ -32,26 +32,26 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       
       // First attempt - quick initial restoration (for standard fields)
       setTimeout(() => {
-        console.log('⚡ Initial attempt at restoring autosaved data');
+        Debug.debug('⚡ Initial attempt at restoring autosaved data');
         this.restoreData();
       }, 300); 
       
       // Second attempt - optimal timing for most Quill editors
       setTimeout(() => {
-        console.log('🔄 Second attempt for Quill editors');
+        Debug.debug('🔄 Second attempt for Quill editors');
         this.restoreData(true); // Force second attempt
       }, 1000);
       
       // Final verification to ensure content is visible
       setTimeout(() => {
-        console.log('✅ Verifying restoration success');
+        Debug.debug('✅ Verifying restoration success');
         this.checkRestorationSuccess();
       }, 2000);
       
       // Clear the "just loaded" flag after restoration is complete
       setTimeout(() => {
         this.justLoaded = false;
-        console.log('🔓 Autosave now fully active - file metadata changes will be tracked');
+        Debug.debug('🔓 Autosave now fully active - file metadata changes will be tracked');
       }, 3000);
       
       // Setup form submission handler to clear localStorage on successful submit
@@ -75,7 +75,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     try {
       const form = this.formHandler.getForm();
       if (!form || !form.length) {
-        console.warn('Form not found for handling complex radio names');
+        Debug.warn('Form not found for handling complex radio names');
         return;
       }
 
@@ -92,12 +92,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             // Generate a safe key for autosave purposes
             const autosaveKey = `radio_${name.replace(/[\[\]]/g, '_')}`;
             $radio.attr('data-autosave-key', autosaveKey);
-            console.log(`📻 Added autosave key "${autosaveKey}" to radio button with complex name: ${name}`);
+            Debug.debug(`📻 Added autosave key "${autosaveKey}" to radio button with complex name: ${name}`);
           }
         }
       });
     } catch (error) {
-      console.warn('Error handling complex radio names:', error);
+      Debug.warn('Error handling complex radio names:', error);
     }
   }
   
@@ -107,11 +107,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   setupSubmitHandler() {
     // Register a hook in the form handler to execute after successful submission
     if (this.formHandler.addHook) {
-      console.log('🔄 Registering afterSuccess hook to clear autosaved data on form submission');
+      Debug.debug('🔄 Registering afterSuccess hook to clear autosaved data on form submission');
       this.formHandler.addHook('afterSuccess', (data) => {
         // Check if submission was successful
         if (data && data.status === "saved") {
-          console.log('✅ Form submitted successfully, clearing autosaved data');
+          Debug.debug('✅ Form submitted successfully, clearing autosaved data');
           this.clearSavedData();
           return true; // Continue with other hooks
         }
@@ -153,11 +153,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       
       // Check if this file input is being handled by FileUploadExtension
       if ($target.data('file-upload-extension')) {
-        console.log(`📁 File input ${e.target.name} is handled by FileUploadExtension, skipping autosave`);
+        Debug.debug(`📁 File input ${e.target.name} is handled by FileUploadExtension, skipping autosave`);
         return;
       }
       
-      console.log(`📁 File input changed, saving immediately: ${e.target.name}`);
+      Debug.debug(`📁 File input changed, saving immediately: ${e.target.name}`);
       
       // Mark that this file input was actively changed by user
       $target.data('user-changed', true);
@@ -176,9 +176,9 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     
     // Log file metadata being saved
     if (formData._fileMetadata && Object.keys(formData._fileMetadata).length > 0) {
-      console.log('💾 Saving file metadata:', formData._fileMetadata);
+      Debug.debug('💾 Saving file metadata:', formData._fileMetadata);
     } else if (this.justLoaded) {
-      console.log('⏸️ Skipping file metadata update - page just loaded');
+      Debug.debug('⏸️ Skipping file metadata update - page just loaded');
     }
     
     // Debug radio buttons specifically since they can be problematic
@@ -195,14 +195,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     });
     
     if (radioValues.length > 0) {
-      console.log('📻 Saving radio button values:', radioValues.reduce((obj, key) => {
+      Debug.debug('📻 Saving radio button values:', radioValues.reduce((obj, key) => {
         obj[key] = formData[key];
         return obj;
       }, {}));
       
       // Log any radio mappings for debugging
       if (formData._radioMappings) {
-        console.log('🔄 Radio name mappings:', formData._radioMappings);
+        Debug.debug('🔄 Radio name mappings:', formData._radioMappings);
       }
     }
     
@@ -220,29 +220,29 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     });
     
     if (checkboxValues.length > 0) {
-      console.log('☑️ Saving checkbox values:', checkboxValues.reduce((obj, key) => {
+      Debug.debug('☑️ Saving checkbox values:', checkboxValues.reduce((obj, key) => {
         obj[key] = formData[key];
         return obj;
       }, {}));
       
       // Log any checkbox mappings for debugging
       if (formData._checkboxMappings) {
-        console.log('🔄 Checkbox name mappings:', formData._checkboxMappings);
+        Debug.debug('🔄 Checkbox name mappings:', formData._checkboxMappings);
       }
     }
     
     localStorage.setItem(this.options.storageKey, JSON.stringify(formData));
-    console.log(`💾 Saved form data to localStorage key: ${this.options.storageKey}`);
+    Debug.debug(`💾 Saved form data to localStorage key: ${this.options.storageKey}`);
   }
 
   restoreData(isRetry = false) {
     // Calculate elapsed time since page load for better debugging
     const elapsedTime = new Date() - this.loadTime;
-    console.log(`⏱️ Starting data restoration process (${elapsedTime}ms after load, retry: ${isRetry})`);
+    Debug.debug(`⏱️ Starting data restoration process (${elapsedTime}ms after load, retry: ${isRetry})`);
     
     try {
       const saved = localStorage.getItem(this.options.storageKey);
-      console.log('📋 Found saved data:', saved ? `Yes (length: ${saved.length})` : 'No');
+      Debug.debug('📋 Found saved data:', saved ? `Yes (length: ${saved.length})` : 'No');
       
       if (saved) {
         // Keep track of restored fields for verification later
@@ -251,28 +251,28 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         }
         
         const data = JSON.parse(saved);
-        console.log('📦 Data structure:', Object.keys(data));
+        Debug.debug('📦 Data structure:', Object.keys(data));
         
         // Always attempt to populate the form
         this.populateForm(data, isRetry);
         
         // Force file metadata restoration if present, even if no other fields
         if (data._fileMetadata && Object.keys(data._fileMetadata).length > 0) {
-          console.log('📁 Ensuring file metadata is restored...');
+          Debug.debug('📁 Ensuring file metadata is restored...');
           setTimeout(() => {
             // Check if file info areas exist, if not restore them
             const existingFileInfos = $('.autosave-file-info');
             if (existingFileInfos.length === 0) {
-              console.log('🔄 File metadata not found in DOM, restoring...');
+              Debug.debug('🔄 File metadata not found in DOM, restoring...');
               this.restoreFileMetadata(data._fileMetadata);
             } else {
-              console.log('✅ File metadata already in DOM');
+              Debug.debug('✅ File metadata already in DOM');
             }
           }, 100);
         }
       }
     } catch (error) {
-      console.warn('❌ Error restoring autosave data:', error);
+      Debug.warn('❌ Error restoring autosave data:', error);
       // Clear corrupted data
       localStorage.removeItem(this.options.storageKey);
     }
@@ -293,15 +293,15 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       
       // Check if we have file metadata that needs to be restored
       if (data._fileMetadata && Object.keys(data._fileMetadata).length > 0) {
-        console.log('🔄 Checking file metadata restoration...');
+        Debug.debug('🔄 Checking file metadata restoration...');
         
         // Check if file metadata was already restored
         const existingFileInfos = $('.autosave-file-info');
         if (existingFileInfos.length === 0) {
-          console.log('⚠️ File metadata not restored yet, forcing restoration...');
+          Debug.debug('⚠️ File metadata not restored yet, forcing restoration...');
           this.restoreFileMetadata(data._fileMetadata);
         } else {
-          console.log('✅ File metadata appears to be already restored');
+          Debug.debug('✅ File metadata appears to be already restored');
         }
       }
       
@@ -330,7 +330,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
                            content.trim() === '<p></p>';
             
             if (isEmpty && data[fieldId]) {
-              console.log(`🛠️ Emergency fix: Field ${fieldId} is empty but should have content`);
+              Debug.debug(`🛠️ Emergency fix: Field ${fieldId} is empty but should have content`);
               
               // Direct content injection - most reliable emergency fix
               editor.html(data[fieldId]);
@@ -338,14 +338,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
               // Force a visual refresh
               setTimeout(() => {
                 editor.hide().show(0);
-                console.log(`✨ Applied emergency content refresh for ${fieldId}`);
+                Debug.debug(`✨ Applied emergency content refresh for ${fieldId}`);
               }, 50);
             }
           }
         }
       });
     } catch (e) {
-      console.warn('❌ Error in restoration check:', e);
+      Debug.warn('❌ Error in restoration check:', e);
     }
   }
 
@@ -353,7 +353,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     try {
       const form = this.formHandler.getFormElement();
       if (!form) {
-        console.warn('Form element not found for serialization');
+        Debug.warn('Form element not found for serialization');
         return {};
       }
       
@@ -365,15 +365,15 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       data._checkboxMappings = {};
       
       // First log all form fields for debugging
-      console.log('🔍 Checking form fields for file inputs...');
+      Debug.debug('🔍 Checking form fields for file inputs...');
       
       // Track all file inputs in the form
       const fileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
-      console.log(`📁 Found ${fileInputs.length} file input(s) in form`);
+      Debug.debug(`📁 Found ${fileInputs.length} file input(s) in form`);
       
       // Log info about each file input
       fileInputs.forEach(input => {
-        console.log(`📁 File input: name=${input.name}, id=${input.id}, files=${input.files?.length || 0}`);
+        Debug.debug(`📁 File input: name=${input.name}, id=${input.id}, files=${input.files?.length || 0}`);
         
         const metadataKey = input.name || input.id || `file_input_${fileInputs.indexOf(input)}`;
         const $input = $(input);
@@ -381,7 +381,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         
         // Check if this input has files selected
         if (input.files && input.files.length > 0) {
-          console.log(`✅ Input ${input.name} has ${input.files.length} file(s) selected`);
+          Debug.debug(`✅ Input ${input.name} has ${input.files.length} file(s) selected`);
           
           const fileInfo = [];
           for (let i = 0; i < input.files.length; i++) {
@@ -392,18 +392,18 @@ if (typeof FormAutoSaveExtension === 'undefined') {
               type: file.type,
               lastModified: file.lastModified
             });
-            console.log(`📄 File: ${file.name}, size: ${file.size} bytes`);
+            Debug.debug(`📄 File: ${file.name}, size: ${file.size} bytes`);
           }
           
           // Store metadata for this input - use a clean key for array notation
           data._fileMetadata[metadataKey] = fileInfo;
-          console.log(`💾 Stored file metadata under key: ${metadataKey}`);
+          Debug.debug(`💾 Stored file metadata under key: ${metadataKey}`);
         } else {
           // If no files are selected, only clear metadata if user actively changed the input
           // OR if we're past the initial load period
           if (userChanged || !this.justLoaded) {
             // User intentionally cleared the files or enough time has passed
-            console.log(`🗑️ File input ${metadataKey} cleared by user or post-load`);
+            Debug.debug(`🗑️ File input ${metadataKey} cleared by user or post-load`);
             // Don't store anything - let existing metadata be preserved
           } else {
             // Page just loaded and input is empty - preserve existing metadata
@@ -412,12 +412,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
               if (existingSaved) {
                 const existingData = JSON.parse(existingSaved);
                 if (existingData._fileMetadata && existingData._fileMetadata[metadataKey]) {
-                  console.log(`📋 Preserving existing file metadata for ${metadataKey} (page just loaded)`);
+                  Debug.debug(`📋 Preserving existing file metadata for ${metadataKey} (page just loaded)`);
                   data._fileMetadata[metadataKey] = existingData._fileMetadata[metadataKey];
                 }
               }
             } catch (e) {
-              console.warn('Error preserving existing file metadata:', e);
+              Debug.warn('Error preserving existing file metadata:', e);
             }
           }
         }
@@ -430,7 +430,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       );
       
       if (complexCheckboxes.length > 0) {
-        console.log(`☑️ Processing ${complexCheckboxes.length} checkboxes with complex names`);
+        Debug.debug(`☑️ Processing ${complexCheckboxes.length} checkboxes with complex names`);
         
         // Process each checkbox
         complexCheckboxes.forEach(checkbox => {
@@ -444,7 +444,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           // Store the mapping for restoration
           data._checkboxMappings[autosaveKey] = checkbox.name;
           
-          console.log(`☑️ Checkbox ${checkbox.name} (${autosaveKey}) is ${checkbox.checked ? 'checked' : 'unchecked'}`);
+          Debug.debug(`☑️ Checkbox ${checkbox.name} (${autosaveKey}) is ${checkbox.checked ? 'checked' : 'unchecked'}`);
         });
       }
       
@@ -470,7 +470,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           const autosaveKey = checkedRadio.getAttribute('data-autosave-key');
           const keyToUse = autosaveKey || name;
           
-          console.log(`📻 Radio button group ${name} has value: ${checkedRadio.value}${
+          Debug.debug(`📻 Radio button group ${name} has value: ${checkedRadio.value}${
             autosaveKey ? ` (using autosave key: ${autosaveKey})` : ''}`);
           
           data[keyToUse] = checkedRadio.value;
@@ -499,7 +499,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         // Handle file inputs - we already processed them above
         const field = form.querySelector(`[name="${key}"]`);
         if (field && (field.type === 'file' || key.includes('files[') || key.startsWith('files'))) {
-          console.log(`⏩ Skipping file field ${key} in form data (already processed in metadata)`);
+          Debug.debug(`⏩ Skipping file field ${key} in form data (already processed in metadata)`);
           continue; // Skip storing file in data object
         }
         
@@ -512,7 +512,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       }
       return data;
     } catch (error) {
-      console.error('Error serializing form:', error);
+      Debug.error('Error serializing form:', error);
       return {};
     }
   }
@@ -521,7 +521,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     try {
       const form = this.formHandler.getForm();
       if (!form || !form.length) {
-        console.warn('Form not found for autosave population');
+        Debug.warn('Form not found for autosave population');
         return;
       }
       
@@ -538,14 +538,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           if (!field.length && data._radioMappings && data._radioMappings[key]) {
             const originalName = data._radioMappings[key];
             field = form.find(`[name="${originalName}"]`);
-            console.log(`🔍 Using mapped name ${originalName} for key: ${key}`);
+            Debug.debug(`🔍 Using mapped name ${originalName} for key: ${key}`);
           }
           
           // If not found and it's a mapped checkbox name, look for the original named field
           if (!field.length && data._checkboxMappings && data._checkboxMappings[key]) {
             const originalName = data._checkboxMappings[key];
             field = form.find(`[name="${originalName}"]`);
-            console.log(`🔍 Using mapped checkbox name ${originalName} for key: ${key}`);
+            Debug.debug(`🔍 Using mapped checkbox name ${originalName} for key: ${key}`);
           }
           
           // Try finding by data attribute
@@ -563,13 +563,13 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             if (document.contains(field[0])) {
               // Skip file inputs - they cannot be programmatically set for security reasons
               if (field[0].type === 'file' || field.attr('type') === 'file') {
-                console.log(`Skipping file input field: ${key}`);
+                Debug.debug(`Skipping file input field: ${key}`);
                 return;
               }
               
               // Skip file arrays (like files[])
               if (key.includes('files[') || key.startsWith('files')) {
-                console.log(`Skipping file array field: ${key}`);
+                Debug.debug(`Skipping file array field: ${key}`);
                 return;
               }
 
@@ -588,25 +588,25 @@ if (typeof FormAutoSaveExtension === 'undefined') {
                 $(`#quill-${field.attr('id')}`).length > 0;
               
               if (isQuillField) {
-                console.log(`🔍 Detected Quill field: ${key} with ID: ${field.attr('id')}`);
+                Debug.debug(`🔍 Detected Quill field: ${key} with ID: ${field.attr('id')}`);
                 this.restoreQuillContent(field, data[key], isRetry);
               } else if (field[0].type === 'radio') {
                 // Special handling for radio buttons
-                console.log(`📻 Restoring radio button: ${key} with value: ${data[key]}`);
+                Debug.debug(`📻 Restoring radio button: ${key} with value: ${data[key]}`);
                 
                 let radioName = key;
                 
                 // Check if this is a mapped radio button with array notation
                 if (data._radioMappings && data._radioMappings[key]) {
                   radioName = data._radioMappings[key];
-                  console.log(`📻 Using mapped radio name: ${radioName} for key: ${key}`);
+                  Debug.debug(`📻 Using mapped radio name: ${radioName} for key: ${key}`);
                 } 
                 // Or check if radios have data-autosave-key attribute
                 else {
                   const radioWithDataKey = form.find(`input[data-autosave-key="${key}"]`);
                   if (radioWithDataKey.length) {
                     radioName = radioWithDataKey.attr('name');
-                    console.log(`📻 Found radio with data-autosave-key: ${key}, using name: ${radioName}`);
+                    Debug.debug(`📻 Found radio with data-autosave-key: ${key}, using name: ${radioName}`);
                   }
                 }
                 
@@ -623,32 +623,32 @@ if (typeof FormAutoSaveExtension === 'undefined') {
                     try {
                       // Use setTimeout to ensure the radio is checked before calling handler
                       setTimeout(() => {
-                        console.log(`🔄 Executing onchange handler for radio: ${key}`);
+                        Debug.debug(`🔄 Executing onchange handler for radio: ${key}`);
                         const handler = new Function(`return ${onChangeAttr}`);
                         handler.call(radioToCheck[0]);
                       }, 10);
                     } catch (e) {
-                      console.warn(`⚠️ Failed to execute onchange handler for ${key}:`, e);
+                      Debug.warn(`⚠️ Failed to execute onchange handler for ${key}:`, e);
                     }
                   }
                 }
               } else if (field[0].type === 'checkbox') {
                 // Special handling for checkboxes
-                console.log(`☑️ Restoring checkbox: ${key} with value: ${data[key]}`);
+                Debug.debug(`☑️ Restoring checkbox: ${key} with value: ${data[key]}`);
                 
                 let checkboxName = key;
                 
                 // Check if this is a mapped checkbox with array notation
                 if (data._checkboxMappings && data._checkboxMappings[key]) {
                   checkboxName = data._checkboxMappings[key];
-                  console.log(`☑️ Using mapped checkbox name: ${checkboxName} for key: ${key}`);
+                  Debug.debug(`☑️ Using mapped checkbox name: ${checkboxName} for key: ${key}`);
                 }
                 
                 // Handle both simple and array notation checkboxes
                 if (key.startsWith('checkbox_') || field.attr('data-autosave-key')) {
                   // For complex checkboxes, set checked based on value presence
                   const isChecked = data[key] && data[key] !== "";
-                  console.log(`☑️ Setting complex checkbox ${checkboxName} to ${isChecked ? 'checked' : 'unchecked'}`);
+                  Debug.debug(`☑️ Setting complex checkbox ${checkboxName} to ${isChecked ? 'checked' : 'unchecked'}`);
                   field.prop('checked', isChecked);
                 } else {
                   // Regular checkbox handling
@@ -668,12 +668,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
                   try {
                     // Use setTimeout to ensure the checkbox is set before calling handler
                     setTimeout(() => {
-                      console.log(`🔄 Executing onchange handler for checkbox: ${key}`);
+                      Debug.debug(`🔄 Executing onchange handler for checkbox: ${key}`);
                       const handler = new Function(`return ${onChangeAttr}`);
                       handler.call(field[0]);
                     }, 10);
                   } catch (e) {
-                    console.warn(`⚠️ Failed to execute onchange handler for ${key}:`, e);
+                    Debug.warn(`⚠️ Failed to execute onchange handler for ${key}:`, e);
                   }
                 }
               } else {
@@ -686,7 +686,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             }
           }
         } catch (error) {
-          console.warn(`Error populating field ${key}:`, error);
+          Debug.warn(`Error populating field ${key}:`, error);
         }
       });
       
@@ -695,7 +695,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         this.restoreFileMetadata(data._fileMetadata);
       }
     } catch (error) {
-      console.error('Error populating form from autosave:', error);
+      Debug.error('Error populating form from autosave:', error);
     }
   }
   
@@ -709,11 +709,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     try {
       const fieldId = field.attr('id');
       if (!fieldId) {
-        console.warn('Field ID not found for Quill restoration');
+        Debug.warn('Field ID not found for Quill restoration');
         return;
       }
       
-      console.log(`📝 Attempting to restore Quill content for field: ${fieldId}`);
+      Debug.debug(`📝 Attempting to restore Quill content for field: ${fieldId}`);
       
       // Try multiple methods to find the Quill editor instance
       let quillInstance = null;
@@ -721,7 +721,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       // Method 1: Check if Quill is attached to the field element
       if (field[0].quill) {
         quillInstance = field[0].quill;
-        console.log('✅ Found Quill instance on field element');
+        Debug.debug('✅ Found Quill instance on field element');
       }
       
       // Method 2: Look for global Quill instances
@@ -733,7 +733,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           )
         );
         if (quillInstance) {
-          console.log('✅ Found Quill instance in global instances');
+          Debug.debug('✅ Found Quill instance in global instances');
         }
       }
       
@@ -742,7 +742,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         const quillContainer = $(`#quill-${fieldId}, .quill-${fieldId}`);
         if (quillContainer.length && quillContainer[0].quill) {
           quillInstance = quillContainer[0].quill;
-          console.log('✅ Found Quill instance on container element');
+          Debug.debug('✅ Found Quill instance on container element');
         }
       }
       
@@ -754,9 +754,9 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         // Also set the hidden field value
         field.val(content);
         
-        console.log(`✅ Restored Quill content for ${fieldId}`);
+        Debug.debug(`✅ Restored Quill content for ${fieldId}`);
       } else {
-        console.warn(`❌ Could not find Quill instance for field: ${fieldId}`);
+        Debug.warn(`❌ Could not find Quill instance for field: ${fieldId}`);
         
         // Fallback: set the field value directly
         field.val(content);
@@ -765,17 +765,17 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         const editorContainer = $(`#quill-${fieldId} .ql-editor`);
         if (editorContainer.length) {
           editorContainer.html(content);
-          console.log(`📝 Set content directly in editor container for ${fieldId}`);
+          Debug.debug(`📝 Set content directly in editor container for ${fieldId}`);
         }
       }
     } catch (error) {
-      console.warn(`Error restoring Quill content:`, error);
+      Debug.warn(`Error restoring Quill content:`, error);
       
       // Fallback: just set the field value
       try {
         field.val(content);
       } catch (fallbackError) {
-        console.warn('Fallback field.val() also failed:', fallbackError);
+        Debug.warn('Fallback field.val() also failed:', fallbackError);
       }
     }
   }
@@ -789,27 +789,27 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     try {
       const form = this.formHandler.getForm();
       
-      console.log('📦 File metadata to restore:', fileMetadata);
+      Debug.debug('📦 File metadata to restore:', fileMetadata);
       
       // Check if metadata is empty
       if (!fileMetadata || Object.keys(fileMetadata).length === 0) {
-        console.log('ℹ️ No file metadata found to restore');
+        Debug.debug('ℹ️ No file metadata found to restore');
         return;
       }
       
       // Find all file inputs in the form
       const fileInputs = form.find('input[type="file"]');
-      console.log(`📁 Found ${fileInputs.length} file input(s) in form for potential metadata restoration`);
+      Debug.debug(`📁 Found ${fileInputs.length} file input(s) in form for potential metadata restoration`);
       
       // Process each saved metadata entry
       Object.keys(fileMetadata).forEach(fieldName => {
         const files = fileMetadata[fieldName];
         if (!files || !files.length) {
-          console.log(`⚠️ No files in metadata for field: ${fieldName}`);
+          Debug.debug(`⚠️ No files in metadata for field: ${fieldName}`);
           return;
         }
         
-        console.log(`🔄 Restoring metadata for field: ${fieldName}, ${files.length} file(s)`);
+        Debug.debug(`🔄 Restoring metadata for field: ${fieldName}, ${files.length} file(s)`);
         
         // Find the file input - try multiple approaches for array notation
         // Escape square brackets in field names for CSS selectors
@@ -819,7 +819,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         // If not found by exact name, try finding by ID
         if (!fileInput.length) {
           fileInput = form.find(`#${escapedFieldName}`);
-          console.log(`🔍 Trying to find file input by ID: ${fieldName}`);
+          Debug.debug(`🔍 Trying to find file input by ID: ${fieldName}`);
         }
         
         // If still not found, try to match against all file inputs
@@ -834,14 +834,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
                 inputName.replace(/\[\]/g, '') === fieldName.replace(/\[\]/g, '') ||
                 input.attr('id') === fieldName) {
               fileInput = input;
-              console.log(`🎯 Found matching file input: ${inputName} for key: ${fieldName}`);
+              Debug.debug(`🎯 Found matching file input: ${inputName} for key: ${fieldName}`);
               return false; // Break the each loop
             }
           });
         }
         
         if (!fileInput.length) {
-          console.warn(`❌ Could not find file input for: ${fieldName}`);
+          Debug.warn(`❌ Could not find file input for: ${fieldName}`);
           return;
         }
         
@@ -851,11 +851,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         // If no container found, try the parent element
         if (!fieldContainer.length) {
           fieldContainer = fileInput.parent();
-          console.log(`ℹ️ Using parent element as container for: ${fieldName}`);
+          Debug.debug(`ℹ️ Using parent element as container for: ${fieldName}`);
         }
         
         if (!fieldContainer.length) {
-          console.warn(`❌ Could not find container for file input: ${fieldName}`);
+          Debug.warn(`❌ Could not find container for file input: ${fieldName}`);
           return;
         }
         
@@ -903,11 +903,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         // Add note
         infoArea.append(`<p class="small mb-0 mt-2">${this.getTranslation('autosave.files_auto_remove_info', 'Files will be automatically removed from this list when you select them again.')}</p>`);
         
-        console.log(`✅ Restored metadata for ${files.length} file(s) in field: ${fieldName}`);
+        Debug.debug(`✅ Restored metadata for ${files.length} file(s) in field: ${fieldName}`);
       });
     } catch (error) {
-      console.warn('❌ Error restoring file metadata:', error);
-      console.error(error);
+      Debug.warn('❌ Error restoring file metadata:', error);
+      Debug.error(error);
     }
   }
   
@@ -920,11 +920,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   setupFileChangeListener(fileInput, fieldName, infoArea) {
     const storageKey = this.options.storageKey;
     
-    console.log(`🔧 Setting up file change listener for field: ${fieldName}`);
+    Debug.debug(`🔧 Setting up file change listener for field: ${fieldName}`);
     
     // Check if we already have an autosave listener on this input
     if (fileInput.data('autosave-listener-attached')) {
-      console.log(`⚠️ Autosave listener already attached to ${fieldName}, skipping`);
+      Debug.debug(`⚠️ Autosave listener already attached to ${fieldName}, skipping`);
       return;
     }
     
@@ -932,38 +932,38 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     fileInput.data('autosave-listener-attached', true);
     
     fileInput.on('change.autosave', () => {
-      console.log(`📁 Autosave file input changed for field: ${fieldName}`);
+      Debug.debug(`📁 Autosave file input changed for field: ${fieldName}`);
       
       // Small delay to let other extensions (like FileUploadExtension) process first
       setTimeout(() => {
         const selectedFiles = Array.from(fileInput[0].files || []);
         if (selectedFiles.length === 0) {
-          console.log(`ℹ️ No files selected for ${fieldName}`);
+          Debug.debug(`ℹ️ No files selected for ${fieldName}`);
           return;
         }
         
-        console.log(`📁 User selected ${selectedFiles.length} new file(s) for ${fieldName}:`);
+        Debug.debug(`📁 User selected ${selectedFiles.length} new file(s) for ${fieldName}:`);
         selectedFiles.forEach((file, index) => {
-          console.log(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
+          Debug.debug(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
         });
         
         try {
           const savedData = localStorage.getItem(storageKey);
           if (!savedData) {
-            console.log(`⚠️ No saved data found in localStorage for key: ${storageKey}`);
+            Debug.debug(`⚠️ No saved data found in localStorage for key: ${storageKey}`);
             return;
           }
           
           const data = JSON.parse(savedData);
           if (!data._fileMetadata || !data._fileMetadata[fieldName]) {
-            console.log(`⚠️ No file metadata found for field: ${fieldName}`);
+            Debug.debug(`⚠️ No file metadata found for field: ${fieldName}`);
             return;
           }
           
           const savedFiles = data._fileMetadata[fieldName];
-          console.log(`📦 Found ${savedFiles.length} previously saved files for ${fieldName}:`);
+          Debug.debug(`📦 Found ${savedFiles.length} previously saved files for ${fieldName}:`);
           savedFiles.forEach((file, index) => {
-            console.log(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
+            Debug.debug(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
           });
           
           let removedFiles = [];
@@ -978,14 +978,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             
             if (isReselected) {
               removedFiles.push(savedFile);
-              console.log(`🗑️ Removing previously selected file: ${savedFile.name}`);
+              Debug.debug(`🗑️ Removing previously selected file: ${savedFile.name}`);
             } else {
               remainingFiles.push(savedFile);
-              console.log(`📋 Keeping file in list: ${savedFile.name}`);
+              Debug.debug(`📋 Keeping file in list: ${savedFile.name}`);
             }
           });
           
-          console.log(`📊 Result: ${removedFiles.length} files to remove, ${remainingFiles.length} files to keep`);
+          Debug.debug(`📊 Result: ${removedFiles.length} files to remove, ${remainingFiles.length} files to keep`);
           
           if (removedFiles.length > 0) {
             // Update the saved data
@@ -996,7 +996,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
               // Update the display
               this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
               
-              console.log(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
+              Debug.debug(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
             } else {
               // No files left, remove the entire metadata for this field
               delete data._fileMetadata[fieldName];
@@ -1007,14 +1007,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
                 $(this).remove();
               });
               
-              console.log(`✅ All previously selected files have been re-selected, removing info area`);
+              Debug.debug(`✅ All previously selected files have been re-selected, removing info area`);
             }
           } else {
-            console.log(`ℹ️ No matching files found to remove from the list`);
+            Debug.debug(`ℹ️ No matching files found to remove from the list`);
           }
         } catch (error) {
-          console.warn('❌ Error updating file metadata on file change:', error);
-          console.error(error);
+          Debug.warn('❌ Error updating file metadata on file change:', error);
+          Debug.error(error);
         }
       }, 100); // Small delay to let other extensions process first
     });
@@ -1032,7 +1032,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       const fileList = infoArea.find('ul');
       
       if (fileList.length === 0) {
-        console.warn('File list not found in info area');
+        Debug.warn('File list not found in info area');
         return;
       }
       
@@ -1060,14 +1060,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         fileList.append(`<li><span class="${icon}" aria-hidden="true"></span> ${file.name} <span class="text-muted">(${sizeStr})</span></li>`);
       });
       
-      console.log(`📝 Updated file list display with ${files.length} remaining file(s)`);
+      Debug.debug(`📝 Updated file list display with ${files.length} remaining file(s)`);
     } catch (error) {
-      console.warn('Error updating file metadata display:', error);
+      Debug.warn('Error updating file metadata display:', error);
     }
   }
 
   clearSavedData() {
-    console.log('🗑️ Clearing autosaved data from localStorage');
+    Debug.debug('🗑️ Clearing autosaved data from localStorage');
     localStorage.removeItem(this.options.storageKey);
   }
 
@@ -1112,17 +1112,17 @@ if (typeof FormAutoSaveExtension === 'undefined') {
    */
   removeFileFromMetadata(deletedFile) {
     try {
-      console.log(`🗑️ FormAutoSaveExtension: Removing file from metadata: ${deletedFile.name}`);
+      Debug.debug(`🗑️ FormAutoSaveExtension: Removing file from metadata: ${deletedFile.name}`);
       
       const savedData = localStorage.getItem(this.options.storageKey);
       if (!savedData) {
-        console.log('⚠️ No autosave data found in localStorage');
+        Debug.debug('⚠️ No autosave data found in localStorage');
         return;
       }
       
       const data = JSON.parse(savedData);
       if (!data._fileMetadata) {
-        console.log('⚠️ No file metadata found in autosave data');
+        Debug.debug('⚠️ No file metadata found in autosave data');
         return;
       }
       
@@ -1140,7 +1140,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           // Match by name and size for accuracy
           const isMatch = file.name === deletedFile.name && file.size === deletedFile.size;
           if (isMatch) {
-            console.log(`🎯 Found matching file in field ${fieldName}: ${file.name}`);
+            Debug.debug(`🎯 Found matching file in field ${fieldName}: ${file.name}`);
             filesRemoved++;
           }
           return !isMatch;
@@ -1153,7 +1153,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           // If no files remain in this field, remove the field entirely
           if (data._fileMetadata[fieldName].length === 0) {
             delete data._fileMetadata[fieldName];
-            console.log(`🧹 Removed empty metadata field: ${fieldName}`);
+            Debug.debug(`🧹 Removed empty metadata field: ${fieldName}`);
             
             // Also remove the visual display
             this.removeFileMetadataDisplay(fieldName);
@@ -1167,10 +1167,10 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       // Save the updated data back to localStorage
       localStorage.setItem(this.options.storageKey, JSON.stringify(data));
       
-      console.log(`✅ Removed ${filesRemoved} instance(s) of file "${deletedFile.name}" from ${fieldsUpdated.length} field(s): ${fieldsUpdated.join(', ')}`);
+      Debug.debug(`✅ Removed ${filesRemoved} instance(s) of file "${deletedFile.name}" from ${fieldsUpdated.length} field(s): ${fieldsUpdated.join(', ')}`);
       
     } catch (error) {
-      console.error('❌ Error removing file from autosave metadata:', error);
+      Debug.error('❌ Error removing file from autosave metadata:', error);
     }
   }
 
@@ -1192,12 +1192,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         if (infoArea.length) {
           infoArea.fadeOut(300, function() {
             $(this).remove();
-            console.log(`🗑️ Removed file metadata display for field: ${fieldName}`);
+            Debug.debug(`🗑️ Removed file metadata display for field: ${fieldName}`);
           });
         }
       }
     } catch (error) {
-      console.warn('Error removing file metadata display:', error);
+      Debug.warn('Error removing file metadata display:', error);
     }
   }
 
@@ -1219,11 +1219,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         
         if (infoArea.length && remainingFiles.length > 0) {
           this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
-          console.log(`🔄 Updated file metadata display for field: ${fieldName} with ${remainingFiles.length} remaining file(s)`);
+          Debug.debug(`🔄 Updated file metadata display for field: ${fieldName} with ${remainingFiles.length} remaining file(s)`);
         }
       }
     } catch (error) {
-      console.warn('Error updating existing file metadata display:', error);
+      Debug.warn('Error updating existing file metadata display:', error);
     }
   }
 

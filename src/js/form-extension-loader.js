@@ -60,11 +60,11 @@ class FormExtensionLoader {
       script.src = url;
       script.onload = () => {
         this.loadedDependencies.add(url);
-        console.log(`✅ Loaded dependency: ${url}`);
+        Debug.debug(`✅ Loaded dependency: ${url}`);
         resolve();
       };
       script.onerror = () => {
-        console.error(`❌ Failed to load dependency: ${url}`);
+        Debug.error(`❌ Failed to load dependency: ${url}`);
         reject(new Error(`Failed to load dependency ${url}`));
       };
       document.head.appendChild(script);
@@ -96,7 +96,7 @@ class FormExtensionLoader {
 
     const path = this.extensionPaths[extensionName];
     if (!path) {
-      console.warn(`Unknown extension: ${extensionName}`);
+      Debug.warn(`Unknown extension: ${extensionName}`);
       return Promise.reject(new Error(`Extension ${extensionName} not found`));
     }
 
@@ -105,11 +105,11 @@ class FormExtensionLoader {
       script.src = path;
       script.onload = () => {
         this.loadedExtensions.add(extensionName);
-        console.log(`✅ Loaded extension: ${extensionName}`);
+        Debug.debug(`✅ Loaded extension: ${extensionName}`);
         resolve();
       };
       script.onerror = () => {
-        console.error(`❌ Failed to load extension: ${extensionName}`);
+        Debug.error(`❌ Failed to load extension: ${extensionName}`);
         reject(new Error(`Failed to load ${extensionName}`));
       };
       document.head.appendChild(script);
@@ -143,12 +143,12 @@ class FormExtensionLoader {
         }
       });
       
-      console.log(`🔄 Loading extensions: ${orderedExtensions.join(', ')}`);
+      Debug.debug(`🔄 Loading extensions: ${orderedExtensions.join(', ')}`);
       await this.loadExtensions(orderedExtensions);
     }
 
     const formHandler = new FormHandler(config);
-    console.log(`✅ FormHandler created for form: ${config.formId}`);
+    Debug.debug(`✅ FormHandler created for form: ${config.formId}`);
     return formHandler;
   }
 
@@ -159,7 +159,7 @@ class FormExtensionLoader {
    * @returns {Object} Minimal fallback extension configuration
    */
   getRecommendedExtensions(formType) {
-    console.log(`⚠️ Using fallback preset for ${formType} - consider adding dynamic configuration`);
+    Debug.debug(`⚠️ Using fallback preset for ${formType} - consider adding dynamic configuration`);
     
     // Minimal fallback - all forms get basic accessibility and validation
     const minimalFallback = {
@@ -200,7 +200,7 @@ class FormExtensionLoader {
   async loadFormConfiguration(formId) {
     // Check cache first
     if (this.configurationSources.has(formId)) {
-      console.log(`📋 Using cached configuration for ${formId}`);
+      Debug.debug(`📋 Using cached configuration for ${formId}`);
       return this.configurationSources.get(formId);
     }
 
@@ -210,30 +210,30 @@ class FormExtensionLoader {
     const dataAttrConfig = this.loadConfigFromDataAttributes(formId);
     if (dataAttrConfig && Object.keys(dataAttrConfig).length > 0) {
       config = this.deepMerge(config, dataAttrConfig);
-      console.log(`📋 Loaded configuration from data attributes for ${formId}:`, dataAttrConfig);
+      Debug.debug(`📋 Loaded configuration from data attributes for ${formId}:`, dataAttrConfig);
     }
 
     // 2. Try loading from dedicated JavaScript configuration file
     const jsConfig = await this.loadConfigFromJavaScriptFile(formId);
     if (jsConfig && Object.keys(jsConfig).length > 0) {
       config = this.deepMerge(config, jsConfig);
-      console.log(`📋 Loaded configuration from JavaScript file for ${formId}:`, jsConfig);
+      Debug.debug(`📋 Loaded configuration from JavaScript file for ${formId}:`, jsConfig);
     }
 
     // 3. Check for Twig template configuration (already loaded via window.formConfigs)
     const twigConfig = this.loadConfigFromTwigTemplate(formId);
     if (twigConfig && Object.keys(twigConfig).length > 0) {
       config = this.deepMerge(config, twigConfig);
-      console.log(`📋 Loaded configuration from Twig template for ${formId}:`, twigConfig);
+      Debug.debug(`📋 Loaded configuration from Twig template for ${formId}:`, twigConfig);
     }
 
     // 4. Final fallback to minimal presets if no dynamic configuration found
     if (Object.keys(config).length === 0) {
       config = this.getRecommendedExtensions(formId);
-      console.log(`📋 No dynamic configuration found for ${formId}, using minimal fallback preset`);
-      console.log(`💡 Consider adding a dynamic configuration file at /src/js/config/forms/${formId}.js`);
+      Debug.debug(`📋 No dynamic configuration found for ${formId}, using minimal fallback preset`);
+      Debug.debug(`💡 Consider adding a dynamic configuration file at /src/js/config/forms/${formId}.js`);
     } else {
-      console.log(`✅ Dynamic configuration successfully loaded for ${formId}`);
+      Debug.debug(`✅ Dynamic configuration successfully loaded for ${formId}`);
     }
 
     // Cache the final configuration
@@ -250,7 +250,7 @@ class FormExtensionLoader {
   loadConfigFromDataAttributes(formId) {
     const formElement = document.getElementById(formId);
     if (!formElement) {
-      console.log(`⚠️ Form element with ID "${formId}" not found for data attribute configuration`);
+      Debug.debug(`⚠️ Form element with ID "${formId}" not found for data attribute configuration`);
       return {};
     }
 
@@ -259,7 +259,7 @@ class FormExtensionLoader {
       const configAttr = formElement.getAttribute('data-form-config');
       if (configAttr) {
         const config = JSON.parse(configAttr);
-        console.log(`✅ Found data-form-config attribute for ${formId}`);
+        Debug.debug(`✅ Found data-form-config attribute for ${formId}`);
         return config;
       }
 
@@ -273,9 +273,9 @@ class FormExtensionLoader {
         if (extensionConfig) {
           try {
             config[extensionName] = JSON.parse(extensionConfig);
-            console.log(`✅ Found ${attrName} attribute for ${formId}`);
+            Debug.debug(`✅ Found ${attrName} attribute for ${formId}`);
           } catch (error) {
-            console.warn(`⚠️ Invalid JSON in ${attrName} for ${formId}:`, error);
+            Debug.warn(`⚠️ Invalid JSON in ${attrName} for ${formId}:`, error);
           }
         }
       });
@@ -294,13 +294,13 @@ class FormExtensionLoader {
           const value = formElement.getAttribute(attr);
           config[key] = config[key] || {};
           config[key][prop] = value === 'true' || value === '1';
-          console.log(`✅ Found ${attr} attribute for ${formId}: ${config[key][prop]}`);
+          Debug.debug(`✅ Found ${attr} attribute for ${formId}: ${config[key][prop]}`);
         }
       });
 
       return config;
     } catch (error) {
-      console.error(`❌ Error parsing data attributes for ${formId}:`, error);
+      Debug.error(`❌ Error parsing data attributes for ${formId}:`, error);
       return {};
     }
   }
@@ -319,7 +319,7 @@ class FormExtensionLoader {
 
     for (const path of configPaths) {
       try {
-        console.log(`🔍 Checking for configuration file: ${path}`);
+        Debug.debug(`🔍 Checking for configuration file: ${path}`);
         
         // Try to load the configuration file
         const response = await fetch(path);
@@ -331,13 +331,13 @@ class FormExtensionLoader {
           const config = configFunction(formId, this);
           
           if (config && Object.keys(config).length > 0) {
-            console.log(`✅ Loaded configuration from ${path} for ${formId}`);
+            Debug.debug(`✅ Loaded configuration from ${path} for ${formId}`);
             return config;
           }
         }
       } catch (error) {
         // Silently continue to next path - this is expected behavior
-        console.log(`⚠️ Configuration file not found or invalid: ${path}`);
+        Debug.debug(`⚠️ Configuration file not found or invalid: ${path}`);
       }
     }
 
@@ -418,14 +418,14 @@ class FormExtensionLoader {
     // Apply minimal fallback configuration only if no dynamic configuration exists
     if (Object.keys(dynamicConfig).length === 0) {
       baseConfig.extensions = this.getRecommendedExtensions(formType);
-      console.log(`📋 No dynamic configuration found for ${formId}, using minimal fallback: ${formType}`);
-      console.log(`💡 For better performance and features, consider creating: /src/js/config/forms/${formId}.js`);
+      Debug.debug(`📋 No dynamic configuration found for ${formId}, using minimal fallback: ${formType}`);
+      Debug.debug(`💡 For better performance and features, consider creating: /src/js/config/forms/${formId}.js`);
     } else {
-      console.log(`✅ Using dynamic configuration for ${formId}, found ${Object.keys(dynamicConfig).length} extension configurations`);
+      Debug.debug(`✅ Using dynamic configuration for ${formId}, found ${Object.keys(dynamicConfig).length} extension configurations`);
     }
 
     const config = this.deepMerge(baseConfig, overrides);
-    console.log(`📋 Final configuration for ${formId}:`, config);
+    Debug.debug(`📋 Final configuration for ${formId}:`, config);
     
     return this.createFormHandler(config);
   }
@@ -437,29 +437,29 @@ class FormExtensionLoader {
    * @param {Object} config - Base configuration to modify
    */
   applyFormConfiguration(formId, config) {
-    console.log(`⚠️ applyFormConfiguration() is deprecated. Use loadFormConfiguration() instead.`);
+    Debug.debug(`⚠️ applyFormConfiguration() is deprecated. Use loadFormConfiguration() instead.`);
     
     if (typeof window.formConfigs !== 'undefined' && window.formConfigs[formId]) {
       const formConfig = window.formConfigs[formId];
-      console.log(`📋 Applying legacy form configuration for ${formId}:`, formConfig);
+      Debug.debug(`📋 Applying legacy form configuration for ${formId}:`, formConfig);
 
       // WCAG 3.3.4 Error Prevention: Form Summary
       if (formConfig.form_summary_on_submit === true) {
-        console.log(`✅ Enabling form summary for ${formId} (WCAG 3.3.4)`);
+        Debug.debug(`✅ Enabling form summary for ${formId} (WCAG 3.3.4)`);
         config.extensions.confirmation = config.extensions.confirmation || {};
         config.extensions.confirmation.showSummary = true;
       }
 
       // WCAG 3.3.4 Error Prevention: Confirmation Dialog
       if (formConfig.confirmation_dialog_enabled === true) {
-        console.log(`✅ Enabling confirmation dialog for ${formId} (WCAG 3.3.4)`);
+        Debug.debug(`✅ Enabling confirmation dialog for ${formId} (WCAG 3.3.4)`);
         config.extensions.confirmation = config.extensions.confirmation || {};
         config.extensions.confirmation.showDialog = true;
       }
 
       // Auto-save configuration
       if (formConfig.auto_save_enabled === true) {
-        console.log(`✅ Enabling auto-save for ${formId}`);
+        Debug.debug(`✅ Enabling auto-save for ${formId}`);
         config.extensions.autoSave = config.extensions.autoSave || {};
         config.extensions.autoSave.interval = 30000;
         config.extensions.autoSave.storageKey = `${formId}_autosave`;
@@ -467,13 +467,13 @@ class FormExtensionLoader {
 
       // File upload configuration
       if (formConfig.enable_fileupload === true) {
-        console.log(`✅ Enabling file upload for ${formId}`);
+        Debug.debug(`✅ Enabling file upload for ${formId}`);
         config.extensions.fileUpload = config.extensions.fileUpload || {};
       }
 
-      console.log(`📋 Final extension configuration for ${formId}:`, config.extensions);
+      Debug.debug(`📋 Final extension configuration for ${formId}:`, config.extensions);
     } else {
-      console.log(`⚠️ No form configuration found for ${formId} in window.formConfigs`);
+      Debug.debug(`⚠️ No form configuration found for ${formId} in window.formConfigs`);
     }
   }
 

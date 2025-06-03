@@ -18,12 +18,12 @@ var formHandler = null;
 $(document).ready(function() {
     try {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
-        console.log('🔄 Initializing helpdesk form with clean architecture...');
+        Debug.debug('🔄 Initializing helpdesk form with clean architecture...');
         
         // Initialize FormHandler using extension loader for WCAG 3.3.4 compliance
         const formElement = document.getElementById('helpdesk');
         if (!formElement) {
-            console.error('❌ Form element with ID "helpdesk" not found');
+            Debug.error('❌ Form element with ID "helpdesk" not found');
             return;
         }
         
@@ -31,23 +31,23 @@ $(document).ready(function() {
         if (typeof formExtensionLoader !== 'undefined') {
             formExtensionLoader.quickSetup('helpdesk', 'helpdesk').then(handler => {
                 formHandler = handler;
-                console.log('✅ Helpdesk form initialized with clean architecture');
-                console.log('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
-                console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+                Debug.debug('✅ Helpdesk form initialized with clean architecture');
+                Debug.debug('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
+                Debug.debug('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
                 
                 // Form-specific setup after FormHandler initialization
                 setupHelpdeskSpecificFeatures();
             }).catch(error => {
-                console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+                Debug.error('❌ Failed to initialize FormHandler with extension loader:', error);
                 fallbackToDirectInitialization();
             });
         } else {
-            console.warn('⚠️ FormExtensionLoader not available, using direct initialization');
+            Debug.warn('⚠️ FormExtensionLoader not available, using direct initialization');
             fallbackToDirectInitialization();
         }
         
     } catch (error) {
-        console.error('❌ Failed to initialize clean FormHandler, falling back to legacy:', error);
+        Debug.error('❌ Failed to initialize clean FormHandler, falling back to legacy:', error);
         fallbackToDirectInitialization();
     }
 });
@@ -71,11 +71,11 @@ function fallbackToDirectInitialization() {
             }
         });
         
-        console.log('✅ Helpdesk form initialized with fallback method');
+        Debug.debug('✅ Helpdesk form initialized with fallback method');
         setupHelpdeskSpecificFeatures();
         
     } catch (error) {
-        console.error('❌ Failed to initialize clean FormHandler, falling back to legacy:', error);
+        Debug.error('❌ Failed to initialize clean FormHandler, falling back to legacy:', error);
         
         // Fallback to legacy bloated FormHandler if needed
         if (typeof FormHandler !== 'undefined') {
@@ -177,7 +177,7 @@ window.helpdeskForm = {
         
     // Legacy function compatibility (deprecated but functional)
     markRequiredFields: function() {
-        console.warn('markRequiredFields() is deprecated. Use accessibility extension instead.');
+        Debug.warn('markRequiredFields() is deprecated. Use accessibility extension instead.');
         if (formHandler && formHandler.getExtension) {
             const accessibility = formHandler.getExtension('accessibility');
             if (accessibility && accessibility.markRequiredFields) {
@@ -187,7 +187,7 @@ window.helpdeskForm = {
     },
     
     initializeFileUploader: function() {
-        console.warn('initializeFileUploader() is deprecated. Use fileUpload extension instead.');
+        Debug.warn('initializeFileUploader() is deprecated. Use fileUpload extension instead.');
         if (formHandler && formHandler.getExtension) {
             const fileUpload = formHandler.getExtension('fileUpload');
             if (fileUpload && fileUpload.initialize) {

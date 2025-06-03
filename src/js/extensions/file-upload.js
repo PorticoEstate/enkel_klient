@@ -30,7 +30,7 @@ if (typeof FileUploadExtension === 'undefined') {
     }
     
     this.options = normalizedOptions;
-    console.log('FileUploadExtension: Initialized with options:', this.options);
+    Debug.debug('FileUploadExtension: Initialized with options:', this.options);
     this.init();
   }
   
@@ -44,7 +44,7 @@ if (typeof FileUploadExtension === 'undefined') {
   }
   
   displayAllowedFileTypes() {
-    console.log('FileUploadExtension: Displaying allowed file types in drop area');
+    Debug.debug('FileUploadExtension: Displaying allowed file types in drop area');
     
     // Create a debug info div to show allowed file types
     const allowedTypesInfo = `
@@ -61,7 +61,7 @@ if (typeof FileUploadExtension === 'undefined') {
       // Remove any existing debug info first
       dropArea.find('.file-types-debug').remove();
 //      dropArea.append(allowedTypesInfo);
-      console.log('FileUploadExtension: Added file types debug info to drop area');
+      Debug.debug('FileUploadExtension: Added file types debug info to drop area');
       
       // Also add it to the upload instructions
       const uploadInstructions = dropArea.find('#upload-instructions');
@@ -75,17 +75,17 @@ if (typeof FileUploadExtension === 'undefined') {
         }
       }
     } else {
-      console.warn('FileUploadExtension: Drop area not found for displaying file types');
+      Debug.warn('FileUploadExtension: Drop area not found for displaying file types');
     }
     
     // Also log to console for debugging
-    console.log('=== FileUploadExtension Configuration ===');
-    console.log('Form ID:', this.formHandler.getFormId());
-    console.log('Allowed file types:', this.options.allowedFileTypes);
-    console.log('Max file size:', this.options.maxFileSizeMB + 'MB');
-    console.log('Upload URL:', this.uploadUrl);
-    console.log('Required:', this.options.required);
-    console.log('========================================');
+    Debug.debug('=== FileUploadExtension Configuration ===');
+    Debug.debug('Form ID:', this.formHandler.getFormId());
+    Debug.debug('Allowed file types:', this.options.allowedFileTypes);
+    Debug.debug('Max file size:', this.options.maxFileSizeMB + 'MB');
+    Debug.debug('Upload URL:', this.uploadUrl);
+    Debug.debug('Required:', this.options.required);
+    Debug.debug('========================================');
   }
   
   initFileUploader() {
@@ -93,7 +93,7 @@ if (typeof FileUploadExtension === 'undefined') {
     const fileInput = this.$form.find('input[type="file"]').first();
     
     if (fileInput.length && $.fn.fileupload) {
-      console.log('FileUploadExtension: Initializing jQuery fileupload plugin directly');
+      Debug.debug('FileUploadExtension: Initializing jQuery fileupload plugin directly');
       
       // Initialize the plugin
       fileInput.fileupload({
@@ -121,12 +121,12 @@ if (typeof FileUploadExtension === 'undefined') {
         },
         
         add: (e, data) => {
-          console.log('Files added:', data.files);
+          Debug.debug('Files added:', data.files);
           this.handleFilesAdded(data);
         },
         
         submit: (e, data) => {
-          console.log('File submit:', data.files[0].name);
+          Debug.debug('File submit:', data.files[0].name);
           
           // Update URL for two-phase submission if needed
           if (this.uploadId) {
@@ -151,17 +151,17 @@ if (typeof FileUploadExtension === 'undefined') {
           
           // Announce progress for accessibility
           if (percent % 25 === 0) {
-            console.log(`Upload ${percent}% complete`);
+            Debug.debug(`Upload ${percent}% complete`);
           }
         },
         
         done: (e, data) => {
-          console.log('File upload complete:', data.files[0].name);
+          Debug.debug('File upload complete:', data.files[0].name);
           this.handleUploadComplete(true, data);
         },
         
         fail: (e, data) => {
-          console.log('File upload failed:', data.files[0].name);
+          Debug.debug('File upload failed:', data.files[0].name);
           this.handleUploadComplete(false, data);
         }
       });
@@ -170,7 +170,7 @@ if (typeof FileUploadExtension === 'undefined') {
       this.setupDropZoneEvents();
       
     } else {
-      console.warn('FileUploadExtension: jQuery fileupload plugin not available');
+      Debug.warn('FileUploadExtension: jQuery fileupload plugin not available');
     }
     
     // Ensure file-select-btn works (fallback if neither method handles it)
@@ -183,7 +183,7 @@ if (typeof FileUploadExtension === 'undefined') {
   // Add methods for two-phase submission compatibility
   sendAllFiles(uploadId) {
     this.uploadId = uploadId;
-    console.log('FileUploadExtension: Starting upload for ID:', uploadId);
+    Debug.debug('FileUploadExtension: Starting upload for ID:', uploadId);
     
     // Trigger all pending uploads
     this.$form.find('.file-item').each((index, item) => {
@@ -191,7 +191,7 @@ if (typeof FileUploadExtension === 'undefined') {
       const uploadData = $item.data('uploadData');
       
       if (uploadData && !$item.hasClass('done')) {
-        console.log('Submitting file:', uploadData.files[0]?.name);
+        Debug.debug('Submitting file:', uploadData.files[0]?.name);
         uploadData.submit();
       }
     });
@@ -213,14 +213,14 @@ if (typeof FileUploadExtension === 'undefined') {
   handleFilesAdded(data) {
     // Add each file to the display queue
     const files = Array.from(data.files);
-    console.log('FileUploadExtension: Processing files:', files);
+    Debug.debug('FileUploadExtension: Processing files:', files);
     
     files.forEach((file, index) => {
-      console.log(`FileUploadExtension: Validating file ${file.name} (${file.size} bytes)`);
+      Debug.debug(`FileUploadExtension: Validating file ${file.name} (${file.size} bytes)`);
       
       // Check for duplicates first
       if (this.isDuplicateFile(file)) {
-        console.log(`FileUploadExtension: File ${file.name} is a duplicate, skipping`);
+        Debug.debug(`FileUploadExtension: File ${file.name} is a duplicate, skipping`);
         const message = this.getTranslation('file_upload.file_duplicate', 'File "{filename}" is already in the upload queue. Please select a different file or remove the existing one first.')
           .replace('{filename}', `<strong>${file.name}</strong>`);
         this.showError(`⚠️ ${message}`);
@@ -229,24 +229,24 @@ if (typeof FileUploadExtension === 'undefined') {
       
       // Continue with validation
       if (this.validateFile(file)) {
-        console.log(`FileUploadExtension: File ${file.name} passed validation, adding to queue`);
+        Debug.debug(`FileUploadExtension: File ${file.name} passed validation, adding to queue`);
         this.addFileToQueue(file, data);
         this.updateFileCount();
       } else {
-        console.log(`FileUploadExtension: File ${file.name} failed validation`);
+        Debug.debug(`FileUploadExtension: File ${file.name} failed validation`);
       }
     });
   }
   
   validateFile(file) {
-    console.log(`FileUploadExtension: Validating file ${file.name}`);
-    console.log(`FileUploadExtension: File size: ${file.size} bytes (max: ${this.options.maxFileSizeMB * 1024 * 1024})`);
-    console.log(`FileUploadExtension: Allowed types configured: ${JSON.stringify(this.options.allowedFileTypes)}`);
+    Debug.debug(`FileUploadExtension: Validating file ${file.name}`);
+    Debug.debug(`FileUploadExtension: File size: ${file.size} bytes (max: ${this.options.maxFileSizeMB * 1024 * 1024})`);
+    Debug.debug(`FileUploadExtension: Allowed types configured: ${JSON.stringify(this.options.allowedFileTypes)}`);
     
     // Check file size first
     if (file.size > this.options.maxFileSizeMB * 1024 * 1024) {
       const actualSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      console.error(`FileUploadExtension: File ${file.name} is too large`);
+      Debug.error(`FileUploadExtension: File ${file.name} is too large`);
       const message = this.getTranslation('file_upload.file_too_large', 'File "{filename}" is too large ({actualSize}MB). Maximum allowed size is {maxSize}MB. Please choose a smaller file or compress it.')
         .replace('{filename}', `<strong>${file.name}</strong>`)
         .replace('{actualSize}', `<strong>${actualSizeMB}</strong>`)
@@ -257,7 +257,7 @@ if (typeof FileUploadExtension === 'undefined') {
     
     // Check if file is empty
     if (file.size === 0) {
-      console.error(`FileUploadExtension: File ${file.name} is empty`);
+      Debug.error(`FileUploadExtension: File ${file.name} is empty`);
       const message = this.getTranslation('file_upload.file_empty', 'File "{filename}" is empty (0 bytes). Please select a valid file with content.')
         .replace('{filename}', `<strong>${file.name}</strong>`);
       this.showError(`❌ ${message}`);
@@ -266,7 +266,7 @@ if (typeof FileUploadExtension === 'undefined') {
     
     // Check if file is suspiciously small (less than 10 bytes)
     if (file.size < 10) {
-      console.warn(`FileUploadExtension: File ${file.name} is very small`);
+      Debug.warn(`FileUploadExtension: File ${file.name} is very small`);
       const message = this.getTranslation('file_upload.file_too_small', 'File "{filename}" seems unusually small ({size} bytes). Please verify this is a valid file.')
         .replace('{filename}', `<strong>${file.name}</strong>`)
         .replace('{size}', file.size);
@@ -279,14 +279,14 @@ if (typeof FileUploadExtension === 'undefined') {
     const allowedTypes = this.options.allowedFileTypes.map(type => type.toLowerCase().replace('.', ''));
     const fileExt = fileName.split('.').pop();
     
-    console.log(`FileUploadExtension: File name: "${fileName}"`);
-    console.log(`FileUploadExtension: File extension extracted: "${fileExt}"`);
-    console.log(`FileUploadExtension: Processed allowed extensions: ${JSON.stringify(allowedTypes)}`);
-    console.log(`FileUploadExtension: Extension check - "${fileExt}" in [${allowedTypes.join(', ')}]: ${allowedTypes.includes(fileExt)}`);
+    Debug.debug(`FileUploadExtension: File name: "${fileName}"`);
+    Debug.debug(`FileUploadExtension: File extension extracted: "${fileExt}"`);
+    Debug.debug(`FileUploadExtension: Processed allowed extensions: ${JSON.stringify(allowedTypes)}`);
+    Debug.debug(`FileUploadExtension: Extension check - "${fileExt}" in [${allowedTypes.join(', ')}]: ${allowedTypes.includes(fileExt)}`);
     
     // Check if file has an extension
     if (!fileExt || fileExt === fileName || !fileName.includes('.')) {
-      console.error(`FileUploadExtension: File ${file.name} has no extension`);
+      Debug.error(`FileUploadExtension: File ${file.name} has no extension`);
       const message = this.getTranslation('file_upload.file_no_extension', 'File "{filename}" has no file extension. Please ensure your file has a valid extension like: {allowedTypes}')
         .replace('{filename}', `<strong>${file.name}</strong>`)
         .replace('{allowedTypes}', `<strong>${this.options.allowedFileTypes.join(', ')}</strong>`);
@@ -296,7 +296,7 @@ if (typeof FileUploadExtension === 'undefined') {
     
     // Check if extension is allowed
     if (allowedTypes.length && !allowedTypes.includes(fileExt)) {
-      console.error(`FileUploadExtension: File type .${fileExt} is not allowed`);
+      Debug.error(`FileUploadExtension: File type .${fileExt} is not allowed`);
       const message = this.getTranslation('file_upload.file_type_not_supported', 'File type "{fileType}" is not supported for "{filename}". Please choose a file with one of these extensions: {allowedTypes}')
         .replace('{fileType}', `<strong>.${fileExt}</strong>`)
         .replace('{filename}', `<strong>${file.name}</strong>`)
@@ -308,7 +308,7 @@ if (typeof FileUploadExtension === 'undefined') {
     // Additional security check for dangerous extensions
     const dangerousExtensions = ['exe', 'bat', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar', 'ps1'];
     if (dangerousExtensions.includes(fileExt)) {
-      console.error(`FileUploadExtension: File ${file.name} has dangerous extension`);
+      Debug.error(`FileUploadExtension: File ${file.name} has dangerous extension`);
       const message = this.getTranslation('file_upload.file_dangerous_type', 'File "{filename}" has a potentially dangerous file type ({fileType}) and cannot be uploaded for security reasons.')
         .replace('{filename}', `<strong>${file.name}</strong>`)
         .replace('{fileType}', `<strong>.${fileExt}</strong>`);
@@ -316,7 +316,7 @@ if (typeof FileUploadExtension === 'undefined') {
       return false;
     }
     
-    console.log(`FileUploadExtension: File ${file.name} passed validation`);
+    Debug.debug(`FileUploadExtension: File ${file.name} passed validation`);
     return true;
   }
   
@@ -332,17 +332,17 @@ if (typeof FileUploadExtension === 'undefined') {
       // by extracting the size from the .file-size element, but name comparison
       // is usually sufficient for user experience
       if (existingFileName === file.name) {
-        console.log(`FileUploadExtension: Duplicate file detected: ${file.name}`);
+        Debug.debug(`FileUploadExtension: Duplicate file detected: ${file.name}`);
         return true;
       }
     }
     
-    console.log(`FileUploadExtension: File ${file.name} is not a duplicate`);
+    Debug.debug(`FileUploadExtension: File ${file.name} is not a duplicate`);
     return false;
   }
   
   addFileToQueue(file, data) {
-    console.log(`FileUploadExtension: Adding file ${file.name} to queue`);
+    Debug.debug(`FileUploadExtension: Adding file ${file.name} to queue`);
     const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     
     const fileItem = $(`
@@ -362,17 +362,17 @@ if (typeof FileUploadExtension === 'undefined') {
     
     // Add to the files display area
     const filesContainer = this.$form.find('.presentation.files');
-    console.log(`FileUploadExtension: Looking for files container: ${filesContainer.length} found`);
+    Debug.debug(`FileUploadExtension: Looking for files container: ${filesContainer.length} found`);
     
     if (filesContainer.length) {
-      console.log('FileUploadExtension: Adding to .presentation.files container');
+      Debug.debug('FileUploadExtension: Adding to .presentation.files container');
       filesContainer.append(fileItem);
     } else {
       // Fallback: create a simple files list
-      console.log('FileUploadExtension: .presentation.files not found, creating fallback list');
+      Debug.debug('FileUploadExtension: .presentation.files not found, creating fallback list');
       let filesList = this.$form.find('.uploaded-files-list');
       if (!filesList.length) {
-        console.log('FileUploadExtension: Creating new .uploaded-files-list');
+        Debug.debug('FileUploadExtension: Creating new .uploaded-files-list');
         filesList = $('<div class="uploaded-files-list"></div>');
         this.$form.find('#drop-area').after(filesList);
       }
@@ -383,7 +383,7 @@ if (typeof FileUploadExtension === 'undefined') {
     fileItem.find('.delete').on('click', () => {
       // Mark as deleted before removing to ensure counting methods see the change
       fileItem.addClass('deleted');
-      console.log(`FileUploadExtension: Marked file ${file.name} as deleted`);
+      Debug.debug(`FileUploadExtension: Marked file ${file.name} as deleted`);
       
       // Update count first while the element still exists but is marked as deleted
       this.updateFileCount();
@@ -400,12 +400,12 @@ if (typeof FileUploadExtension === 'undefined') {
         const fileInput = this.$form.find('input[type="file"]');
         if (fileInput.length) {
           fileInput.val(''); // Clear the file input
-          console.log('FileUploadExtension: Cleared file input after deleting all files');
+          Debug.debug('FileUploadExtension: Cleared file input after deleting all files');
         }
       }
     });
     
-    console.log(`FileUploadExtension: File ${file.name} added to queue with ID ${fileId}`);
+    Debug.debug(`FileUploadExtension: File ${file.name} added to queue with ID ${fileId}`);
   }
   
   updateFileCount() {
@@ -414,7 +414,7 @@ if (typeof FileUploadExtension === 'undefined') {
     if (counter.length) {
       counter.text(fileCount);
     }
-    console.log(`File count updated: ${fileCount}`);
+    Debug.debug(`File count updated: ${fileCount}`);
   }
   
   formatFileSize(bytes) {
@@ -459,11 +459,11 @@ if (typeof FileUploadExtension === 'undefined') {
         flashError.fadeOut(300, () => flashError.remove());
       }, 5000);
     } else {
-      console.warn('FileUploadExtension: Drop area not found for error display');
+      Debug.warn('FileUploadExtension: Drop area not found for error display');
     }
     
-    console.error('FileUploadExtension Error:', message);
-    console.error('Error details:', {
+    Debug.error('FileUploadExtension Error:', message);
+    Debug.error('Error details:', {
       timestamp: new Date().toISOString(),
       formId: this.formHandler.getFormId(),
       allowedTypes: this.options.allowedFileTypes,
@@ -472,42 +472,42 @@ if (typeof FileUploadExtension === 'undefined') {
   }
   
   setupFileSelectButton() {
-    console.log('FileUploadExtension: Setting up file select button');
+    Debug.debug('FileUploadExtension: Setting up file select button');
     
     const fileInput = this.$form.find('input[type="file"]').first();
     const fileSelectBtn = this.$form.find('.file-select-btn, #file-select-btn');
     
-    console.log('FileUploadExtension: File input found:', fileInput.length);
-    console.log('FileUploadExtension: File select button found:', fileSelectBtn.length);
-    console.log('FileUploadExtension: Button element type:', fileSelectBtn.prop('tagName'));
-    console.log('FileUploadExtension: Button is label?', fileSelectBtn.is('label'));
+    Debug.debug('FileUploadExtension: File input found:', fileInput.length);
+    Debug.debug('FileUploadExtension: File select button found:', fileSelectBtn.length);
+    Debug.debug('FileUploadExtension: Button element type:', fileSelectBtn.prop('tagName'));
+    Debug.debug('FileUploadExtension: Button is label?', fileSelectBtn.is('label'));
     
     // Debug file input properties
     if (fileInput.length > 0) {
       const input = fileInput[0];
-      console.log('FileUploadExtension: File input ID:', input.id);
-      console.log('FileUploadExtension: File input name:', input.name);
-      console.log('FileUploadExtension: File input type:', input.type);
-      console.log('FileUploadExtension: File input disabled:', input.disabled);
-      console.log('FileUploadExtension: File input style.display:', input.style.display);
-      console.log('FileUploadExtension: File input style.visibility:', input.style.visibility);
-      console.log('FileUploadExtension: File input offsetWidth:', input.offsetWidth);
-      console.log('FileUploadExtension: File input offsetHeight:', input.offsetHeight);
+      Debug.debug('FileUploadExtension: File input ID:', input.id);
+      Debug.debug('FileUploadExtension: File input name:', input.name);
+      Debug.debug('FileUploadExtension: File input type:', input.type);
+      Debug.debug('FileUploadExtension: File input disabled:', input.disabled);
+      Debug.debug('FileUploadExtension: File input style.display:', input.style.display);
+      Debug.debug('FileUploadExtension: File input style.visibility:', input.style.visibility);
+      Debug.debug('FileUploadExtension: File input offsetWidth:', input.offsetWidth);
+      Debug.debug('FileUploadExtension: File input offsetHeight:', input.offsetHeight);
     }
     
     if (fileInput.length === 0 || fileSelectBtn.length === 0) {
-      console.warn('FileUploadExtension: File select button or file input not found');
+      Debug.warn('FileUploadExtension: File select button or file input not found');
       return;
     }
     
     // Check if the button is already a label (old template approach)
     if (fileSelectBtn.is('label')) {
-      console.log('FileUploadExtension: ✅ Using label approach - direct file selection enabled');
+      Debug.debug('FileUploadExtension: ✅ Using label approach - direct file selection enabled');
       
       // Add keyboard support for the label (Enter/Space)
       fileSelectBtn.on('keydown.fileUploadExt', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          console.log('FileUploadExtension: Label activated via keyboard');
+          Debug.debug('FileUploadExtension: Label activated via keyboard');
           e.preventDefault();
           // For label elements, clicking the label will automatically trigger the input
           fileSelectBtn[0].click();
@@ -516,20 +516,20 @@ if (typeof FileUploadExtension === 'undefined') {
       
     } else {
       // Button approach (recommended for accessibility - no duplicate labels)
-      console.log('FileUploadExtension: ✅ Using button approach (WCAG compliant)');
+      Debug.debug('FileUploadExtension: ✅ Using button approach (WCAG compliant)');
       
       // Remove any existing handlers first to avoid duplicates
       fileSelectBtn.off('.fileUploadExt');
       
       // Simple, direct approach - this should work in all modern browsers
       fileSelectBtn.on('click.fileUploadExt', (e) => {
-        console.log('FileUploadExtension: File select button clicked');
+        Debug.debug('FileUploadExtension: File select button clicked');
         e.preventDefault();
         e.stopPropagation();
         
         const input = fileInput[0];
         if (input) {
-          console.log('FileUploadExtension: Triggering file input click...');
+          Debug.debug('FileUploadExtension: Triggering file input click...');
           
           // Ensure input is enabled and not hidden by display:none
           input.disabled = false;
@@ -538,16 +538,16 @@ if (typeof FileUploadExtension === 'undefined') {
           // Direct click - this is the most reliable method
           input.click();
           
-          console.log('FileUploadExtension: ✅ File input click triggered');
+          Debug.debug('FileUploadExtension: ✅ File input click triggered');
         } else {
-          console.error('FileUploadExtension: File input element not found');
+          Debug.error('FileUploadExtension: File input element not found');
         }
       });
       
       // Add keyboard handler - simply trigger the button click
       fileSelectBtn.on('keydown.fileUploadExt', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          console.log('FileUploadExtension: File select button activated via keyboard:', e.key);
+          Debug.debug('FileUploadExtension: File select button activated via keyboard:', e.key);
           e.preventDefault();
           e.stopPropagation();
           
@@ -558,11 +558,11 @@ if (typeof FileUploadExtension === 'undefined') {
       
       // Add focus/blur handlers for better UX
       fileSelectBtn.on('focus.fileUploadExt', () => {
-        console.log('FileUploadExtension: File select button focused');
+        Debug.debug('FileUploadExtension: File select button focused');
       });
       
       fileSelectBtn.on('blur.fileUploadExt', () => {
-        console.log('FileUploadExtension: File select button blurred');
+        Debug.debug('FileUploadExtension: File select button blurred');
       });
     }
     
@@ -571,13 +571,13 @@ if (typeof FileUploadExtension === 'undefined') {
     fileInput.off('change.fileUploadExt');
     
     fileInput.on('change.fileUploadExt', (e) => {
-      console.log('FileUploadExtension: File input change event triggered');
-      console.log('FileUploadExtension: Number of files selected:', e.target.files ? e.target.files.length : 0);
+      Debug.debug('FileUploadExtension: File input change event triggered');
+      Debug.debug('FileUploadExtension: Number of files selected:', e.target.files ? e.target.files.length : 0);
       
       if (e.target.files && e.target.files.length > 0) {
-        console.log('FileUploadExtension: ✅ File selection successful!');
+        Debug.debug('FileUploadExtension: ✅ File selection successful!');
         for (let i = 0; i < e.target.files.length; i++) {
-          console.log(`FileUploadExtension: File ${i + 1}:`, e.target.files[i].name, `(${e.target.files[i].size} bytes)`);
+          Debug.debug(`FileUploadExtension: File ${i + 1}:`, e.target.files[i].name, `(${e.target.files[i].size} bytes)`);
         }
         
         // Trigger the jQuery fileupload add event manually if needed
@@ -591,20 +591,20 @@ if (typeof FileUploadExtension === 'undefined') {
           // Check if jQuery fileupload is handling this automatically
           const fileuploadData = fileInput.data('blueimp-fileupload');
           if (fileuploadData) {
-            console.log('FileUploadExtension: jQuery fileupload plugin will handle the files automatically');
+            Debug.debug('FileUploadExtension: jQuery fileupload plugin will handle the files automatically');
           } else {
-            console.log('FileUploadExtension: Manually processing files through validation');
+            Debug.debug('FileUploadExtension: Manually processing files through validation');
             this.handleFilesAdded(data);
           }
         } catch (error) {
-          console.error('FileUploadExtension: Error processing selected files:', error);
+          Debug.error('FileUploadExtension: Error processing selected files:', error);
         }
       } else {
-        console.log('FileUploadExtension: No files selected or files array is empty');
+        Debug.debug('FileUploadExtension: No files selected or files array is empty');
       }
     });
     
-    console.log('FileUploadExtension: File select button setup complete');
+    Debug.debug('FileUploadExtension: File select button setup complete');
   }
   
   setupDropZoneEvents() {
@@ -612,27 +612,27 @@ if (typeof FileUploadExtension === 'undefined') {
     const fileInput = this.$form.find('input[type="file"]').first();
     
     if (dropArea.length === 0) {
-      console.warn('FileUploadExtension: Drop area not found');
+      Debug.warn('FileUploadExtension: Drop area not found');
       return;
     }
     
-    console.log('FileUploadExtension: Setting up drop zone events');
+    Debug.debug('FileUploadExtension: Setting up drop zone events');
     
     // Wait for the jQuery fileupload plugin to be fully initialized
     setTimeout(() => {
       const fileuploadData = fileInput.data('blueimp-fileupload');
       
       if (fileuploadData) {
-        console.log('FileUploadExtension: jQuery fileupload plugin detected, ensuring drop zone connection');
+        Debug.debug('FileUploadExtension: jQuery fileupload plugin detected, ensuring drop zone connection');
         
         try {
           fileInput.fileupload('option', 'dropZone', dropArea);
-          console.log('FileUploadExtension: Drop zone connection verified');
+          Debug.debug('FileUploadExtension: Drop zone connection verified');
         } catch (error) {
-          console.error('FileUploadExtension: Error setting drop zone option:', error);
+          Debug.error('FileUploadExtension: Error setting drop zone option:', error);
         }
       } else {
-        console.warn('FileUploadExtension: jQuery fileupload plugin not fully initialized yet');
+        Debug.warn('FileUploadExtension: jQuery fileupload plugin not fully initialized yet');
       }
     }, 100);
     
@@ -648,22 +648,22 @@ if (typeof FileUploadExtension === 'undefined') {
     dropArea.on('dragover.fileUploadExt dragenter.fileUploadExt', (e) => {
       e.preventDefault();
       dropArea.addClass('is-dragover');
-      console.log('FileUploadExtension: Dragover detected, added is-dragover class');
+      Debug.debug('FileUploadExtension: Dragover detected, added is-dragover class');
     });
     
     // Handle dragleave/dragend for visual feedback ONLY
     dropArea.on('dragleave.fileUploadExt dragend.fileUploadExt', (e) => {
       e.preventDefault();
       dropArea.removeClass('is-dragover');
-      console.log('FileUploadExtension: Dragleave detected, removed is-dragover class');
+      Debug.debug('FileUploadExtension: Dragleave detected, removed is-dragover class');
     });
     
     // For drop event, ONLY handle visual feedback - let jQuery fileupload handle the files
     dropArea.on('drop.fileUploadExt', (e) => {
-      console.log('FileUploadExtension: Drop event detected in drop area');
+      Debug.debug('FileUploadExtension: Drop event detected in drop area');
       dropArea.removeClass('is-dragover');
       // Do NOT prevent default or stop propagation - let jQuery fileupload handle the files
-      console.log('FileUploadExtension: Removed visual feedback, letting plugin handle files');
+      Debug.debug('FileUploadExtension: Removed visual feedback, letting plugin handle files');
     });
     
     // Set up keyboard accessibility
@@ -672,14 +672,14 @@ if (typeof FileUploadExtension === 'undefined') {
       if (e.altKey && e.key === 'd') {
         e.preventDefault();
         dropArea.focus();
-        console.log('FileUploadExtension: Drop zone activated via Alt+D');
+        Debug.debug('FileUploadExtension: Drop zone activated via Alt+D');
       }
       
       // Escape exits drop zone focus
       if (e.key === 'Escape' && document.activeElement === dropArea[0]) {
         e.preventDefault();
         this.$form.find('#file-select-btn, .file-select-btn').first().focus();
-        console.log('FileUploadExtension: Exited drop zone via Escape');
+        Debug.debug('FileUploadExtension: Exited drop zone via Escape');
       }
     });
     
@@ -687,29 +687,29 @@ if (typeof FileUploadExtension === 'undefined') {
     // Only add click handler if we're not using a label-based file selection
     const fileSelectBtn = this.$form.find('.file-select-btn, #file-select-btn');
     if (!fileSelectBtn.is('label')) {
-      console.log('FileUploadExtension: Adding drop area click handler');
+      Debug.debug('FileUploadExtension: Adding drop area click handler');
       dropArea.on('click.fileUploadExt keydown.fileUploadExt', (e) => {
         // Only trigger if the click/keydown is directly on the drop area, not on child elements
         if (e.target === dropArea[0] || $(e.target).is('#upload-instructions')) {
           if (e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('FileUploadExtension: Drop area activated, triggering file select');
+            Debug.debug('FileUploadExtension: Drop area activated, triggering file select');
             
             try {
               const input = fileInput[0];
               if (input && typeof input.click === 'function') {
                 input.click();
-                console.log('FileUploadExtension: ✅ File input triggered from drop area');
+                Debug.debug('FileUploadExtension: ✅ File input triggered from drop area');
               }
             } catch (error) {
-              console.error('FileUploadExtension: Error triggering file input from drop area:', error);
+              Debug.error('FileUploadExtension: Error triggering file input from drop area:', error);
             }
           }
         }
       });
     } else {
-      console.log('FileUploadExtension: Skipping drop area click handler (using label approach)');
+      Debug.debug('FileUploadExtension: Skipping drop area click handler (using label approach)');
     }
   }
   
@@ -770,7 +770,7 @@ if (typeof FileUploadExtension === 'undefined') {
     this.$form.find('#drop-area').off('.fileUploadExt');
     this.$form.find('#file-select-btn, .file-select-btn').off('.fileUploadExt');
     $(document).off('keydown.fileUploadExtDropArea');
-    console.log('FileUploadExtension: Cleaned up event handlers');
+    Debug.debug('FileUploadExtension: Cleaned up event handlers');
   }
 
   setRequired(required) {
@@ -794,7 +794,7 @@ if (typeof FileUploadExtension === 'undefined') {
     try {
       // Check if translations object exists
       if (typeof window.translations === 'undefined') {
-        console.warn('FileUploadExtension: No translations object found, using fallback');
+        Debug.warn('FileUploadExtension: No translations object found, using fallback');
         return fallback;
       }
 
@@ -806,7 +806,7 @@ if (typeof FileUploadExtension === 'undefined') {
         if (current && current.hasOwnProperty(keyPart)) {
           current = current[keyPart];
         } else {
-          console.warn(`FileUploadExtension: Translation key '${key}' not found, using fallback`);
+          Debug.warn(`FileUploadExtension: Translation key '${key}' not found, using fallback`);
           return fallback;
         }
       }
@@ -814,7 +814,7 @@ if (typeof FileUploadExtension === 'undefined') {
       // Return the found translation or fallback if it's not a string
       return (typeof current === 'string' && current.trim() !== '') ? current : fallback;
     } catch (error) {
-      console.error('FileUploadExtension: Error getting translation for key:', key, error);
+      Debug.error('FileUploadExtension: Error getting translation for key:', key, error);
       return fallback;
     }
   }
@@ -824,13 +824,13 @@ if (typeof FileUploadExtension === 'undefined') {
       // Get the autosave extension
       const autosaveExtension = this.formHandler.getExtension('autoSave');
       if (autosaveExtension && typeof autosaveExtension.removeFileFromMetadata === 'function') {
-        console.log(`FileUploadExtension: Notifying autosave about deleted file: ${file.name}`);
+        Debug.debug(`FileUploadExtension: Notifying autosave about deleted file: ${file.name}`);
         autosaveExtension.removeFileFromMetadata(file);
       } else {
-        console.log('FileUploadExtension: Autosave extension not found or removeFileFromMetadata method not available');
+        Debug.debug('FileUploadExtension: Autosave extension not found or removeFileFromMetadata method not available');
       }
     } catch (error) {
-      console.warn('FileUploadExtension: Error notifying autosave about file deletion:', error);
+      Debug.warn('FileUploadExtension: Error notifying autosave about file deletion:', error);
     }
   }
   }

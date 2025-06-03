@@ -7,7 +7,7 @@
  */
 
 function getFormConfig(formId) {
-    console.log(`🔧 Loading dynamic configuration for ${formId}`);
+    Debug.debug(`🔧 Loading dynamic configuration for ${formId}`);
     
     return {
         // File upload configuration

@@ -12,12 +12,12 @@ const autoCompleteJS = new autoComplete({
 					document
 						.getElementById("location_name")
 						.setAttribute("placeholder", "Loading...");
-					console.log("Fetching locations");
+					Debug.debug("Fetching locations");
 
 					// Use the schema variable to determine the right endpoint
 					// schema is defined in each template (nokkelbestilling, helpdesk, etc.)
 					const endpoint = schema ? `/${schema}/locations` : '/locations';
-					console.log(`${strBaseURL}${endpoint}?query=${encodeURIComponent(query)}`);
+					Debug.debug(`${strBaseURL}${endpoint}?query=${encodeURIComponent(query)}`);
 
 					// Fetch External Data Source using new controller endpoint
 					const response = await fetch(`${strBaseURL}${endpoint}?query=${encodeURIComponent(query)}`, {
@@ -43,7 +43,7 @@ const autoCompleteJS = new autoComplete({
 					return data;
 				} catch (error)
 				{
-					console.error('Error fetching locations:', error);
+					Debug.error('Error fetching locations:', error);
 					return [];
 				}
 			}

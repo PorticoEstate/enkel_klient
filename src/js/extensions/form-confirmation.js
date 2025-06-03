@@ -56,17 +56,17 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const validationExtension = this.formHandler.getExtension('validation');
     if (validationExtension && typeof validationExtension.isValid === 'function') {
       const isValid = validationExtension.isValid();
-      console.log('🔍 Confirmation extension: Form validation result:', isValid);
+      Debug.debug('🔍 Confirmation extension: Form validation result:', isValid);
       
       if (!isValid) {
-        console.log('❌ Confirmation extension: Form has validation errors, not showing summary');
+        Debug.debug('❌ Confirmation extension: Form has validation errors, not showing summary');
         // Let validation extension handle error display
         return false; // Block submission due to validation errors
       }
     }
     
     // Form is valid, proceed with confirmation logic
-    console.log('✅ Confirmation extension: Form is valid, proceeding with confirmation');
+    Debug.debug('✅ Confirmation extension: Form is valid, proceeding with confirmation');
     this.formData = this.collectFormData();
     
     // Check if form has files that need two-phase submission
@@ -74,7 +74,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     
     // Always show form summary for review when using confirmation or when there are files
     if (this.options.showSummary || hasFiles) {
-      console.log('Showing form summary for review before submission');
+      Debug.debug('Showing form summary for review before submission');
       this.showFormSummary();
       return false; // Prevent normal submission, we'll handle it in the modal
     }
@@ -97,7 +97,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const fileCount = this.getFileCount();
     const hasFilesToUpload = fileCount > 0;
     
-    console.log('shouldUseTwoPhaseSubmission check:', {
+    Debug.debug('shouldUseTwoPhaseSubmission check:', {
       hasFileInputs,
       hasFileUploader,
       fileCount,
@@ -115,7 +115,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       try {
         return fileUploadExt.getFileCount();
       } catch (e) {
-        console.warn('Error getting file count from FileUploadExtension:', e);
+        Debug.warn('Error getting file count from FileUploadExtension:', e);
       }
     }
     
@@ -124,7 +124,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       try {
         return window.fileUploaderInstance.getPendingCount();
       } catch (e) {
-        console.warn('Error getting file count from FileUploader:', e);
+        Debug.warn('Error getting file count from FileUploader:', e);
       }
     }
     
@@ -656,7 +656,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
           const $quillEditor = this.$form.find(`#${quillEditorId}`);
           
           if ($quillEditor.length) {
-            console.log(`Found Quill editor for textarea ${fieldId}, targeting editor container`);
+            Debug.debug(`Found Quill editor for textarea ${fieldId}, targeting editor container`);
             $targetElement = $quillEditor;
             
             // Also try to focus the Quill instance directly
@@ -664,9 +664,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
               setTimeout(() => {
                 try {
                   window.quillInstances[fieldId].focus();
-                  console.log(`Focused Quill editor instance for ${fieldId}`);
+                  Debug.debug(`Focused Quill editor instance for ${fieldId}`);
                 } catch (e) {
-                  console.warn(`Could not focus Quill editor for ${fieldId}:`, e);
+                  Debug.warn(`Could not focus Quill editor for ${fieldId}:`, e);
                 }
               }, 700);
             }
@@ -675,7 +675,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
             const $editorContainer = this.$form.find(`[data-quill-id="${fieldId}"], .ql-container[data-field-id="${fieldId}"]`).first();
             
             if ($editorContainer.length) {
-              console.log(`Found rich text editor container for textarea ${fieldId}`);
+              Debug.debug(`Found rich text editor container for textarea ${fieldId}`);
               $targetElement = $editorContainer;
             }
           }
@@ -695,7 +695,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
             const $editor = $targetElement.find('.ql-editor').first();
             if ($editor.length) {
               $editor.focus();
-              console.log(`Focused Quill editor content area for ${fieldName}`);
+              Debug.debug(`Focused Quill editor content area for ${fieldName}`);
             } else {
               $targetElement.focus();
             }
@@ -711,7 +711,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
           }, 2000);
         }, 600);
       } else {
-        console.warn(`Field not found: ${fieldName} (ID: ${fieldId})`);
+        Debug.warn(`Field not found: ${fieldName} (ID: ${fieldId})`);
       }
     });
     
@@ -845,7 +845,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       }, 1500);
       
     } catch (error) {
-      console.error('Form submission failed:', error);
+      Debug.error('Form submission failed:', error);
       
       // Show error in overlay
       $overlay.find('.spinner').hide();
@@ -931,10 +931,10 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       const recordId = await this.submitFormData();
       this.recordId = recordId;
       
-      console.log('Form data submitted successfully, record ID:', recordId);
+      Debug.debug('Form data submitted successfully, record ID:', recordId);
       
       // Lock the form after successful Phase 1 completion
-      console.log('Setting form locked state to prevent editing');
+      Debug.debug('Setting form locked state to prevent editing');
       this.isFormLocked = true;
       this.lockFormFields($modal);
       
@@ -956,14 +956,14 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         </div>
       `);
       
-      console.log('✅ Phase 1 complete, record ID:', recordId);
-      console.log('🔒 Form is now locked to prevent editing');
+      Debug.debug('✅ Phase 1 complete, record ID:', recordId);
+      Debug.debug('🔒 Form is now locked to prevent editing');
       
       // Clear autosaved data after successful Phase 1 completion
       this.clearAutosaveData();
       
     } catch (error) {
-      console.error('❌ Phase 1 failed:', error);
+      Debug.error('❌ Phase 1 failed:', error);
       
       // Update UI to show error
       $phase1Step.removeClass('active');
@@ -997,23 +997,23 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     $phase2Button.prop('disabled', true).text(this.getTranslation('form_confirmation.uploading_files', 'Uploading files...'));
     
     // Debug: Log file information before upload
-    console.log('--- File Upload Debug Info ---');
-    console.log('Record ID:', this.recordId);
+    Debug.debug('--- File Upload Debug Info ---');
+    Debug.debug('Record ID:', this.recordId);
     
     // Check window.fileUploaderInstance
     if (window.fileUploaderInstance) {
-      console.log('Global fileUploaderInstance exists:', window.fileUploaderInstance);
+      Debug.debug('Global fileUploaderInstance exists:', window.fileUploaderInstance);
       if (typeof window.fileUploaderInstance.getPendingCount === 'function') {
-        console.log('Pending files count:', window.fileUploaderInstance.getPendingCount());
+        Debug.debug('Pending files count:', window.fileUploaderInstance.getPendingCount());
       }
     } else {
-      console.log('No global fileUploaderInstance found');
+      Debug.debug('No global fileUploaderInstance found');
     }
     
     // Check for file elements in the DOM
-    console.log('File input elements:', $('input[type="file"]').length);
-    console.log('File items in UI:', $('.file-item').length);
-    console.log('------------------------');
+    Debug.debug('File input elements:', $('input[type="file"]').length);
+    Debug.debug('File items in UI:', $('.file-item').length);
+    Debug.debug('------------------------');
     
     try {
       // Store modal for progress updates
@@ -1048,13 +1048,13 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Enable the close button now that all phases are complete
       $modal.find('.form-summary-close').removeAttr('data-phase-locked');
       
-      console.log('✅ Phase 2 complete: Files uploaded');
+      Debug.debug('✅ Phase 2 complete: Files uploaded');
       
       // Clear any remaining autosaved data after successful Phase 2 completion
       this.clearAutosaveData();
       
     } catch (error) {
-      console.error('❌ Phase 2 failed:', error);
+      Debug.error('❌ Phase 2 failed:', error);
       
       // Update UI to show error
       $phase2Step.removeClass('active');
@@ -1092,7 +1092,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
   isFormEditable() {
     // Return false if the form is locked (after Phase 1 completion)
     if (this.isFormLocked) {
-      console.log('Form editing prevented: Form is locked after Phase 1 submission');
+      Debug.debug('Form editing prevented: Form is locked after Phase 1 submission');
       return false;
     }
     
@@ -1121,7 +1121,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         return true;
       } else {
         // Phase 2 not completed yet, don't allow closing
-        console.log('Preventing modal close: Phase 2 (file upload) not completed');
+        Debug.debug('Preventing modal close: Phase 2 (file upload) not completed');
         return false;
       }
     }
@@ -1137,19 +1137,19 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       const autosaveExtension = this.formHandler.getExtension ? this.formHandler.getExtension('autoSave') : null;
       
       if (autosaveExtension && typeof autosaveExtension.clearSavedData === 'function') {
-        console.log('🧹 Clearing autosave data via extension method');
+        Debug.debug('🧹 Clearing autosave data via extension method');
         autosaveExtension.clearSavedData();
       } else {
         // Fallback: manually clear localStorage for this form
         const formId = this.formHandler.getFormId();
         const storageKey = `autosave_${formId}`;
         localStorage.removeItem(storageKey);
-        console.log(`🧹 Cleared autosave data manually for ${storageKey}`);
+        Debug.debug(`🧹 Cleared autosave data manually for ${storageKey}`);
       }
       
-      console.log('✅ Autosave data cleared successfully');
+      Debug.debug('✅ Autosave data cleared successfully');
     } catch (error) {
-      console.warn('❌ Error clearing autosave data:', error);
+      Debug.warn('❌ Error clearing autosave data:', error);
     }
   }
   
@@ -1193,7 +1193,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         success: (data) => {
           if (data && data.status === "saved" && data.id) {
             this.recordId = data.id;
-            console.log(`✅ Form data submitted successfully, record ID: ${data.id}`);
+            Debug.debug(`✅ Form data submitted successfully, record ID: ${data.id}`);
             resolve(data.id);
           } else {
             reject(new Error(`Server returned unexpected response: ${JSON.stringify(data)}`));
@@ -1503,7 +1503,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       });
       
       if (!fileInput || fileInput.files.length === 0) {
-        console.log('No files to upload, skipping phase 2');
+        Debug.debug('No files to upload, skipping phase 2');
         resolve();
         return;
       }
@@ -1525,11 +1525,11 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       // Use direct upload method
       this.directUploadFiles($(fileInput), uploadUrl)
         .then(() => {
-          console.log('File upload completed successfully');
+          Debug.debug('File upload completed successfully');
           resolve();
         })
         .catch(err => {
-          console.error('File upload failed:', err);
+          Debug.error('File upload failed:', err);
           reject(err);
         });
     });
@@ -1544,13 +1544,13 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
   directUploadFiles($fileInput, uploadUrl) {
     return new Promise((resolve, reject) => {
       if (!$fileInput || !$fileInput.length || !$fileInput[0].files || !$fileInput[0].files.length) {
-        console.log('No files to upload in directUploadFiles');
+        Debug.debug('No files to upload in directUploadFiles');
         resolve();
         return;
       }
       
       const files = Array.from($fileInput[0].files);
-      console.log(`Uploading ${files.length} files to ${uploadUrl}`);
+      Debug.debug(`Uploading ${files.length} files to ${uploadUrl}`);
       
       let completed = 0;
       const errors = [];
@@ -1585,9 +1585,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
         if (randcheckValue) {
           // Add it to the form data - only as POST parameter
           formData.append('randcheck', randcheckValue);
-          console.log('✓ Including randcheck token in file upload as POST parameter');
+          Debug.debug('✓ Including randcheck token in file upload as POST parameter');
         } else {
-          console.warn('⚠️ No randcheck token found for file upload');
+          Debug.warn('⚠️ No randcheck token found for file upload');
         }
         
         $.ajax({
@@ -1601,7 +1601,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
             xhr.upload.addEventListener("progress", (evt) => {
               if (evt.lengthComputable) {
                 const percentComplete = Math.round((evt.loaded / evt.total) * 100);
-                console.log(`Upload progress: ${percentComplete}%`);
+                Debug.debug(`Upload progress: ${percentComplete}%`);
                 // Update individual file progress if we had UI for it
               }
             }, false);
@@ -1610,10 +1610,10 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
           success: (response) => {
             // Check if the response indicates an error (even though HTTP status is 200)
             if (typeof response === 'object' && response.status === 'error') {
-              console.error(`Server returned error for file ${file.name}:`, response.message);
+              Debug.error(`Server returned error for file ${file.name}:`, response.message);
               errors.push(`${file.name} (${response.message || 'Server error'})`);
             } else {
-              console.log(`File ${file.name} uploaded successfully`);
+              Debug.debug(`File ${file.name} uploaded successfully`);
             }
             
             completed++;
@@ -1629,7 +1629,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
             }
           },
           error: (xhr, status, error) => {
-            console.error(`Failed to upload file ${file.name}:`, error);
+            Debug.error(`Failed to upload file ${file.name}:`, error);
             
             // Try to parse the response to get more detailed error info
             let errorMessage = error;
@@ -1641,7 +1641,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
                 }
               }
             } catch (e) {
-              console.log('Could not parse error response as JSON');
+              Debug.debug('Could not parse error response as JSON');
             }
             
             errors.push(`${file.name} (${errorMessage})`);
@@ -1685,7 +1685,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
   
   // Lock form fields after Phase 1 submission
   lockFormFields($modal) {
-    console.log('Locking form fields after Phase 1 submission');
+    Debug.debug('Locking form fields after Phase 1 submission');
     
     // If we have a modal, update it to show the form is locked
     if ($modal) {
@@ -1801,7 +1801,7 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
       `);
     }
     
-    console.log('Form fields locked successfully');
+    Debug.debug('Form fields locked successfully');
   }
   } // End of FormConfirmationExtension class
 })(); // End of IIFE returning the class definition

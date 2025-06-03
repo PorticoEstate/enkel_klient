@@ -446,7 +446,7 @@ class TwoPhaseTestPanel {
       }, 10000);
       
     } catch (error) {
-      console.error('Error running Phase 1:', error);
+      Debug.error('Error running Phase 1:', error);
       this.setStatus('Error: ' + error.message);
     }
   }
@@ -476,7 +476,7 @@ class TwoPhaseTestPanel {
       }, 500);
       
     } catch (error) {
-      console.error('Error running Phase 2:', error);
+      Debug.error('Error running Phase 2:', error);
       this.setStatus('Error: ' + error.message);
     }
   }

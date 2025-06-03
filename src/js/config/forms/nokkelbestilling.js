@@ -4,7 +4,7 @@
  */
 
 function getFormConfig(formId) {
-    console.log(`🔧 Loading dynamic configuration for ${formId}`);
+    Debug.debug(`🔧 Loading dynamic configuration for ${formId}`);
     
     // Ensure this configuration only applies to the nokkelbestilling form
     if (formId !== 'nokkelbestilling') {

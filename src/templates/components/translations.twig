@@ -157,6 +157,6 @@ window.formConfigs = window.formConfigs || {};
             };
         {% endif %}
     {% endif %}
-    console.log("Form configuration for {{ formType }}:", window.formConfigs['{{ formType }}']);
+    Debug.debug("Form configuration for {{ formType }}:", window.formConfigs['{{ formType }}']);
 {% endif %}
 </script>

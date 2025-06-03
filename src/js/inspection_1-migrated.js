@@ -18,24 +18,24 @@ var formHandler = null;
 $(document).ready(function() {
     try {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
-        console.log('🔄 Initializing inspection form with clean architecture...');
+        Debug.debug('🔄 Initializing inspection form with clean architecture...');
         
         // Initialize using formExtensionLoader.quickSetup for automatic WCAG 3.3.4 support
         formExtensionLoader.quickSetup('inspection_1', 'inspection_1').then(handler => {
             formHandler = handler;
-            console.log('✅ Inspection form initialized with clean architecture');
-            console.log('📊 Performance: ~580 lines total vs 1,950+ lines (77% reduction)');
-            console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+            Debug.debug('✅ Inspection form initialized with clean architecture');
+            Debug.debug('📊 Performance: ~580 lines total vs 1,950+ lines (77% reduction)');
+            Debug.debug('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
             
             // Form-specific setup after FormHandler initialization
             initializeForm();
         }).catch(error => {
-            console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+            Debug.error('❌ Failed to initialize FormHandler with extension loader:', error);
             initializeFallback();
         });
         
     } catch (error) {
-        console.error('❌ Failed to initialize inspection form:', error);
+        Debug.error('❌ Failed to initialize inspection form:', error);
         // Fallback to basic form handling
         initializeFallback();
     }
@@ -62,7 +62,7 @@ function initializeForm() {
         });
 
         formHandler.addHook('afterSuccess', function(response) {
-            console.log('✅ Inspection form submitted successfully');
+            Debug.debug('✅ Inspection form submitted successfully');
             // Any post-submission cleanup
         });
     }
@@ -130,7 +130,7 @@ function toggleInspectionSections(inspectionType) {
  * @param {HTMLElement} element The checkbox element
  */
 function handleChangeTilgang(element) {
-    console.log('Tilgang changed:', element.checked);
+    Debug.debug('Tilgang changed:', element.checked);
     
     const fireSafetyFields = [
         'type_br_slokking_1', 'type_br_slokking_2', 'type_br_slokking_3', 'type_br_slokking_4'
@@ -246,13 +246,13 @@ function initializeQuillEditor() {
     
     // Check if Quill is available
     if (typeof Quill !== 'undefined') {
-        console.log('✅ Quill library is available');
+        Debug.debug('✅ Quill library is available');
         
         // Wait a bit for quill-textarea.js to initialize, then check
         setTimeout(() => {
             const quillContainer = remarkField.parentElement.querySelector('.ql-editor');
             if (quillContainer) {
-                console.log('✅ Quill editor initialized for merknad field');
+                Debug.debug('✅ Quill editor initialized for merknad field');
                 
                 // Add form-specific label (accessibility extension handles the rest)
                 quillContainer.setAttribute('aria-label', 'Inspection remark (rich text editor)');
@@ -260,11 +260,11 @@ function initializeQuillEditor() {
                 // Set global flag to indicate Quill is ready
                 window.quillTextareaSetup = true;
             } else {
-                console.log('⚠️ Quill editor not found, using plain textarea');
+                Debug.debug('⚠️ Quill editor not found, using plain textarea');
             }
         }, 500);
     } else {
-        console.log('ℹ️ Quill library not available, using plain textarea');
+        Debug.debug('ℹ️ Quill library not available, using plain textarea');
     }
 }
 
@@ -310,7 +310,7 @@ function validateInspectionSpecific(formData) {
 
     // Display errors if any
     if (!isValid) {
-        console.warn('⚠️ Inspection validation failed:', errors);
+        Debug.warn('⚠️ Inspection validation failed:', errors);
         if (formHandler && formHandler.showErrors) {
             formHandler.showErrors(errors);
         }
@@ -420,7 +420,7 @@ function announceChange(message) {
  * Fallback initialization if clean architecture fails
  */
 function initializeFallback() {
-    console.warn('⚠️ Using fallback initialization for inspection form');
+    Debug.warn('⚠️ Using fallback initialization for inspection form');
     
     // Basic form validation
     $('#inspection_1').on('submit', function(e) {

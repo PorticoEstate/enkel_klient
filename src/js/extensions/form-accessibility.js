@@ -8,7 +8,7 @@
 if (typeof FormAccessibilityExtension === 'undefined') {
   // Check for jQuery dependency
   if (typeof $ === 'undefined') {
-    console.error('FormAccessibilityExtension requires jQuery');
+    Debug.error('FormAccessibilityExtension requires jQuery');
   } else {
     class FormAccessibilityExtension {
       constructor(formHandler, options = {}) {
@@ -48,9 +48,9 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           if (this.hasDropzoneHelper) helpers.push('makeDropzoneAccessible');
           if (this.hasFormStatusHelper) helpers.push('announceFormStatus');
           
-          console.log('FormAccessibilityExtension: Using global accessibility helpers:', helpers.join(', '));
+          Debug.debug('FormAccessibilityExtension: Using global accessibility helpers:', helpers.join(', '));
         } else {
-          console.log('FormAccessibilityExtension: Using fallback implementations');
+          Debug.debug('FormAccessibilityExtension: Using fallback implementations');
         }
         
         this.init();
@@ -61,7 +61,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           this.$form = this.formHandler.getForm();
           
           if (!this.$form || !this.$form.length) {
-            console.warn('FormAccessibilityExtension: No form found');
+            Debug.warn('FormAccessibilityExtension: No form found');
             return;
           }
 
@@ -87,7 +87,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           this.setupARIALandmarks();
           
         } catch (error) {
-          console.error('FormAccessibilityExtension initialization failed:', error);
+          Debug.error('FormAccessibilityExtension initialization failed:', error);
         }
       }
 
@@ -127,7 +127,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           const id = $field.attr('id');
           
           if (!id) {
-            console.warn('Required field missing ID attribute', element);
+            Debug.warn('Required field missing ID attribute', element);
             return;
           }
           
@@ -176,7 +176,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           const id = $field.attr('id');
           
           if (!id) {
-            console.warn('Field missing ID for accessibility features', field);
+            Debug.warn('Field missing ID for accessibility features', field);
             return;
           }
           
@@ -291,7 +291,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
             firstInput.focus();
           }
         } catch (error) {
-          console.warn('Could not set initial focus:', error);
+          Debug.warn('Could not set initial focus:', error);
         }
       }
 
@@ -381,7 +381,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
           const fieldId = $field.attr('id');
           
           if (!fieldId) {
-            console.warn('Field with description missing ID attribute', element);
+            Debug.warn('Field with description missing ID attribute', element);
             return;
           }
           
@@ -407,7 +407,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
         const fieldId = $field.attr('id');
         
         if (!fieldId) {
-          console.warn('Cannot show error for field without ID', field);
+          Debug.warn('Cannot show error for field without ID', field);
           return;
         }
         
@@ -435,7 +435,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
 
       announceToScreenReader(message, isUrgent = false) {
         if (!message || typeof message !== 'string') {
-          console.warn('Invalid message for screen reader announcement');
+          Debug.warn('Invalid message for screen reader announcement');
           return;
         }
         
@@ -451,7 +451,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
         const statusEl = document.getElementById(statusElId);
         
         if (!statusEl) {
-          console.warn('Screen reader status element not found');
+          Debug.warn('Screen reader status element not found');
           return;
         }
         
@@ -612,7 +612,7 @@ if (typeof FormAccessibilityExtension === 'undefined') {
             $('#form-status, #form-status-assertive').remove();
           }
         } catch (error) {
-          console.error('Error during FormAccessibilityExtension cleanup:', error);
+          Debug.error('Error during FormAccessibilityExtension cleanup:', error);
         }
       }
     }

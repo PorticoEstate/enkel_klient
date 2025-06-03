@@ -13,7 +13,7 @@ if (typeof FormValidationExtension === 'undefined') {
       wcagCompliant: options.wcagCompliant || true,
       ...options
     };
-    console.log('🔍 FormValidationExtension initialized with options:', this.options);
+    Debug.debug('🔍 FormValidationExtension initialized with options:', this.options);
     this.init();
   }
 
@@ -34,18 +34,18 @@ if (typeof FormValidationExtension === 'undefined') {
   setupRealTimeValidation() {
     // Extract validation logic from bloated version
     const form = this.formHandler.getForm();
-    console.log('🔍 Setting up real-time validation for form:', form.attr('id'));
+    Debug.debug('🔍 Setting up real-time validation for form:', form.attr('id'));
     
     // Setup location validator if both fields exist
     this.setupLocationValidator();
     
     // Real-time validation on input (as user types)
     form.find('input, textarea').on('input.realTimeValidation', (e) => {
-      console.log('📝 Input event triggered for:', e.target.id || e.target.name);
+      Debug.debug('📝 Input event triggered for:', e.target.id || e.target.name);
       // Add slight delay to avoid excessive validation while typing
       clearTimeout($(e.target).data('validation-timeout'));
       const timeout = setTimeout(() => {
-        console.log('⏱️ Validating field after delay:', e.target.id || e.target.name);
+        Debug.debug('⏱️ Validating field after delay:', e.target.id || e.target.name);
         this.validateField(e.target);
       }, 300); // 300ms delay
       $(e.target).data('validation-timeout', timeout);
@@ -53,7 +53,7 @@ if (typeof FormValidationExtension === 'undefined') {
     
     // Immediate validation on blur and change for all form elements
     form.find('input, textarea, select').on('blur.realTimeValidation change.realTimeValidation', (e) => {
-      console.log('🎯 Blur/change event triggered for:', e.target.id || e.target.name);
+      Debug.debug('🎯 Blur/change event triggered for:', e.target.id || e.target.name);
       // Clear any pending input validation timeout
       clearTimeout($(e.target).data('validation-timeout'));
       this.validateField(e.target);
@@ -61,11 +61,11 @@ if (typeof FormValidationExtension === 'undefined') {
     
     // Special handling for radio buttons and checkboxes
     form.find('input[type="radio"], input[type="checkbox"]').on('change.realTimeValidation', (e) => {
-      console.log('☑️ Radio/checkbox change event triggered for:', e.target.id || e.target.name);
+      Debug.debug('☑️ Radio/checkbox change event triggered for:', e.target.id || e.target.name);
       this.validateField(e.target);
     });
     
-    console.log('✅ Real-time validation setup complete');
+    Debug.debug('✅ Real-time validation setup complete');
   }
 
   setupAccessibility() {
@@ -78,7 +78,7 @@ if (typeof FormValidationExtension === 'undefined') {
   validateField(field) {
     try {
       const $field = $(field);
-      console.log('🔍 validateField called for:', $field.attr('id') || $field.attr('name'));
+      Debug.debug('🔍 validateField called for:', $field.attr('id') || $field.attr('name'));
       
       if (!$field.length) return true;
       
@@ -93,7 +93,7 @@ if (typeof FormValidationExtension === 'undefined') {
       
       return validationResult.isValid;
     } catch (error) {
-      console.warn('Error validating field:', error);
+      Debug.warn('Error validating field:', error);
       return true; // Assume valid on error to avoid blocking
     }
   }
@@ -106,7 +106,7 @@ if (typeof FormValidationExtension === 'undefined') {
   performFieldValidation($field) {
     // Safety check: ensure $field is a valid jQuery object
     if (!$field || !$field.length || typeof $field.attr !== 'function') {
-      console.warn('performFieldValidation called with invalid field:', $field);
+      Debug.warn('performFieldValidation called with invalid field:', $field);
       return { isValid: true, errorMessage: '' };
     }
     
@@ -163,13 +163,13 @@ if (typeof FormValidationExtension === 'undefined') {
 
   // Critical beforeSubmit hook - required by FormHandlerCore
   beforeSubmit() {
-    console.log('🔍 Validation extension beforeSubmit hook called');
+    Debug.debug('🔍 Validation extension beforeSubmit hook called');
     const isValid = this.isValid();
-    console.log('📋 Form validation result:', isValid);
+    Debug.debug('📋 Form validation result:', isValid);
     
     if (!isValid) {
       const errors = this.getErrors();
-      console.log('❌ Validation errors:', errors);
+      Debug.debug('❌ Validation errors:', errors);
       this.displayErrors(errors);
     }
     
@@ -181,7 +181,7 @@ if (typeof FormValidationExtension === 'undefined') {
     try {
       const form = this.formHandler.getForm();
       if (!form || !form.length) {
-        console.warn('No form found for validation');
+        Debug.warn('No form found for validation');
         return false;
       }
 
@@ -261,11 +261,11 @@ if (typeof FormValidationExtension === 'undefined') {
         }
       });
 
-      console.log(`Validation completed: ${isValid ? 'VALID' : 'INVALID'} (${errorCount} errors)`);
+      Debug.debug(`Validation completed: ${isValid ? 'VALID' : 'INVALID'} (${errorCount} errors)`);
       return isValid;
 
     } catch (error) {
-      console.error('Error during form validation:', error);
+      Debug.error('Error during form validation:', error);
       return false; // Fail safe - don't allow submission if validation fails
     }
   }
@@ -431,7 +431,7 @@ if (typeof FormValidationExtension === 'undefined') {
       e.preventDefault();
       const fieldId = $(e.target).data('field-id');
       if (fieldId) {
-        console.log(`🔗 Error summary link clicked for field: ${fieldId}`);
+        Debug.debug(`🔗 Error summary link clicked for field: ${fieldId}`);
         this.focusField(fieldId);
       }
     });
@@ -489,7 +489,7 @@ if (typeof FormValidationExtension === 'undefined') {
     const locationName = $field.val();
     const locationCode = $("#location_code").val();
     
-    console.log('🏙️ Location validation - name:', locationName, 'code:', locationCode);
+    Debug.debug('🏙️ Location validation - name:', locationName, 'code:', locationCode);
     return locationName && 
            locationName.trim() !== "" && 
            locationCode && 
@@ -535,7 +535,7 @@ if (typeof FormValidationExtension === 'undefined') {
   focusField(fieldId) {
     const field = document.getElementById(fieldId);
     if (!field) {
-      console.warn(`Field with ID "${fieldId}" not found`);
+      Debug.warn(`Field with ID "${fieldId}" not found`);
       return false;
     }
 
@@ -546,7 +546,7 @@ if (typeof FormValidationExtension === 'undefined') {
       const $quillContainer = $textarea.siblings('.ql-container');
       
       if ($quillContainer.length) {
-        console.log(`📝 Focusing Quill editor for textarea: ${fieldId}`);
+        Debug.debug(`📝 Focusing Quill editor for textarea: ${fieldId}`);
         // Focus the Quill editor
         const $editor = $quillContainer.find('.ql-editor');
         if ($editor.length) {
@@ -559,7 +559,7 @@ if (typeof FormValidationExtension === 'undefined') {
       // CKEditor
       const $ckeditor = $textarea.siblings('.cke');
       if ($ckeditor.length) {
-        console.log(`📝 Focusing CKEditor for textarea: ${fieldId}`);
+        Debug.debug(`📝 Focusing CKEditor for textarea: ${fieldId}`);
         if (window.CKEDITOR && window.CKEDITOR.instances[fieldId]) {
           window.CKEDITOR.instances[fieldId].focus();
           return true;
@@ -568,14 +568,14 @@ if (typeof FormValidationExtension === 'undefined') {
       
       // TinyMCE
       if (window.tinymce && window.tinymce.get(fieldId)) {
-        console.log(`📝 Focusing TinyMCE editor for textarea: ${fieldId}`);
+        Debug.debug(`📝 Focusing TinyMCE editor for textarea: ${fieldId}`);
         window.tinymce.get(fieldId).focus();
         return true;
       }
     }
 
     // Default focus for regular fields
-    console.log(`📝 Focusing regular field: ${fieldId}`);
+    Debug.debug(`📝 Focusing regular field: ${fieldId}`);
     field.focus();
     return true;
   }
@@ -587,12 +587,12 @@ if (typeof FormValidationExtension === 'undefined') {
     if ($locationName.length && $locationCode.length) {
       // Simple event-based approach
       $locationCode.on('change input', () => {
-        console.log('🏙️ Location code changed, triggering validation');
+        Debug.debug('🏙️ Location code changed, triggering validation');
         this.validateField($locationName[0]);
       });
       
       $locationName.on('change input', () => {
-        console.log('🏙️ Location name changed, triggering validation');
+        Debug.debug('🏙️ Location name changed, triggering validation');
         this.validateField($locationName[0]);
       });
     }

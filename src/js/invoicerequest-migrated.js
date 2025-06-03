@@ -20,24 +20,24 @@ var datepicker = null;
 $(document).ready(function() {
     try {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
-        console.log('🔄 Initializing invoice request form with clean architecture...');
+        Debug.debug('🔄 Initializing invoice request form with clean architecture...');
         
         // Initialize using formExtensionLoader.quickSetup for automatic WCAG 3.3.4 support
         formExtensionLoader.quickSetup('invoicerequest', 'invoicerequest').then(handler => {
             formHandler = handler;
-            console.log('✅ Invoice request form initialized with clean architecture');
-            console.log('📊 Performance: ~620 lines total vs 1,950+ lines (75% reduction)');
-            console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+            Debug.debug('✅ Invoice request form initialized with clean architecture');
+            Debug.debug('📊 Performance: ~620 lines total vs 1,950+ lines (75% reduction)');
+            Debug.debug('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
             
             // Form-specific setup after FormHandler initialization
             initializeForm();
         }).catch(error => {
-            console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+            Debug.error('❌ Failed to initialize FormHandler with extension loader:', error);
             initializeFallback();
         });
         
     } catch (error) {
-        console.error('❌ Failed to initialize invoice request form:', error);
+        Debug.error('❌ Failed to initialize invoice request form:', error);
         // Fallback to basic form handling
         initializeFallback();
     }
@@ -61,7 +61,7 @@ function initializeForm() {
         });
 
         formHandler.addHook('afterSuccess', function(response) {
-            console.log('✅ Invoice request submitted successfully');
+            Debug.debug('✅ Invoice request submitted successfully');
             // Clean up datepicker
             if (datepicker) {
                 datepicker.destroy();
@@ -173,7 +173,7 @@ async function initializeDatepicker() {
         }
     });
 
-    console.log('✅ Datepicker initialized with accessibility features');
+    Debug.debug('✅ Datepicker initialized with accessibility features');
 }
 
 /**
@@ -196,11 +196,11 @@ function loadFlatpickr() {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
         script.onload = () => {
-            console.log('✅ Flatpickr loaded dynamically');
+            Debug.debug('✅ Flatpickr loaded dynamically');
             resolve();
         };
         script.onerror = () => {
-            console.error('❌ Failed to load Flatpickr');
+            Debug.error('❌ Failed to load Flatpickr');
             reject(new Error('Failed to load Flatpickr'));
         };
         document.head.appendChild(script);
@@ -216,7 +216,7 @@ function initializeRichTextEditor() {
 
     // Check if Quill is available and quill-textarea.js has set up the editor
     if (typeof Quill !== 'undefined' && window.quillTextareaSetup) {
-        console.log('✅ Quill editor already initialized by quill-textarea.js');
+        Debug.debug('✅ Quill editor already initialized by quill-textarea.js');
         
         // Enhance with accessibility features
         const quillContainer = descriptionField.parentElement.querySelector('.ql-editor');
@@ -226,7 +226,7 @@ function initializeRichTextEditor() {
             quillContainer.setAttribute('aria-multiline', 'true');
         }
     } else {
-        console.log('ℹ️ Quill editor not found, using plain textarea');
+        Debug.debug('ℹ️ Quill editor not found, using plain textarea');
     }
 }
 
@@ -294,7 +294,7 @@ function validateInvoiceSpecific(formData) {
 
     // Display errors if any
     if (!isValid) {
-        console.warn('⚠️ Invoice validation failed:', errors);
+        Debug.warn('⚠️ Invoice validation failed:', errors);
         if (formHandler && formHandler.showErrors) {
             formHandler.showErrors(errors);
         }
@@ -343,7 +343,7 @@ function announceToScreenReader(message) {
  * Fallback initialization if clean architecture fails
  */
 function initializeFallback() {
-    console.warn('⚠️ Using fallback initialization for invoice request form');
+    Debug.warn('⚠️ Using fallback initialization for invoice request form');
     
     // Basic form validation
     $('#invoicerequest').on('submit', function(e) {
@@ -370,7 +370,7 @@ function initializeFallback() {
     
     // Basic datepicker fallback
     initializeDatepicker().catch(() => {
-        console.warn('⚠️ Datepicker fallback: using regular date input');
+        Debug.warn('⚠️ Datepicker fallback: using regular date input');
         $('#invoice_date').attr('type', 'month');
     });
 }

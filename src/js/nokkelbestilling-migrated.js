@@ -18,12 +18,12 @@ var formHandler = null;
 $(document).ready(function() {
     try {
         // MIGRATION: Replace bloated FormHandler with clean core + extensions
-        console.log('🔄 Initializing nokkelbestilling form with clean architecture...');
+        Debug.debug('🔄 Initializing nokkelbestilling form with clean architecture...');
         
         // Initialize FormHandler using extension loader for WCAG 3.3.4 compliance
         const formElement = document.getElementById('nokkelbestilling');
         if (!formElement) {
-            console.error('❌ Form element with ID "nokkelbestilling" not found');
+            Debug.error('❌ Form element with ID "nokkelbestilling" not found');
             return;
         }
         
@@ -31,23 +31,23 @@ $(document).ready(function() {
         if (typeof formExtensionLoader !== 'undefined') {
             formExtensionLoader.quickSetup('nokkelbestilling', 'nokkelbestilling').then(handler => {
                 formHandler = handler;
-                console.log('✅ Nokkelbestilling form initialized with clean architecture');
-                console.log('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
-                console.log('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
+                Debug.debug('✅ Nokkelbestilling form initialized with clean architecture');
+                Debug.debug('📊 Performance: ~400 lines total vs 1,950+ lines (80% reduction)');
+                Debug.debug('📋 Registered extensions:', Array.from(formHandler.extensions.keys()));
                 
                 // Form-specific setup after FormHandler initialization
                 initializeForm();
             }).catch(error => {
-                console.error('❌ Failed to initialize FormHandler with extension loader:', error);
+                Debug.error('❌ Failed to initialize FormHandler with extension loader:', error);
                 fallbackToDirectInitialization();
             });
         } else {
-            console.warn('⚠️ FormExtensionLoader not available, using direct initialization');
+            Debug.warn('⚠️ FormExtensionLoader not available, using direct initialization');
             fallbackToDirectInitialization();
         }
         
     } catch (error) {
-        console.error('❌ Failed to initialize clean FormHandler:', error);
+        Debug.error('❌ Failed to initialize clean FormHandler:', error);
         fallbackToDirectInitialization();
     }
 });
@@ -81,11 +81,11 @@ function fallbackToDirectInitialization() {
         // Form-specific initialization
         initializeForm();
         
-        console.log('✅ Nokkelbestilling form initialized with clean architecture');
-        console.log('📋 Registered extensions:', Object.keys(formHandler.extensions || {}));
+        Debug.debug('✅ Nokkelbestilling form initialized with clean architecture');
+        Debug.debug('📋 Registered extensions:', Object.keys(formHandler.extensions || {}));
         
     } catch (error) {
-        console.error('❌ Failed to initialize nokkelbestilling form:', error);
+        Debug.error('❌ Failed to initialize nokkelbestilling form:', error);
         // Fallback to basic form handling
         initializeFallback();
     }
@@ -111,7 +111,7 @@ function initializeForm() {
         // Update UI to reflect requirement change
         updateFileUploadRequirement(fileRequired);
         
-        console.log(`📋 File upload requirement updated: ${fileRequired ? 'Required' : 'Optional'}`);
+        Debug.debug(`📋 File upload requirement updated: ${fileRequired ? 'Required' : 'Optional'}`);
     });
 
     // Initialize location code check on page load
@@ -127,7 +127,7 @@ function initializeForm() {
         });
 
         formHandler.addHook('afterSuccess', function(response) {
-            console.log('✅ Nokkelbestilling submitted successfully');
+            Debug.debug('✅ Nokkelbestilling submitted successfully');
             // Any post-submission cleanup
         });
     }
@@ -206,7 +206,7 @@ function validateNokkelbestillingSpecific(formData) {
 
     // Display errors if any
     if (!isValid) {
-        console.warn('⚠️ Nokkelbestilling validation failed:', errors);
+        Debug.warn('⚠️ Nokkelbestilling validation failed:', errors);
         if (formHandler && formHandler.showErrors) {
             formHandler.showErrors(errors);
         }
@@ -219,7 +219,7 @@ function validateNokkelbestillingSpecific(formData) {
  * Fallback initialization if clean architecture fails
  */
 function initializeFallback() {
-    console.warn('⚠️ Using fallback initialization for nokkelbestilling form');
+    Debug.warn('⚠️ Using fallback initialization for nokkelbestilling form');
     
     // Basic form validation
     $('#nokkelbestilling').on('submit', function(e) {

@@ -22,12 +22,12 @@ $(document).ready(function() {
             autoHide: true
           });
           
-          console.log('🧪 Two-Phase Test Panel initialized');
+          Debug.debug('🧪 Two-Phase Test Panel initialized');
           
           // Add a console message to help developers
-          console.log('💡 To manually test phases:');
-          console.log('   1. Phase 1: formHandler.getExtension("twoPhaseSubmit").manualRunPhase1()');
-          console.log('   2. Phase 2: formHandler.getExtension("twoPhaseSubmit").manualRunPhase2(recordId)');
+          Debug.debug('💡 To manually test phases:');
+          Debug.debug('   1. Phase 1: formHandler.getExtension("twoPhaseSubmit").manualRunPhase1()');
+          Debug.debug('   2. Phase 2: formHandler.getExtension("twoPhaseSubmit").manualRunPhase2(recordId)');
         } else {
           // If test panel component isn't loaded, load it dynamically
           const script = document.createElement('script');
@@ -39,7 +39,7 @@ $(document).ready(function() {
               theme: 'light',
               autoHide: true
             });
-            console.log('🧪 Two-Phase Test Panel initialized (delayed load)');
+            Debug.debug('🧪 Two-Phase Test Panel initialized (delayed load)');
           };
           document.head.appendChild(script);
         }

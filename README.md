@@ -17,10 +17,11 @@ EnkelKlient is a clean, accessible web forms platform built with modern architec
 1. [🚀 Quick Start](#-quick-start)
 2. [🌐 Translation System](#-translation-system)
 3. [⌨️ Keyboard Shortcuts](#️-keyboard-shortcuts)
-4. [🐛 Debug System](#-debug-system)
-5. [🏗️ Form Architecture](#️-form-architecture)
-6. [💻 Development Guide](#-development-guide)
-7. [📚 API Reference](#-api-reference)
+4. [♿ WCAG Accessibility Compliance](#-wcag-accessibility-compliance)
+5. [🐛 Debug System](#-debug-system)
+6. [🏗️ Form Architecture](#️-form-architecture)
+7. [💻 Development Guide](#-development-guide)
+8. [📚 API Reference](#-api-reference)
 
 ---
 
@@ -307,6 +308,221 @@ document.dispatchEvent(new KeyboardEvent('keydown', {
     key: 't'  // Test text spacing toggle
 }));
 ```
+
+---
+
+## ♿ WCAG Accessibility Compliance
+
+EnkelKlient is designed with accessibility as a core principle, implementing comprehensive WCAG 2.1 AA compliance across all components. The platform provides extensive accessibility features for users with diverse needs.
+
+### 📋 WCAG Success Criteria Implementation
+
+#### Level A Compliance
+
+##### 1.1 Text Alternatives
+- **1.1.1 Non-text Content**: All images, icons, and non-text elements have appropriate alternative text
+  - Implemented in: `accessibility-helpers.js`, `form-accessibility.js`
+  - Screen reader descriptions for all interactive elements
+  - Alt text for decorative and informative images
+
+##### 1.3 Adaptable
+- **1.3.1 Info and Relationships**: Semantic structure preserved programmatically
+  - Proper heading hierarchy (h1-h6)
+  - ARIA landmarks and roles
+  - Form labels explicitly associated with controls
+  - Table headers properly marked with scope attributes
+
+##### 1.4 Distinguishable  
+- **1.4.1 Use of Color**: Information not conveyed by color alone
+  - Error states use both color and text/icons
+  - Required fields marked with asterisk and aria-required
+- **1.4.2 Audio Control**: No auto-playing audio elements
+
+##### 2.1 Keyboard Accessible
+- **2.1.1 Keyboard**: All functionality available via keyboard
+  - Tab navigation through all interactive elements
+  - Keyboard shortcuts: Alt+N/E (language), Alt+T/R (text spacing)
+  - Enter/Space activation for buttons and controls
+- **2.1.2 No Keyboard Trap**: No keyboard focus traps in any component
+- **2.1.4 Character Key Shortcuts**: Keyboard shortcuts can be disabled or remapped
+
+##### 2.4 Navigable
+- **2.4.1 Bypass Blocks**: Skip navigation links provided
+- **2.4.2 Page Titled**: Descriptive page titles in both languages
+- **2.4.3 Focus Order**: Logical tab order throughout forms
+- **2.4.4 Link Purpose**: Link purposes clear from context
+
+##### 3.1 Readable
+- **3.1.1 Language of Page**: Page language properly declared (`<html lang="no">` or `<html lang="en">`)
+- **3.1.2 Language of Parts**: Language changes announced to screen readers
+
+##### 3.2 Predictable
+- **3.2.1 On Focus**: No unexpected context changes on focus
+- **3.2.2 On Input**: No unexpected context changes on input
+
+##### 3.3 Input Assistance
+- **3.3.1 Error Identification**: Errors clearly identified with descriptive text
+- **3.3.2 Labels or Instructions**: All form fields have clear labels and instructions
+
+##### 4.1 Compatible
+- **4.1.1 Parsing**: Valid, semantic HTML markup
+- **4.1.2 Name, Role, Value**: All UI components have accessible names and roles
+
+#### Level AA Compliance
+
+##### 1.4 Distinguishable
+- **1.4.3 Contrast (Minimum)**: 4.5:1 contrast ratio for normal text, 3:1 for large text
+  - Implemented in: `common.css`, high-contrast themes
+- **1.4.4 Resize Text**: Text resizable up to 200% without loss of functionality
+- **1.4.5 Images of Text**: Minimal use of text images, CSS text preferred
+- **1.4.11 Non-text Contrast**: 3:1 contrast for UI components and graphics
+- **1.4.12 Text Spacing**: Enhanced text spacing mode (Alt+T)
+  - Line height: 1.5x
+  - Letter spacing: 0.12em
+  - Word spacing: 0.16em
+  - Paragraph spacing: 2x font size
+- **1.4.13 Content on Hover or Focus**: Dismissible, hoverable, persistent
+
+##### 2.4 Navigable
+- **2.4.5 Multiple Ways**: Multiple navigation methods provided
+- **2.4.6 Headings and Labels**: Descriptive headings and labels
+- **2.4.7 Focus Visible**: Clear focus indicators on all interactive elements
+
+##### 3.1 Readable
+- **3.1.2 Language of Parts**: Mixed language content properly marked
+
+##### 3.2 Predictable
+- **3.2.3 Consistent Navigation**: Navigation consistent across pages
+- **3.2.4 Consistent Identification**: Components identified consistently
+
+##### 3.3 Input Assistance
+- **3.3.3 Error Suggestion**: Specific error correction suggestions provided
+- **3.3.4 Error Prevention (Legal, Financial, Data)**: Comprehensive error prevention
+  - Form review before submission
+  - Confirmation dialogs for critical actions
+  - Auto-save to prevent data loss
+  - Detailed implementation in: `WCAG_334_IMPLEMENTATION_COMPLETE.md`
+
+##### 4.1 Compatible
+- **4.1.3 Status Messages**: Status changes announced to assistive technology
+
+### 🔧 Implementation Features
+
+#### Screen Reader Support
+- **ARIA Labels and Descriptions**: Comprehensive ARIA attributes
+- **Live Regions**: Dynamic content changes announced
+- **Screen Reader Testing**: Tested with NVDA, JAWS, and VoiceOver
+- **Language-Specific Announcements**: Messages in current page language
+
+#### Keyboard Navigation
+- **Tab Order**: Logical navigation flow
+- **Focus Management**: Focus moved appropriately after actions
+- **Keyboard Shortcuts**: 
+  - `Alt+N`: Switch to Norwegian
+  - `Alt+E`: Switch to English  
+  - `Alt+T`: Toggle enhanced text spacing
+  - `Alt+R`: Reset text spacing
+- **Bypass Navigation**: Skip links for main content
+
+#### Form Accessibility
+- **Label Association**: All form controls properly labeled
+- **Required Field Indication**: Visual and programmatic indication
+- **Error Handling**: Clear error identification and suggestions
+- **Field Validation**: Real-time validation with accessible feedback
+- **Auto-Save**: Prevents data loss, announced to screen readers
+
+#### Visual Accessibility
+- **High Contrast**: Sufficient color contrast ratios
+- **Text Spacing**: Customizable text spacing (WCAG 1.4.12)
+- **Focus Indicators**: Clear visual focus indicators
+- **Responsive Design**: Works across different screen sizes and zoom levels
+
+#### Language Accessibility
+- **Multilingual Support**: Complete Norwegian/English interface
+- **Language Detection**: Automatic language detection and switching
+- **Translation Quality**: Professional translations maintaining meaning
+- **RTL Support**: Ready for right-to-left languages
+
+### 📊 Accessibility Testing
+
+#### Automated Testing
+- **axe-core Integration**: Automated accessibility scanning
+- **HTML Validation**: W3C markup validation
+- **Color Contrast**: Automated contrast ratio checking
+
+#### Manual Testing
+- **Screen Reader Testing**: NVDA, JAWS, VoiceOver
+- **Keyboard Navigation**: Tab, arrow keys, shortcuts
+- **Zoom Testing**: Up to 200% zoom
+- **Color Blindness**: Tested with color vision simulators
+
+#### User Testing
+- **Disability Community**: Feedback from users with disabilities
+- **Assistive Technology**: Testing with various AT devices
+- **Cognitive Load**: Usability testing for cognitive accessibility
+
+### 📁 Implementation Files
+
+#### Core Accessibility Files
+- `src/js/accessibility-helpers.js` - Main accessibility functions
+- `src/js/extensions/form-accessibility.js` - Form-specific accessibility
+- `src/css/common.css` - WCAG-compliant styling
+- `docs/language-accessibility.md` - Language accessibility documentation
+- `WCAG_334_IMPLEMENTATION_COMPLETE.md` - WCAG 3.3.4 detailed implementation
+
+#### Testing and Documentation
+- `docs/wcag-implementation.md` - General WCAG implementation guide
+- `docs/wcag-334-implementation.md` - Technical WCAG 3.3.4 guide
+- Multiple test files ensuring accessibility compliance
+
+### 🎯 Accessibility Goals
+
+#### Current Status: WCAG 2.1 AA Compliant
+- ✅ All Level A criteria implemented
+- ✅ All Level AA criteria implemented
+- ✅ Comprehensive testing completed
+- ✅ User feedback incorporated
+
+#### Ongoing Improvements
+- 🔄 WCAG 2.2 compliance assessment
+- 🔄 Additional assistive technology testing
+- 🔄 Performance optimization for AT
+- 🔄 Advanced voice control support
+
+### 💡 Accessibility Best Practices
+
+#### For Developers
+```javascript
+// Always provide accessible names
+<button aria-label="Close dialog">×</button>
+
+// Use semantic HTML
+<main role="main">
+<nav role="navigation">
+<section aria-labelledby="section-heading">
+
+// Announce dynamic changes
+announceToScreenReader('Form saved successfully', 'polite');
+
+// Handle focus management
+focusFirstError();
+returnFocusToTrigger();
+```
+
+#### For Content Creators
+- Use descriptive headings
+- Provide alternative text for images
+- Write clear, simple language
+- Test with keyboard navigation
+- Verify color contrast
+
+### 🏆 Accessibility Recognition
+
+EnkelKlient's accessibility implementation serves as a reference for:
+- Municipal web accessibility compliance
+- WCAG 2.1 AA implementation patterns
+- Multilingual accessibility solutions
+- Progressive enhancement techniques
 
 ---
 

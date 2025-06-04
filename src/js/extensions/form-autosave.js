@@ -1032,7 +1032,10 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           
           fileList.append(`<li><span class="${icon}" aria-hidden="true"></span> ${file.name} <span class="text-muted">(${sizeStr})</span></li>`);
         });
-        
+
+        // Store the original list of files as a data attribute on the info area
+        infoArea.data('original-files', JSON.stringify(files));
+
         infoArea.append(fileList);
         
         // Set up file change listener to automatically remove matched files from the list
@@ -1057,147 +1060,105 @@ if (typeof FormAutoSaveExtension === 'undefined') {
    */
   setupFileChangeListener(fileInput, fieldName, infoArea) {
     const storageKey = this.options.storageKey;
-    
     Debug.debug(`🔧 Setting up file change listener for field: ${fieldName}`);
-    
-    // Check if we already have an autosave listener on this input
     if (fileInput.data('autosave-listener-attached')) {
       Debug.debug(`⚠️ Autosave listener already attached to ${fieldName}, skipping`);
       return;
     }
-    
-    // Mark this input as having an autosave listener
     fileInput.data('autosave-listener-attached', true);
-    
     fileInput.on('change.autosave', () => {
       Debug.debug(`📁 Autosave file input changed for field: ${fieldName}`);
-      
-      // Check if autosave is currently in progress - if so, don't process file changes
-      // This prevents newly saved files from being immediately removed from the "previously selected" list
       if (this.autosaveInProgress) {
         Debug.debug(`⏸️ Autosave in progress, skipping file change processing for ${fieldName}`);
         return;
       }
-      
-      // Get the current metadata state BEFORE any autosave triggered by this file change
-      const savedDataBefore = localStorage.getItem(storageKey);
-      const existingMetadataBefore = savedDataBefore ? 
-        JSON.parse(savedDataBefore)._fileMetadata && JSON.parse(savedDataBefore)._fileMetadata[fieldName] || [] : [];
-      
-      // Small delay to let other extensions (like FileUploadExtension) process first
+      // Always use the original list of previously saved files from the info area data attribute
+      let originalFiles = [];
+      try {
+        const originalFilesData = infoArea.data('original-files');
+        if (originalFilesData) {
+          originalFiles = JSON.parse(originalFilesData);
+        }
+      } catch (e) {
+        Debug.warn('Could not parse original files from info area data attribute:', e);
+      }
       setTimeout(() => {
-        
         const selectedFiles = Array.from(fileInput[0].files || []);
         if (selectedFiles.length === 0) {
           Debug.debug(`ℹ️ No files selected for ${fieldName}, not modifying previously selected list`);
           return;
         }
-        
         Debug.debug(`📁 User selected ${selectedFiles.length} new file(s) for ${fieldName}:`);
         selectedFiles.forEach((file, index) => {
           Debug.debug(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
         });
-        
         try {
-          // Use the metadata that existed BEFORE this file change
-          if (existingMetadataBefore.length === 0) {
-            Debug.debug(`ℹ️ No previously saved file metadata found for field: ${fieldName}`);
+          if (originalFiles.length === 0) {
+            Debug.debug(`ℹ️ No original previously saved file metadata found for field: ${fieldName}`);
             return;
           }
-          
-          const savedFiles = existingMetadataBefore;
-          Debug.debug(`📦 Found ${savedFiles.length} previously saved files for ${fieldName}:`);
+          const savedFiles = originalFiles;
+          Debug.debug(`📦 Found ${savedFiles.length} original previously saved files for ${fieldName}:`);
           savedFiles.forEach((file, index) => {
             Debug.debug(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
           });
-          
           let removedFiles = [];
           let remainingFiles = [];
-          
-          // Get the FileUploadExtension to validate newly selected files
+          let matchedFilesCount = 0;
           const fileUploadExtension = this.formHandler.getExtension ? this.formHandler.getExtension('fileUpload') : null;
-          
-          // IMPORTANT: HTML file inputs replace the entire selection when users pick files
-          // So we should only remove files that are actually present in the current selection
-          // and have passed validation. Files not in the current selection should remain in 
-          // the "previously selected" list since the user didn't explicitly reselect them.
-          
-          // However, we need to be careful not to treat files that were just saved in this 
-          // session as "previously selected" files that should be removed.
-          
-          // Check each saved file to see if it was reselected and is valid
+          // Only remove files that are present in both the original list and the current selection
           savedFiles.forEach(savedFile => {
-            const matchingNewFile = selectedFiles.find(newFile => 
-              newFile.name === savedFile.name && 
+            const matchingNewFile = selectedFiles.find(newFile =>
+              newFile.name === savedFile.name &&
               newFile.size === savedFile.size
             );
-            
             if (matchingNewFile) {
-              // File is reselected, check if it passes validation
               let isValid = true;
-              
               if (fileUploadExtension && typeof fileUploadExtension.validateFile === 'function') {
-                // Use the FileUploadExtension's validation if available
                 isValid = fileUploadExtension.validateFile(matchingNewFile);
                 Debug.debug(`🔍 Reselected file ${matchingNewFile.name} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
               } else {
-                // Fallback: basic validation if FileUploadExtension is not available
                 isValid = this.basicFileValidation(matchingNewFile, fileInput[0]);
                 Debug.debug(`🔍 Reselected file ${matchingNewFile.name} basic validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
               }
-              
               if (isValid) {
-                // File is valid and reselected, remove it from the previously selected list
                 removedFiles.push(savedFile);
-                
-                // Also remove from restored files tracking since it's now a newly selected file
+                matchedFilesCount++;
                 const fileId = `${fieldName}:${savedFile.name}:${savedFile.size}`;
                 this.restoredFiles.delete(fileId);
                 Debug.debug(`🗑️ Removing previously selected file (valid reselection): ${savedFile.name}`);
                 Debug.debug(`📋 Removed from restored files tracking: ${fileId}`);
               } else {
-                // File is invalid but was reselected, keep it in the list for user awareness
                 remainingFiles.push(savedFile);
                 Debug.debug(`📋 Keeping file in list (reselected but failed validation): ${savedFile.name}`);
               }
             } else {
-              // File was not reselected, keep it in the previously selected list
+              // File was not reselected, keep in the previously selected list
               remainingFiles.push(savedFile);
               Debug.debug(`📋 Keeping file in list (not reselected in current file input): ${savedFile.name}`);
             }
           });
-          
           Debug.debug(`📊 Result: ${removedFiles.length} files to remove, ${remainingFiles.length} files to keep`);
-          
+          // Only remove the info area if ALL previously saved files have been reselected and validated (matchedFilesCount === savedFiles.length)
           if (removedFiles.length > 0) {
-            // Get the current data (it may have been updated by serializeForm)
-            const currentSavedData = localStorage.getItem(storageKey);
-            const currentData = currentSavedData ? JSON.parse(currentSavedData) : {};
-            
-            // Update the saved data - replace with remaining files from the original list
-            if (!currentData._fileMetadata) {
-              currentData._fileMetadata = {};
-            }
-            currentData._fileMetadata[fieldName] = remainingFiles;
-            localStorage.setItem(storageKey, JSON.stringify(currentData));
-            
+            // Do not update localStorage here, only update the info area
             if (remainingFiles.length > 0) {
-              // Update the display with remaining files
               this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
               Debug.debug(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
-            } else {
-              // No files left in the previously selected list, remove the info area
+            } else if (matchedFilesCount === savedFiles.length) {
+              // Only remove info area if all previously saved files have been matched and validated
               infoArea.fadeOut(300, function() {
                 $(this).remove();
               });
-              
-              // Clean up the metadata since no files remain from the previous list
-              delete currentData._fileMetadata[fieldName];
-              localStorage.setItem(storageKey, JSON.stringify(currentData));
-              
               Debug.debug(`✅ All previously selected files have been re-selected and validated, removing info area`);
+            } else {
+              // If not all previously saved files have been matched, do not remove info area
+              this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
+              Debug.debug(`ℹ️ Not all previously saved files have been reselected, info area remains`);
             }
           } else {
+            // No valid matching files found to remove from the list (no reselected files passed validation)
+            // Do not update the info area, just leave it as is
             Debug.debug(`ℹ️ No valid matching files found to remove from the list (no reselected files passed validation)`);
           }
         } catch (error) {
@@ -1209,50 +1170,47 @@ if (typeof FormAutoSaveExtension === 'undefined') {
   }
   
   /**
-   * Update the display of file metadata without recreating the entire info area
+   * Update the display of file metadata by only removing <li> elements for files that have been reselected and validated
    * @param {jQuery} infoArea - The info area to update
    * @param {string} fieldName - The name of the field
-   * @param {Array} files - The remaining files to display
+   * @param {Array} remainingFiles - The files that should remain in the list
    */
-  updateFileMetadataDisplay(infoArea, fieldName, files) {
+  updateFileMetadataDisplay(infoArea, fieldName, remainingFiles) {
     try {
-      // Find and update the file list
       const fileList = infoArea.find('ul');
-      
       if (fileList.length === 0) {
         Debug.warn('File list not found in info area');
         return;
       }
-      
-      // Clear and rebuild the list
-      fileList.empty();
-      
-      files.forEach(file => {
-        // Ensure this file is tracked as restored (in case it wasn't already)
-        const fileId = `${fieldName}:${file.name}:${file.size}`;
-        this.restoredFiles.add(fileId);
-        
-        // Format file size with proper units
-        let sizeStr;
-        if (file.size < 1024) {
-          sizeStr = `${file.size} bytes`;
-        } else if (file.size < 1024 * 1024) {
-          sizeStr = `${(file.size / 1024).toFixed(1)} KB`;
-        } else {
-          sizeStr = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+      // For each <li>, check if its file is still in the remaining files. If not, remove it.
+      fileList.find('li').each((_, li) => {
+        const $li = $(li);
+        // Extract file name and size from the <li> text
+        const text = $li.text();
+        const match = text.match(/([^\(]+)\s*\((\d+(?:\.\d+)?\s*(?:bytes|KB|MB))\)/i);
+        if (!match) return;
+        const fileName = match[1].trim();
+        let fileSize = null;
+        if (match[2].includes('bytes')) {
+          fileSize = parseInt(match[2]);
+        } else if (match[2].includes('KB')) {
+          fileSize = Math.round(parseFloat(match[2]) * 1024);
+        } else if (match[2].includes('MB')) {
+          fileSize = Math.round(parseFloat(match[2]) * 1024 * 1024);
         }
-          
-        // Add file with icon based on type if possible
-        let icon = 'fas fa-file';
-        if (file.type.includes('image')) icon = 'fas fa-file-image';
-        else if (file.type.includes('pdf')) icon = 'fas fa-file-pdf';
-        else if (file.type.includes('word')) icon = 'fas fa-file-word';
-        else if (file.type.includes('excel') || file.type.includes('sheet')) icon = 'fas fa-file-excel';
-        
-        fileList.append(`<li><span class="${icon}" aria-hidden="true"></span> ${file.name} <span class="text-muted">(${sizeStr})</span></li>`);
+        // If this file is NOT in the remaining files, remove the <li>
+        const stillPresent = remainingFiles.some(f => f.name === fileName && Math.abs(f.size - fileSize) < 10);
+        if (!stillPresent) {
+          $li.fadeOut(200, function() { $(this).remove(); });
+        }
       });
-      
-      Debug.debug(`📝 Updated file list display with ${files.length} remaining file(s)`);
+      // If no <li> remain, remove the info area
+      setTimeout(() => {
+        if (fileList.find('li').length === 0) {
+          infoArea.fadeOut(300, function() { $(this).remove(); });
+        }
+      }, 250);
+      Debug.debug(`📝 Updated file list display with ${remainingFiles.length} remaining file(s)`);
     } catch (error) {
       Debug.warn('Error updating file metadata display:', error);
     }

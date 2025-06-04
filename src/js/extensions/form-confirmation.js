@@ -1490,48 +1490,148 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
   // Phase 2: Upload files
   async uploadFiles($modal) {
     return new Promise((resolve, reject) => {
-      // Locate file inputs with files
-      let $fileInputs = this.$form.find('input[type="file"]');
-      let fileInput = null;
+      // Check if we have a FileUploadExtension that can handle the uploads properly
+      const fileUploadExt = this.formHandler.getExtension('fileUpload');
       
-      // Find the first input with files
-      $fileInputs.each(function() {
-        if (this.files && this.files.length > 0) {
-          fileInput = this;
-          return false; // break the loop
+      if (fileUploadExt && typeof fileUploadExt.sendAllFiles === 'function') {
+        Debug.debug('Using FileUploadExtension for Phase 2 upload');
+        
+        // Get the current file count to ensure we have files to upload
+        // Use multiple methods to detect files, prioritizing UI-based detection
+        let fileCount = 0;
+        
+        // Method 1: Check FileUploadExtension's count
+        try {
+          fileCount = fileUploadExt.getFileCount();
+          Debug.debug(`FileUploadExtension.getFileCount() returned: ${fileCount}`);
+        } catch (e) {
+          Debug.warn('Error calling FileUploadExtension.getFileCount():', e);
         }
-      });
-      
-      if (!fileInput || fileInput.files.length === 0) {
-        Debug.debug('No files to upload, skipping phase 2');
-        resolve();
-        return;
-      }
-      
-      // Update progress UI if modal exists
-      if ($modal) {
-        const $progressBar = $modal.find('.progress-bar');
-        const $progressText = $modal.find('.progress-text');
-        $modal.find('.file-progress-container').show();
-      }
-      
-      // Prepare upload URL
-      const formId = this.formHandler.getFormId();
-      const baseUrl = `${window.strBaseURL || ''}/${formId}/upload`;
-      const hasQueryParams = baseUrl.includes('?');
-      const separator = hasQueryParams ? '&' : '?';
-      const uploadUrl = `${baseUrl}${separator}id=${this.recordId}&phase2=true`;
-      
-      // Use direct upload method
-      this.directUploadFiles($(fileInput), uploadUrl)
-        .then(() => {
-          Debug.debug('File upload completed successfully');
+        
+        // Method 2: If FileUploadExtension returns 0, check UI directly
+        if (fileCount === 0) {
+          const fileItemsInUI = this.$form.find('.file-item:not(.done):not(.deleted)').length;
+          Debug.debug(`Direct UI check found ${fileItemsInUI} file items`);
+          fileCount = fileItemsInUI;
+        }
+        
+        // Method 3: Also check our own getFileCount method as final fallback
+        if (fileCount === 0) {
+          fileCount = this.getFileCount();
+          Debug.debug(`Fallback getFileCount() returned: ${fileCount}`);
+        }
+        
+        if (fileCount === 0) {
+          Debug.debug('No files to upload via FileUploadExtension, skipping phase 2');
           resolve();
-        })
-        .catch(err => {
-          Debug.error('File upload failed:', err);
-          reject(err);
+          return;
+        }
+        
+        Debug.debug(`Starting upload of ${fileCount} files via FileUploadExtension`);
+        
+        // Set up progress tracking for the uploads
+        let uploadedCount = 0;
+        const totalFiles = fileCount;
+        
+        // Listen for upload completion events
+        const handleUploadDone = () => {
+          uploadedCount++;
+          const percent = Math.round((uploadedCount / totalFiles) * 100);
+          
+          // Update progress UI if modal exists
+          if ($modal) {
+            $modal.find('.progress-bar').css('width', percent + '%');
+            $modal.find('.progress-text').text(`${percent}% complete`);
+            $modal.find('.file-progress-container').show();
+          }
+          
+          Debug.debug(`File upload progress: ${uploadedCount}/${totalFiles} (${percent}%)`);
+          
+          if (uploadedCount >= totalFiles) {
+            Debug.debug('All files uploaded successfully via FileUploadExtension');
+            // Clean up event listeners and timeout
+            this.$form.off('fileuploaddone.phase2');
+            this.$form.off('fileuploadfail.phase2');
+            if (uploadTimeout) {
+              clearTimeout(uploadTimeout);
+            }
+            resolve();
+          }
+        };
+        
+        const handleUploadFail = (e, data) => {
+          Debug.error('File upload failed via FileUploadExtension:', data?.errorThrown || 'Unknown error');
+          // Clean up event listeners and timeout
+          this.$form.off('fileuploaddone.phase2');
+          this.$form.off('fileuploadfail.phase2');
+          if (uploadTimeout) {
+            clearTimeout(uploadTimeout);
+          }
+          reject(new Error(`File upload failed: ${data?.errorThrown || 'Unknown error'}`));
+        };
+        
+        // Set up event listeners for upload completion
+        this.$form.on('fileuploaddone.phase2', handleUploadDone);
+        this.$form.on('fileuploadfail.phase2', handleUploadFail);
+        
+        // Set up a timeout to prevent hanging (30 seconds per file + 10 seconds buffer)
+        const uploadTimeout = setTimeout(() => {
+          Debug.warn('File upload timeout reached, resolving anyway');
+          this.$form.off('fileuploaddone.phase2');
+          this.$form.off('fileuploadfail.phase2');
+          resolve(); // Resolve instead of reject to allow form completion
+        }, (totalFiles * 30 + 10) * 1000);
+        
+        // Start the uploads using the FileUploadExtension's method
+        fileUploadExt.sendAllFiles(this.recordId);
+        
+      } else {
+        // Fallback to the old method for cases where FileUploadExtension is not available
+        Debug.debug('FileUploadExtension not available, falling back to direct file input method');
+        
+        // Locate file inputs with files
+        let $fileInputs = this.$form.find('input[type="file"]');
+        let fileInput = null;
+        
+        // Find the first input with files
+        $fileInputs.each(function() {
+          if (this.files && this.files.length > 0) {
+            fileInput = this;
+            return false; // break the loop
+          }
         });
+        
+        if (!fileInput || fileInput.files.length === 0) {
+          Debug.debug('No files to upload, skipping phase 2');
+          resolve();
+          return;
+        }
+        
+        // Update progress UI if modal exists
+        if ($modal) {
+          const $progressBar = $modal.find('.progress-bar');
+          const $progressText = $modal.find('.progress-text');
+          $modal.find('.file-progress-container').show();
+        }
+        
+        // Prepare upload URL
+        const formId = this.formHandler.getFormId();
+        const baseUrl = `${window.strBaseURL || ''}/${formId}/upload`;
+        const hasQueryParams = baseUrl.includes('?');
+        const separator = hasQueryParams ? '&' : '?';
+        const uploadUrl = `${baseUrl}${separator}id=${this.recordId}&phase2=true`;
+        
+        // Use direct upload method
+        this.directUploadFiles($(fileInput), uploadUrl)
+          .then(() => {
+            Debug.debug('File upload completed successfully');
+            resolve();
+          })
+          .catch(err => {
+            Debug.error('File upload failed:', err);
+            reject(err);
+          });
+      }
     });
   }
   

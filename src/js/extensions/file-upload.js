@@ -143,15 +143,33 @@ if (typeof FileUploadExtension === 'undefined') {
           const percent = parseInt((data.loaded / data.total) * 100, 10);
           
           // Update progress bar in file item
-          const $progressBar = data.context?.find('.progress-bar');
-          if ($progressBar.length) {
+          let $progressBar = data.context?.find('.progress-bar');
+          
+          // If no progress bar in context, try to find it by filename or fallback to any progress bar
+          if (!$progressBar || !$progressBar.length) {
+            const fileName = data.files?.[0]?.name;
+            if (fileName) {
+              // Try to find the file item by filename
+              const $fileItem = this.$form.find('.file-item').filter(function() {
+                return $(this).find('.file-name').text().trim() === fileName;
+              });
+              $progressBar = $fileItem.find('.progress-bar');
+            }
+            
+            // Final fallback: use any available progress bar in the form
+            if (!$progressBar || !$progressBar.length) {
+              $progressBar = this.$form.find('.progress-bar').first();
+            }
+          }
+          
+          if ($progressBar && $progressBar.length) {
             $progressBar.css('width', percent + '%');
             $progressBar.parent().show();
           }
           
           // Announce progress for accessibility
           if (percent % 25 === 0) {
-            Debug.debug(`Upload ${percent}% complete`);
+            Debug.debug(`Upload ${percent}% complete for file: ${data.files?.[0]?.name || 'unknown'}`);
           }
         },
         
@@ -185,24 +203,66 @@ if (typeof FileUploadExtension === 'undefined') {
     this.uploadId = uploadId;
     Debug.debug('FileUploadExtension: Starting upload for ID:', uploadId);
     
+    // Count how many files we're about to submit
+    const fileItems = this.$form.find('.file-item:not(.done):not(.deleted)');
+    Debug.debug(`FileUploadExtension: Found ${fileItems.length} file items to upload`);
+    
+    if (fileItems.length === 0) {
+      Debug.debug('FileUploadExtension: No files to upload, triggering completion event');
+      // Trigger completion event immediately if no files
+      this.$form.trigger('fileuploaddone');
+      return;
+    }
+    
+    let submittedCount = 0;
+    
     // Trigger all pending uploads
-    this.$form.find('.file-item').each((index, item) => {
+    fileItems.each((index, item) => {
       const $item = $(item);
       const uploadData = $item.data('uploadData');
       
-      if (uploadData && !$item.hasClass('done')) {
-        Debug.debug('Submitting file:', uploadData.files[0]?.name);
+      if (uploadData && uploadData.files && uploadData.files.length > 0) {
+        const fileName = uploadData.files[0]?.name || 'unknown';
+        Debug.debug(`FileUploadExtension: Submitting file ${submittedCount + 1}/${fileItems.length}: ${fileName}`);
+        submittedCount++;
+        
+        // Update the upload URL for Phase 2
+        const baseUrl = this.uploadUrl;
+        const hasQueryParams = baseUrl.includes('?');
+        const separator = hasQueryParams ? '&' : '?';
+        uploadData.url = `${baseUrl}${separator}id=${uploadId}&phase2=true`;
+        
+        // Ensure context points to the file item for progress tracking
+        if (!uploadData.context) {
+          uploadData.context = $item;
+        }
+        
+        Debug.debug(`FileUploadExtension: Upload URL set to: ${uploadData.url}`);
         uploadData.submit();
+      } else {
+        Debug.warn(`FileUploadExtension: File item ${index} has no uploadData or files`);
       }
     });
+    
+    Debug.debug(`FileUploadExtension: Submitted ${submittedCount} files for upload`);
+    
+    // If no files were actually submitted, trigger completion
+    if (submittedCount === 0) {
+      Debug.debug('FileUploadExtension: No files submitted, triggering completion event');
+      this.$form.trigger('fileuploaddone');
+    }
   }
   
   getPendingCount() {
-    return this.$form.find('.file-item:not(.done):not(.deleted)').length;
+    const fileItemCount = this.$form.find('.file-item:not(.done):not(.deleted)').length;
+    Debug.debug(`FileUploadExtension: getPendingCount() found ${fileItemCount} file items`);
+    return fileItemCount;
   }
   
   getFileCount() {
-    return this.getPendingCount();
+    const pendingCount = this.getPendingCount();
+    Debug.debug(`FileUploadExtension: getFileCount() returning ${pendingCount}`);
+    return pendingCount;
   }
   
   resetCounts() {
@@ -230,7 +290,15 @@ if (typeof FileUploadExtension === 'undefined') {
       // Continue with validation
       if (this.validateFile(file)) {
         Debug.debug(`FileUploadExtension: File ${file.name} passed validation, adding to queue`);
-        this.addFileToQueue(file, data);
+        
+        // Create individual data object for this specific file
+        const individualData = {
+          ...data,
+          files: [file], // Only this specific file
+          index: index   // Track the original index
+        };
+        
+        this.addFileToQueue(file, individualData);
         this.updateFileCount();
       } else {
         Debug.debug(`FileUploadExtension: File ${file.name} failed validation`);
@@ -359,6 +427,12 @@ if (typeof FileUploadExtension === 'undefined') {
     
     // Store the data context for upload
     fileItem.data('uploadData', data);
+    Debug.debug(`FileUploadExtension: Stored uploadData for ${file.name}:`, {
+      hasData: !!data,
+      hasFiles: !!(data && data.files),
+      fileCount: data && data.files ? data.files.length : 0,
+      firstFileName: data && data.files && data.files[0] ? data.files[0].name : 'N/A'
+    });
     
     // Add to the files display area
     const filesContainer = this.$form.find('.presentation.files');
@@ -761,10 +835,65 @@ if (typeof FileUploadExtension === 'undefined') {
   }
 
   handleUploadComplete(success, data) {
+    const fileName = data.files?.[0]?.name || 'unknown';
+    Debug.debug(`FileUploadExtension: handleUploadComplete called for ${fileName}, success: ${success}`);
+    
     if (success) {
-      window.location.href = this.formHandler.redirectUrl;
+      // Mark file as completed in the UI
+      if (data.context) {
+        data.context.addClass('done').removeClass('uploading');
+        Debug.debug(`FileUploadExtension: Marked file ${fileName} as done in UI`);
+      } else {
+        // Fallback: find file item by name and mark as done
+        const $fileItem = this.$form.find('.file-item').filter(function() {
+          return $(this).find('.file-name').text().trim() === fileName;
+        });
+        if ($fileItem.length) {
+          $fileItem.addClass('done').removeClass('uploading');
+          Debug.debug(`FileUploadExtension: Found and marked file ${fileName} as done via fallback`);
+        }
+      }
+      
+      // Check if this is a two-phase upload (uploadId is set)
+      if (this.uploadId) {
+        Debug.debug(`FileUploadExtension: Two-phase upload detected for ${fileName}`);
+        
+        // Check if all files are now complete
+        const remainingFiles = this.$form.find('.file-item:not(.done):not(.deleted)').length;
+        Debug.debug(`FileUploadExtension: ${remainingFiles} files remaining after ${fileName} completion`);
+        
+        if (remainingFiles === 0) {
+          Debug.debug('FileUploadExtension: All files uploaded, triggering completion event');
+          this.$form.trigger('fileuploaddone');
+        }
+      } else {
+        // Single phase upload - redirect as before
+        Debug.debug(`FileUploadExtension: Single-phase upload complete for ${fileName}, redirecting`);
+        window.location.href = this.formHandler.redirectUrl;
+      }
     } else {
-      this.showFileError('File upload failed');
+      // Handle upload failure
+      Debug.error(`FileUploadExtension: Upload failed for ${fileName}`);
+      
+      if (data.context) {
+        data.context.addClass('error').removeClass('uploading');
+      } else {
+        // Fallback: find file item by name and mark as error
+        const $fileItem = this.$form.find('.file-item').filter(function() {
+          return $(this).find('.file-name').text().trim() === fileName;
+        });
+        if ($fileItem.length) {
+          $fileItem.addClass('error').removeClass('uploading');
+        }
+      }
+      
+      // Show error message
+      this.showFileError(`File upload failed: ${fileName}`);
+      
+      // In two-phase mode, trigger failure event
+      if (this.uploadId) {
+        this.$form.trigger('fileuploadfail', data);
+      }
     }
   }
 

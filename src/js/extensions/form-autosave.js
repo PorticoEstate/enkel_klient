@@ -441,15 +441,15 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       // Log info about each file input
       fileInputs.forEach(input => {
         Debug.debug(`📁 File input: name=${input.name}, id=${input.id}, files=${input.files?.length || 0}`);
-        
+
         const metadataKey = input.name || input.id || `file_input_${fileInputs.indexOf(input)}`;
         const $input = $(input);
         const userChanged = $input.data('user-changed');
-        
+
         // Collect files from both native file input AND upload queue
         const allFiles = [];
         const seenFiles = new Set(); // Track files by name+size to avoid duplicates
-        
+
         // First, add files from native file input
         if (input.files && input.files.length > 0) {
           Debug.debug(`✅ Input ${input.name} has ${input.files.length} file(s) selected from native input`);
@@ -458,13 +458,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             if (!seenFiles.has(fileKey)) {
               allFiles.push(file);
               seenFiles.add(fileKey);
-              Debug.debug(`📁 Added native file: ${file.name} (${file.size} bytes)`);
             } else {
               Debug.debug(`⚠️ Skipping duplicate native file: ${file.name} (${file.size} bytes)`);
             }
           });
         }
-        
+
         // Then, add files from the FileUploadExtension's upload queue (avoiding duplicates)
         if (fileUploadExtension) {
           const queueFiles = this.getFilesFromUploadQueue(fileUploadExtension, metadataKey);
@@ -475,54 +474,86 @@ if (typeof FormAutoSaveExtension === 'undefined') {
               if (!seenFiles.has(fileKey)) {
                 allFiles.push(file);
                 seenFiles.add(fileKey);
-                Debug.debug(`📁 Added queue file: ${file.name} (${file.size} bytes)`);
               } else {
                 Debug.debug(`⚠️ Skipping duplicate queue file: ${file.name} (${file.size} bytes)`);
               }
             });
           }
         }
-        
-        // Process all collected files (both native and queue, deduplicated)
-        if (allFiles.length > 0) {
-          Debug.debug(`📋 Processing ${allFiles.length} unique file(s) for ${metadataKey} (deduplicated from native + queue)`);
-          
+
+        // Merge with original autosave files if info area exists and not all original files have been reselected/validated
+        let originalFiles = [];
+        let originalFilesMap = new Map();
+        const formJQ = this.formHandler.getForm ? this.formHandler.getForm() : null;
+        if (formJQ && formJQ.length) {
+          const escapedKey = metadataKey.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+          const fileInputJQ = formJQ.find(`[name="${escapedKey}"]`);
+          const fieldContainer = fileInputJQ.closest('.form-group, .custom-file, .file-upload-container, .file-input-container');
+          const infoArea = fieldContainer.find('.autosave-file-info');
+          if (infoArea.length) {
+            const originalFilesData = infoArea.data('original-files');
+            if (originalFilesData) {
+              try {
+                originalFiles = JSON.parse(originalFilesData);
+                originalFiles.forEach(f => originalFilesMap.set(`${f.name}:${f.size}`, f));
+              } catch (e) {
+                Debug.warn('Could not parse original files from info area data attribute:', e);
+              }
+            }
+          }
+        }
+
+        // Track which original files have been reselected and validated
+        const reselectedKeys = new Set();
+        const newFiles = [];
+
+        allFiles.forEach(file => {
+          const key = `${file.name}:${file.size}`;
+          if (originalFilesMap.has(key)) {
+            // This is a reselected file
+            reselectedKeys.add(key);
+          } else {
+            // This is a new file
+            newFiles.push(file);
+          }
+        });
+
+        // Build the new metadata: keep all original files except those reselected, and add new files
+        let mergedFiles = [];
+        originalFiles.forEach(f => {
+          const key = `${f.name}:${f.size}`;
+          if (!reselectedKeys.has(key)) {
+            mergedFiles.push(f);
+            Debug.debug(`🔄 Preserving original autosave file in metadata: ${f.name} (${f.size} bytes)`);
+          } else {
+            Debug.debug(`🗑️ Removing reselected original file from metadata: ${f.name} (${f.size} bytes)`);
+          }
+        });
+        mergedFiles = mergedFiles.concat(newFiles);
+
+        if (mergedFiles.length > 0) {
+          Debug.debug(`📋 Processing ${mergedFiles.length} unique file(s) for ${metadataKey} (originals not yet reselected + new)`);
           const fileInfo = [];
-          
-          for (let i = 0; i < allFiles.length; i++) {
-            const file = allFiles[i];
+          for (let i = 0; i < mergedFiles.length; i++) {
+            const file = mergedFiles[i];
             let isValid = true;
-            
-            // Only save metadata for files that pass validation
             if (fileUploadExtension && typeof fileUploadExtension.validateFile === 'function') {
-              // Use the FileUploadExtension's validation if available
               isValid = fileUploadExtension.validateFile(file);
-              Debug.debug(`🔍 File ${file.name} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+              Debug.debug(`🔍 Queue file ${file.name} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
             } else {
-              // Fallback: basic validation if FileUploadExtension is not available
               isValid = this.basicFileValidation(file, input);
               Debug.debug(`🔍 File ${file.name} basic validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
             }
-            
-            // Only add to metadata if the file is valid
             if (isValid) {
-              fileInfo.push({
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: file.lastModified
-              });
-              
+              fileInfo.push({ name: file.name, size: file.size, type: file.type });
               Debug.debug(`✅ File: ${file.name}, size: ${file.size} bytes - VALID, added to metadata`);
             } else {
-              Debug.debug(`❌ File: ${file.name}, size: ${file.size} bytes - INVALID, excluded from metadata`);
+              Debug.debug(`❌ File: ${file.name}, size: ${file.size} bytes - INVALID, not added to metadata`);
             }
           }
-          
-          // Only store metadata if we have valid files
           if (fileInfo.length > 0) {
             data._fileMetadata[metadataKey] = fileInfo;
-            Debug.debug(`💾 Stored file metadata under key: ${metadataKey} (${fileInfo.length} valid files out of ${allFiles.length} unique files)`);
+            Debug.debug(`💾 Stored file metadata under key: ${metadataKey} (${fileInfo.length} valid files out of ${mergedFiles.length} unique files)`);
           } else {
             Debug.debug(`⚠️ No valid files found for ${metadataKey}, not storing metadata`);
           }
@@ -530,7 +561,6 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           // If no files are selected, only clear metadata if user actively changed the input
           // OR if we're past the initial load period
           if (userChanged || !this.justLoaded) {
-            // User intentionally cleared the files or enough time has passed
             Debug.debug(`🗑️ File input ${metadataKey} cleared by user or post-load`);
             // Don't store anything - let existing metadata be preserved
           } else {

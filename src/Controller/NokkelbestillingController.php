@@ -190,7 +190,7 @@ class NokkelbestillingController extends BaseFormController
 					'priority' => 3,
 					'apply' => true,
 					'location_code' => $sanitizedPost['location_code'] ?? '',
-					'address' => $sanitizedPost['address'] ?? $post['location_name'] ?? '',
+					'address' => !empty($sanitizedPost['address']) ? $sanitizedPost['address'] : $sanitizedPost['location_name'],
 					'subject' => Sanitizer::sanitizeString($post['subject'] ?? ''),
 					'details' => $details,
 					'extra' => [

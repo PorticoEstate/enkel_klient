@@ -13,6 +13,8 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       storageKey: options.storageKey || `autosave_${formHandler.getFormId()}`,
       ...options
     };
+    this.autosaveInProgress = false; // Flag to prevent file change listener during autosave
+    this.restoredFiles = new Set(); // Track files that were restored from autosave (field names + file identifiers)
     this.init();
   }
 
@@ -349,7 +351,69 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     }
   }
 
+  /**
+   * Get files from the FileUploadExtension's upload queue for a specific field
+   * This captures files that were added via drag-and-drop but are stored in the extension's queue
+   * @param {Object} fileUploadExtension - The FileUploadExtension instance
+   * @param {string} metadataKey - The metadata key for the field
+   * @returns {Array} Array of File objects from the upload queue
+   */
+  getFilesFromUploadQueue(fileUploadExtension, metadataKey) {
+    try {
+      if (!fileUploadExtension || !this.formHandler.getForm) {
+        Debug.debug(`⚠️ FileUploadExtension not available for ${metadataKey}`);
+        return [];
+      }
+
+      const form = this.formHandler.getForm();
+      const queueFiles = [];
+
+      // Find all file items in the upload queue that are not deleted or already done
+      const fileItems = form.find('.file-item:not(.deleted)');
+      Debug.debug(`📁 Found ${fileItems.length} file item(s) in upload queue for ${metadataKey}`);
+
+      fileItems.each((index, item) => {
+        const $item = $(item);
+        const uploadData = $item.data('uploadData');
+
+        if (uploadData && uploadData.files && uploadData.files.length > 0) {
+          // Extract File objects from the uploadData
+          Array.from(uploadData.files).forEach(file => {
+            // Validate the file using the same logic as native file inputs
+            let isValid = true;
+            
+            if (fileUploadExtension && typeof fileUploadExtension.validateFile === 'function') {
+              isValid = fileUploadExtension.validateFile(file);
+              Debug.debug(`🔍 Queue file ${file.name} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+            } else {
+              // Fallback: basic validation if FileUploadExtension validation is not available
+              isValid = this.basicFileValidation(file, null);
+              Debug.debug(`🔍 Queue file ${file.name} basic validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+            }
+
+            if (isValid) {
+              queueFiles.push(file);
+              Debug.debug(`✅ Added queue file to metadata: ${file.name} (${file.size} bytes)`);
+            } else {
+              Debug.debug(`❌ Excluded invalid queue file: ${file.name} (${file.size} bytes)`);
+            }
+          });
+        }
+      });
+
+      Debug.debug(`📋 Extracted ${queueFiles.length} valid file(s) from upload queue for ${metadataKey}`);
+      return queueFiles;
+
+    } catch (error) {
+      Debug.warn(`❌ Error extracting files from upload queue for ${metadataKey}:`, error);
+      return [];
+    }
+  }
+
   serializeForm() {
+    // Set flag to prevent file change listeners from triggering during autosave
+    this.autosaveInProgress = true;
+    
     try {
       const form = this.formHandler.getFormElement();
       if (!form) {
@@ -371,6 +435,9 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       const fileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
       Debug.debug(`📁 Found ${fileInputs.length} file input(s) in form`);
       
+      // Get the FileUploadExtension to use its validation logic and upload queue
+      const fileUploadExtension = this.formHandler.getExtension ? this.formHandler.getExtension('fileUpload') : null;
+      
       // Log info about each file input
       fileInputs.forEach(input => {
         Debug.debug(`📁 File input: name=${input.name}, id=${input.id}, files=${input.files?.length || 0}`);
@@ -379,25 +446,86 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         const $input = $(input);
         const userChanged = $input.data('user-changed');
         
-        // Check if this input has files selected
+        // Collect files from both native file input AND upload queue
+        const allFiles = [];
+        const seenFiles = new Set(); // Track files by name+size to avoid duplicates
+        
+        // First, add files from native file input
         if (input.files && input.files.length > 0) {
-          Debug.debug(`✅ Input ${input.name} has ${input.files.length} file(s) selected`);
+          Debug.debug(`✅ Input ${input.name} has ${input.files.length} file(s) selected from native input`);
+          Array.from(input.files).forEach(file => {
+            const fileKey = `${file.name}:${file.size}`;
+            if (!seenFiles.has(fileKey)) {
+              allFiles.push(file);
+              seenFiles.add(fileKey);
+              Debug.debug(`📁 Added native file: ${file.name} (${file.size} bytes)`);
+            } else {
+              Debug.debug(`⚠️ Skipping duplicate native file: ${file.name} (${file.size} bytes)`);
+            }
+          });
+        }
+        
+        // Then, add files from the FileUploadExtension's upload queue (avoiding duplicates)
+        if (fileUploadExtension) {
+          const queueFiles = this.getFilesFromUploadQueue(fileUploadExtension, metadataKey);
+          if (queueFiles.length > 0) {
+            Debug.debug(`✅ Found ${queueFiles.length} additional file(s) in upload queue for ${input.name}`);
+            queueFiles.forEach(file => {
+              const fileKey = `${file.name}:${file.size}`;
+              if (!seenFiles.has(fileKey)) {
+                allFiles.push(file);
+                seenFiles.add(fileKey);
+                Debug.debug(`📁 Added queue file: ${file.name} (${file.size} bytes)`);
+              } else {
+                Debug.debug(`⚠️ Skipping duplicate queue file: ${file.name} (${file.size} bytes)`);
+              }
+            });
+          }
+        }
+        
+        // Process all collected files (both native and queue, deduplicated)
+        if (allFiles.length > 0) {
+          Debug.debug(`📋 Processing ${allFiles.length} unique file(s) for ${metadataKey} (deduplicated from native + queue)`);
           
           const fileInfo = [];
-          for (let i = 0; i < input.files.length; i++) {
-            const file = input.files[i];
-            fileInfo.push({
-              name: file.name,
-              size: file.size,
-              type: file.type,
-              lastModified: file.lastModified
-            });
-            Debug.debug(`📄 File: ${file.name}, size: ${file.size} bytes`);
+          
+          for (let i = 0; i < allFiles.length; i++) {
+            const file = allFiles[i];
+            let isValid = true;
+            
+            // Only save metadata for files that pass validation
+            if (fileUploadExtension && typeof fileUploadExtension.validateFile === 'function') {
+              // Use the FileUploadExtension's validation if available
+              isValid = fileUploadExtension.validateFile(file);
+              Debug.debug(`🔍 File ${file.name} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+            } else {
+              // Fallback: basic validation if FileUploadExtension is not available
+              isValid = this.basicFileValidation(file, input);
+              Debug.debug(`🔍 File ${file.name} basic validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+            }
+            
+            // Only add to metadata if the file is valid
+            if (isValid) {
+              fileInfo.push({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: file.lastModified
+              });
+              
+              Debug.debug(`✅ File: ${file.name}, size: ${file.size} bytes - VALID, added to metadata`);
+            } else {
+              Debug.debug(`❌ File: ${file.name}, size: ${file.size} bytes - INVALID, excluded from metadata`);
+            }
           }
           
-          // Store metadata for this input - use a clean key for array notation
-          data._fileMetadata[metadataKey] = fileInfo;
-          Debug.debug(`💾 Stored file metadata under key: ${metadataKey}`);
+          // Only store metadata if we have valid files
+          if (fileInfo.length > 0) {
+            data._fileMetadata[metadataKey] = fileInfo;
+            Debug.debug(`💾 Stored file metadata under key: ${metadataKey} (${fileInfo.length} valid files out of ${allFiles.length} unique files)`);
+          } else {
+            Debug.debug(`⚠️ No valid files found for ${metadataKey}, not storing metadata`);
+          }
         } else {
           // If no files are selected, only clear metadata if user actively changed the input
           // OR if we're past the initial load period
@@ -510,9 +638,14 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         
         data[key] = value;
       }
+      
+      // Clear the autosave flag before returning
+      this.autosaveInProgress = false;
       return data;
     } catch (error) {
       Debug.error('Error serializing form:', error);
+      // Clear the autosave flag on error too
+      this.autosaveInProgress = false;
       return {};
     }
   }
@@ -875,6 +1008,11 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         // Add file list
         const fileList = $('<ul class="mb-1"></ul>');
         files.forEach(file => {
+          // Track this file as being restored from autosave
+          const fileId = `${fieldName}:${file.name}:${file.size}`;
+          this.restoredFiles.add(fileId);
+          Debug.debug(`📋 Tracking restored file: ${fileId}`);
+          
           // Format file size with proper units
           let sizeStr;
           if (file.size < 1024) {
@@ -934,11 +1072,24 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     fileInput.on('change.autosave', () => {
       Debug.debug(`📁 Autosave file input changed for field: ${fieldName}`);
       
+      // Check if autosave is currently in progress - if so, don't process file changes
+      // This prevents newly saved files from being immediately removed from the "previously selected" list
+      if (this.autosaveInProgress) {
+        Debug.debug(`⏸️ Autosave in progress, skipping file change processing for ${fieldName}`);
+        return;
+      }
+      
+      // Get the current metadata state BEFORE any autosave triggered by this file change
+      const savedDataBefore = localStorage.getItem(storageKey);
+      const existingMetadataBefore = savedDataBefore ? 
+        JSON.parse(savedDataBefore)._fileMetadata && JSON.parse(savedDataBefore)._fileMetadata[fieldName] || [] : [];
+      
       // Small delay to let other extensions (like FileUploadExtension) process first
       setTimeout(() => {
+        
         const selectedFiles = Array.from(fileInput[0].files || []);
         if (selectedFiles.length === 0) {
-          Debug.debug(`ℹ️ No files selected for ${fieldName}`);
+          Debug.debug(`ℹ️ No files selected for ${fieldName}, not modifying previously selected list`);
           return;
         }
         
@@ -948,19 +1099,13 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         });
         
         try {
-          const savedData = localStorage.getItem(storageKey);
-          if (!savedData) {
-            Debug.debug(`⚠️ No saved data found in localStorage for key: ${storageKey}`);
+          // Use the metadata that existed BEFORE this file change
+          if (existingMetadataBefore.length === 0) {
+            Debug.debug(`ℹ️ No previously saved file metadata found for field: ${fieldName}`);
             return;
           }
           
-          const data = JSON.parse(savedData);
-          if (!data._fileMetadata || !data._fileMetadata[fieldName]) {
-            Debug.debug(`⚠️ No file metadata found for field: ${fieldName}`);
-            return;
-          }
-          
-          const savedFiles = data._fileMetadata[fieldName];
+          const savedFiles = existingMetadataBefore;
           Debug.debug(`📦 Found ${savedFiles.length} previously saved files for ${fieldName}:`);
           savedFiles.forEach((file, index) => {
             Debug.debug(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
@@ -969,48 +1114,91 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           let removedFiles = [];
           let remainingFiles = [];
           
-          // Check each saved file against newly selected files
+          // Get the FileUploadExtension to validate newly selected files
+          const fileUploadExtension = this.formHandler.getExtension ? this.formHandler.getExtension('fileUpload') : null;
+          
+          // IMPORTANT: HTML file inputs replace the entire selection when users pick files
+          // So we should only remove files that are actually present in the current selection
+          // and have passed validation. Files not in the current selection should remain in 
+          // the "previously selected" list since the user didn't explicitly reselect them.
+          
+          // However, we need to be careful not to treat files that were just saved in this 
+          // session as "previously selected" files that should be removed.
+          
+          // Check each saved file to see if it was reselected and is valid
           savedFiles.forEach(savedFile => {
-            const isReselected = selectedFiles.some(newFile => 
+            const matchingNewFile = selectedFiles.find(newFile => 
               newFile.name === savedFile.name && 
               newFile.size === savedFile.size
             );
             
-            if (isReselected) {
-              removedFiles.push(savedFile);
-              Debug.debug(`🗑️ Removing previously selected file: ${savedFile.name}`);
+            if (matchingNewFile) {
+              // File is reselected, check if it passes validation
+              let isValid = true;
+              
+              if (fileUploadExtension && typeof fileUploadExtension.validateFile === 'function') {
+                // Use the FileUploadExtension's validation if available
+                isValid = fileUploadExtension.validateFile(matchingNewFile);
+                Debug.debug(`🔍 Reselected file ${matchingNewFile.name} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+              } else {
+                // Fallback: basic validation if FileUploadExtension is not available
+                isValid = this.basicFileValidation(matchingNewFile, fileInput[0]);
+                Debug.debug(`🔍 Reselected file ${matchingNewFile.name} basic validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+              }
+              
+              if (isValid) {
+                // File is valid and reselected, remove it from the previously selected list
+                removedFiles.push(savedFile);
+                
+                // Also remove from restored files tracking since it's now a newly selected file
+                const fileId = `${fieldName}:${savedFile.name}:${savedFile.size}`;
+                this.restoredFiles.delete(fileId);
+                Debug.debug(`🗑️ Removing previously selected file (valid reselection): ${savedFile.name}`);
+                Debug.debug(`📋 Removed from restored files tracking: ${fileId}`);
+              } else {
+                // File is invalid but was reselected, keep it in the list for user awareness
+                remainingFiles.push(savedFile);
+                Debug.debug(`📋 Keeping file in list (reselected but failed validation): ${savedFile.name}`);
+              }
             } else {
+              // File was not reselected, keep it in the previously selected list
               remainingFiles.push(savedFile);
-              Debug.debug(`📋 Keeping file in list: ${savedFile.name}`);
+              Debug.debug(`📋 Keeping file in list (not reselected in current file input): ${savedFile.name}`);
             }
           });
           
           Debug.debug(`📊 Result: ${removedFiles.length} files to remove, ${remainingFiles.length} files to keep`);
           
           if (removedFiles.length > 0) {
-            // Update the saved data
+            // Get the current data (it may have been updated by serializeForm)
+            const currentSavedData = localStorage.getItem(storageKey);
+            const currentData = currentSavedData ? JSON.parse(currentSavedData) : {};
+            
+            // Update the saved data - replace with remaining files from the original list
+            if (!currentData._fileMetadata) {
+              currentData._fileMetadata = {};
+            }
+            currentData._fileMetadata[fieldName] = remainingFiles;
+            localStorage.setItem(storageKey, JSON.stringify(currentData));
+            
             if (remainingFiles.length > 0) {
-              data._fileMetadata[fieldName] = remainingFiles;
-              localStorage.setItem(storageKey, JSON.stringify(data));
-              
-              // Update the display
+              // Update the display with remaining files
               this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
-              
               Debug.debug(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
             } else {
-              // No files left, remove the entire metadata for this field
-              delete data._fileMetadata[fieldName];
-              localStorage.setItem(storageKey, JSON.stringify(data));
-              
-              // Remove the entire info area
+              // No files left in the previously selected list, remove the info area
               infoArea.fadeOut(300, function() {
                 $(this).remove();
               });
               
-              Debug.debug(`✅ All previously selected files have been re-selected, removing info area`);
+              // Clean up the metadata since no files remain from the previous list
+              delete currentData._fileMetadata[fieldName];
+              localStorage.setItem(storageKey, JSON.stringify(currentData));
+              
+              Debug.debug(`✅ All previously selected files have been re-selected and validated, removing info area`);
             }
           } else {
-            Debug.debug(`ℹ️ No matching files found to remove from the list`);
+            Debug.debug(`ℹ️ No valid matching files found to remove from the list (no reselected files passed validation)`);
           }
         } catch (error) {
           Debug.warn('❌ Error updating file metadata on file change:', error);
@@ -1040,6 +1228,10 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       fileList.empty();
       
       files.forEach(file => {
+        // Ensure this file is tracked as restored (in case it wasn't already)
+        const fileId = `${fieldName}:${file.name}:${file.size}`;
+        this.restoredFiles.add(fileId);
+        
         // Format file size with proper units
         let sizeStr;
         if (file.size < 1024) {
@@ -1112,7 +1304,7 @@ if (typeof FormAutoSaveExtension === 'undefined') {
    */
   removeFileFromMetadata(deletedFile) {
     try {
-      Debug.debug(`🗑️ FormAutoSaveExtension: Removing file from metadata: ${deletedFile.name}`);
+      Debug.debug(`🗑️ FormAutoSaveExtension: Removing file from metadata: ${deletedFile.name} (${deletedFile.size} bytes)`);
       
       const savedData = localStorage.getItem(this.options.storageKey);
       if (!savedData) {
@@ -1129,10 +1321,17 @@ if (typeof FormAutoSaveExtension === 'undefined') {
       let filesRemoved = 0;
       let fieldsUpdated = [];
       
+      Debug.debug(`🔍 Checking ${Object.keys(data._fileMetadata).length} metadata field(s) for file to remove`);
+      
       // Check all file metadata fields for this file
       Object.keys(data._fileMetadata).forEach(fieldName => {
         const files = data._fileMetadata[fieldName];
         if (!Array.isArray(files)) return;
+        
+        Debug.debug(`📁 Field ${fieldName} has ${files.length} file(s) before removal:`);
+        files.forEach((file, index) => {
+          Debug.debug(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
+        });
         
         // Find and remove the deleted file from this field's metadata
         const originalLength = files.length;
@@ -1140,11 +1339,29 @@ if (typeof FormAutoSaveExtension === 'undefined') {
           // Match by name and size for accuracy
           const isMatch = file.name === deletedFile.name && file.size === deletedFile.size;
           if (isMatch) {
-            Debug.debug(`🎯 Found matching file in field ${fieldName}: ${file.name}`);
-            filesRemoved++;
+            // Check if this file was originally restored from autosave
+            const fileId = `${fieldName}:${file.name}:${file.size}`;
+            const wasRestored = this.restoredFiles.has(fileId);
+            
+            Debug.debug(`🎯 Found matching file in field ${fieldName}: ${file.name} (${file.size} bytes)`);
+            Debug.debug(`📋 File was restored from autosave: ${wasRestored}`);
+            
+            if (wasRestored) {
+              // This file was from the "Previously selected files" list, so remove it
+              Debug.debug(`✅ Removing restored file from metadata: ${file.name}`);
+              this.restoredFiles.delete(fileId); // Also clean up tracking
+              filesRemoved++;
+              return false; // Remove from metadata
+            } else {
+              // This file was newly selected in current session, don't remove from metadata
+              Debug.debug(`⚠️ File was newly selected (not restored), keeping in metadata: ${file.name}`);
+              return true; // Keep in metadata
+            }
           }
-          return !isMatch;
+          return true; // Keep other files
         });
+        
+        Debug.debug(`📁 Field ${fieldName} has ${data._fileMetadata[fieldName].length} file(s) after removal`);
         
         // Check if this field was affected
         if (data._fileMetadata[fieldName].length !== originalLength) {
@@ -1158,9 +1375,12 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             // Also remove the visual display
             this.removeFileMetadataDisplay(fieldName);
           } else {
+            Debug.debug(`✅ ${data._fileMetadata[fieldName].length} file(s) remain in field ${fieldName}, updating display`);
             // Update the visual display with remaining files
             this.updateExistingFileMetadataDisplay(fieldName, data._fileMetadata[fieldName]);
           }
+        } else {
+          Debug.debug(`ℹ️ Field ${fieldName} was not affected by removal`);
         }
       });
       
@@ -1220,11 +1440,69 @@ if (typeof FormAutoSaveExtension === 'undefined') {
         if (infoArea.length && remainingFiles.length > 0) {
           this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
           Debug.debug(`🔄 Updated file metadata display for field: ${fieldName} with ${remainingFiles.length} remaining file(s)`);
+        } else if (infoArea.length && remainingFiles.length === 0) {
+          // If no files remain, remove the display and clean up tracking
+          remainingFiles.forEach(file => {
+            const fileId = `${fieldName}:${file.name}:${file.size}`;
+            this.restoredFiles.delete(fileId);
+          });
+          infoArea.fadeOut(300, function() {
+            $(this).remove();
+          });
+          Debug.debug(`🗑️ Removed empty file metadata display for field: ${fieldName}`);
         }
       }
     } catch (error) {
       Debug.warn('Error updating existing file metadata display:', error);
     }
+  }
+
+  /**
+   * Basic file validation fallback when FileUploadExtension is not available
+   * @param {File} file - The file to validate
+   * @param {HTMLInputElement} input - The file input element
+   * @returns {boolean} - Whether the file is valid
+   */
+  basicFileValidation(file, input) {
+    // Check if file is empty
+    if (file.size === 0) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} is empty (0 bytes)`);
+      return false;
+    }
+    
+    // Check if file is suspiciously small (less than 10 bytes)
+    if (file.size < 10) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} is very small (${file.size} bytes)`);
+      return false;
+    }
+    
+    // Check for basic file size limit (default 15MB if not specified)
+    const maxSizeMB = 15;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB > ${maxSizeMB}MB)`);
+      return false;
+    }
+    
+    // Check if file has an extension
+    const fileName = file.name.toLowerCase();
+    const hasExtension = fileName.includes('.') && fileName.split('.').pop() !== fileName;
+    if (!hasExtension) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} has no file extension`);
+      return false;
+    }
+    
+    // Check for dangerous extensions
+    const fileExt = fileName.split('.').pop();
+    const dangerousExtensions = ['exe', 'bat', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar', 'ps1'];
+    if (dangerousExtensions.includes(fileExt)) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} has dangerous extension (.${fileExt})`);
+      return false;
+    }
+    
+    // If we get here, the file passes basic validation
+    Debug.debug(`FormAutoSaveExtension: File ${file.name} passed basic validation`);
+    return true;
   }
 
   // ...existing code...

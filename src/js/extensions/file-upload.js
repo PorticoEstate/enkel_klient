@@ -406,6 +406,9 @@ if (typeof FileUploadExtension === 'undefined') {
     });
     
     Debug.debug(`FileUploadExtension: File ${file.name} added to queue with ID ${fileId}`);
+    
+    // Notify autosave extension about file addition to immediately update metadata
+    this.notifyAutosaveFileAdded(file);
   }
   
   updateFileCount() {
@@ -831,6 +834,22 @@ if (typeof FileUploadExtension === 'undefined') {
       }
     } catch (error) {
       Debug.warn('FileUploadExtension: Error notifying autosave about file deletion:', error);
+    }
+  }
+
+  notifyAutosaveFileAdded(file) {
+    try {
+      // Get the autosave extension
+      const autosaveExtension = this.formHandler.getExtension('autoSave');
+      if (autosaveExtension && typeof autosaveExtension.saveData === 'function') {
+        Debug.debug(`FileUploadExtension: Notifying autosave about added file: ${file.name}`);
+        // Trigger autosave to immediately update metadata with the new file
+        autosaveExtension.saveData();
+      } else {
+        Debug.debug('FileUploadExtension: Autosave extension not found or saveData method not available');
+      }
+    } catch (error) {
+      Debug.warn('FileUploadExtension: Error notifying autosave about file addition:', error);
     }
   }
   }

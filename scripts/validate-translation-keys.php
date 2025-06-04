@@ -1,4 +1,10 @@
 <?php
+// Ensure script is run from command line only
+if (php_sapi_name() !== 'cli')
+{
+    http_response_code(403);
+    die('This script can only be run from the command line.');
+}
 // scripts/validate-translation-keys.php
 // Compares extracted translation keys with translation files and reports missing/unused keys
 
@@ -9,19 +15,21 @@ $translationDir = __DIR__ . '/../src/translations';
 $translations = [];
 foreach (glob($translationDir . '/*.php') as $file)
 {
-	$lang = basename($file, '.php');
-	$translations[$lang] = include $file;
+    $lang = basename($file, '.php');
+    $translations[$lang] = include $file;
 }
 
 // Dynamically detect keys that have individual translations for each section
 $sectionKeyCounts = [];
-foreach ($extracted as $item) {
+foreach ($extracted as $item)
+{
     $key = $item['key'];
     $section = $item['section'] ?: 'common';
     if (!isset($sectionKeyCounts[$key])) $sectionKeyCounts[$key] = [];
     $sectionKeyCounts[$key][$section] = true;
 }
-$multiSectionKeys = array_keys(array_filter($sectionKeyCounts, function($sections) {
+$multiSectionKeys = array_keys(array_filter($sectionKeyCounts, function ($sections)
+{
     return count($sections) > 1;
 }));
 

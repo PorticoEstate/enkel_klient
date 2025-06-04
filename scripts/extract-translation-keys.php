@@ -1,4 +1,10 @@
 <?php
+// Ensure script is run from command line only
+if (php_sapi_name() !== 'cli')
+{
+    http_response_code(403);
+    die('This script can only be run from the command line.');
+}
 // scripts/extract-translation-keys.php
 // Scans PHP and Twig files for translation key usage and outputs a JSON file with all found keys/sections
 
@@ -15,7 +21,7 @@ $patterns = [
 // Map template filenames to their corresponding sections
 $templateToSection = [
     'helpdesk.twig' => 'helpdesk',
-    'nokkelbestilling.twig' => 'nokkelbestilling', 
+    'nokkelbestilling.twig' => 'nokkelbestilling',
     'invoicerequest.twig' => 'invoicerequest',
     'inspection_1.twig' => 'inspection_1'
 ];
@@ -31,50 +37,63 @@ $controllerToSection = [
 $foundWithMeta = [];
 $keyFileMapping = []; // Track which files each key appears in
 
-foreach ($srcDirs as $dir) {
+foreach ($srcDirs as $dir)
+{
     $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
-    foreach ($rii as $file) {
+    foreach ($rii as $file)
+    {
         if ($file->isDir()) continue;
         if (!preg_match('/\.(php|twig)$/', $file->getFilename())) continue;
-        
+
         $content = file_get_contents($file->getPathname());
         $lines = explode("\n", $content);
         $filename = $file->getFilename();
-        
-        foreach ($lines as $lineNum => $line) {
+
+        foreach ($lines as $lineNum => $line)
+        {
             // Determine which patterns to use based on file type
             $filePatterns = [];
-            if (preg_match('/\.twig$/', $filename)) {
+            if (preg_match('/\.twig$/', $filename))
+            {
                 $filePatterns['twig'] = $patterns['twig'];
-            } elseif (preg_match('/\.php$/', $filename)) {
+            }
+            elseif (preg_match('/\.php$/', $filename))
+            {
                 $filePatterns['twig'] = $patterns['twig']; // PHP files can also use __() function
                 $filePatterns['php'] = $patterns['php'];   // PHP files can use $translator->translate()
             }
-            
-            foreach ($filePatterns as $patternType => $pattern) {
-                if (preg_match_all($pattern, $line, $matches, PREG_SET_ORDER)) {
-                    foreach ($matches as $match) {
+
+            foreach ($filePatterns as $patternType => $pattern)
+            {
+                if (preg_match_all($pattern, $line, $matches, PREG_SET_ORDER))
+                {
+                    foreach ($matches as $match)
+                    {
                         $key = $match[1];
                         $explicitSection = isset($match[3]) ? $match[3] : null;
-                        
+
                         // Track which files this key appears in
-                        if (!isset($keyFileMapping[$key])) {
+                        if (!isset($keyFileMapping[$key]))
+                        {
                             $keyFileMapping[$key] = [];
                         }
                         $keyFileMapping[$key][$filename] = true;
-                        
+
                         // Determine section: explicit section takes precedence, then template/controller mapping, then common
                         $section = $explicitSection;
-                        if (!$section && isset($templateToSection[$filename])) {
+                        if (!$section && isset($templateToSection[$filename]))
+                        {
                             $section = $templateToSection[$filename];
                         }
-                        if (!$section && isset($controllerToSection[$filename])) {
+                        if (!$section && isset($controllerToSection[$filename]))
+                        {
                             $section = $controllerToSection[$filename];
                         }
-                        if (!$section) {
+                        if (!$section)
+                        {
                             $section = 'common';
                         }
-                        
+
                         $id = $key . '|' . $section . '|' . $filename; // Include filename to ensure uniqueness
                         $foundWithMeta[$id] = [
                             'key' => $key,
@@ -91,17 +110,22 @@ foreach ($srcDirs as $dir) {
 
 // Analyze multi-section keys: keys that appear in multiple template files with different sections
 $multiSectionKeys = [];
-foreach ($keyFileMapping as $key => $files) {
+foreach ($keyFileMapping as $key => $files)
+{
     $sections = [];
-    foreach (array_keys($files) as $filename) {
-        if (isset($templateToSection[$filename])) {
+    foreach (array_keys($files) as $filename)
+    {
+        if (isset($templateToSection[$filename]))
+        {
             $sections[$templateToSection[$filename]] = true;
         }
-        if (isset($controllerToSection[$filename])) {
+        if (isset($controllerToSection[$filename]))
+        {
             $sections[$controllerToSection[$filename]] = true;
         }
     }
-    if (count($sections) > 1) {
+    if (count($sections) > 1)
+    {
         $multiSectionKeys[$key] = array_keys($sections);
         echo "Multi-section key detected: '$key' appears in sections: " . implode(', ', array_keys($sections)) . "\n";
     }
@@ -111,14 +135,18 @@ foreach ($keyFileMapping as $key => $files) {
 $final = [];
 $processedKeys = [];
 
-foreach ($foundWithMeta as $item) {
+foreach ($foundWithMeta as $item)
+{
     $key = $item['key'];
-    
+
     // For multi-section keys, create entries for each section they should appear in
-    if (isset($multiSectionKeys[$key])) {
-        foreach ($multiSectionKeys[$key] as $section) {
+    if (isset($multiSectionKeys[$key]))
+    {
+        foreach ($multiSectionKeys[$key] as $section)
+        {
             $uniqueId = $key . '|' . $section;
-            if (!isset($processedKeys[$uniqueId])) {
+            if (!isset($processedKeys[$uniqueId]))
+            {
                 $final[] = [
                     'key' => $key,
                     'section' => $section,
@@ -128,10 +156,13 @@ foreach ($foundWithMeta as $item) {
                 $processedKeys[$uniqueId] = true;
             }
         }
-    } else {
+    }
+    else
+    {
         // For single-section keys, just add them as-is
         $uniqueId = $key . '|' . $item['section'];
-        if (!isset($processedKeys[$uniqueId])) {
+        if (!isset($processedKeys[$uniqueId]))
+        {
             $final[] = $item;
             $processedKeys[$uniqueId] = true;
         }

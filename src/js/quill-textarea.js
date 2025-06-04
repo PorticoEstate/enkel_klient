@@ -10,10 +10,15 @@ var toolbarOptions = [
 
 /**
  * Global registry for Quill instances
- * Used by the autosave extension to find and update editors
+ * Single source of truth for all editor instances
  */
 window.quillInstances = window.quillInstances || {};
-window.quill = window.quill || {}; // For backward compatibility
+
+// Backward compatibility alias
+Object.defineProperty(window, 'quill', {
+	get: function() { return window.quillInstances; },
+	set: function(value) { Object.assign(window.quillInstances, value); }
+});
 
 /**
  * Quill Editor initialization for textareas
@@ -150,38 +155,34 @@ function quilljs_textarea(elem = null, options = null)
 				options.modules.toolbar = toolbarOptions;
 			}
 
-			// Enable keyboard navigation
-			if (!options.keyboard)
-			{
-				// Replace the existing keyboard options section with this implementation:
+			// Enable keyboard navigation - allow tab to exit editor
+			if (!options.keyboard) {
 				options.keyboard = {
-				  bindings: {
-					tab: {
-					  key: 9,
-					  handler: function(range, context) {
-						// Always let Tab and Shift+Tab bubble out of Quill to enable proper navigation
-						return true;
-					  }
-					},
-					'shift+tab': {
-					  key: 9,
-					  shiftKey: true,
-					  handler: function(range, context) {
-						// Always let Shift+Tab bubble out of Quill to enable proper navigation
-						return true;
-					  }
+					bindings: {
+						tab: {
+							key: 9,
+							handler: function(range, context) {
+								// Allow tab to move focus out of the editor to the next form field
+								return true;
+							}
+						},
+						'shift+tab': {
+							key: 9,
+							shiftKey: true,
+							handler: function(range, context) {
+								// Allow shift+tab to move focus out of the editor to the previous form field
+								return true;
+							}
+						}
 					}
-				  }
 				};
 			}
 
 			var editor = new Quill(editorDiv, default_options);
 			
-			// Store in global registry for autosave extension to use
-			// Use both quillInstances (new) and quill (legacy) to ensure compatibility
+			// Store in global registry
 			if (elemId) {
 				window.quillInstances[elemId] = editor;
-				window.quill[elemId] = editor; // Also store in legacy location
 				
 				// Add a data attribute to the editor element for easier selection
 				$(editorDiv).attr('data-quill-id', elemId);
@@ -313,12 +314,6 @@ function quilljs_textarea(elem = null, options = null)
             white-space: nowrap;
         }
         
-        /* Hide focus styles when tabbing through interface */
-        .ql-toolbar [tabindex="-1"]:focus {
-            outline: none !important;
-            box-shadow: none !important;
-        }
-        
         /* Ensure ALL toolbar elements are non-tabbable */
         .ql-toolbar *, 
         .ql-toolbar button,
@@ -329,19 +324,19 @@ function quilljs_textarea(elem = null, options = null)
             tabindex: -1 !important;
         }
         
+        /* Prevent any toolbar element from receiving focus */
+        .ql-toolbar *:focus,
+        .ql-clean:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
         /* Specifically target the clean button to ensure it's never focusable */
         .ql-clean,
         button.ql-clean,
         .ql-toolbar .ql-clean {
             tabindex: -1 !important;
             pointer-events: auto; /* Keep mouse interaction */
-        }
-        
-        /* Prevent any toolbar element from receiving focus via CSS */
-        .ql-toolbar *:focus,
-        .ql-clean:focus {
-            outline: none !important;
-            box-shadow: none !important;
         }
         
         /* Hide screen reader announcement visually but keep it accessible */
@@ -369,95 +364,70 @@ function quilljs_textarea(elem = null, options = null)
 		document.body.appendChild(statusElement);
 	}
 
-	// Add button tooltips
+	// Add button tooltips and ensure toolbar accessibility
 	addAccessibleButtonLabels();
 	
-	// Ensure all toolbar elements are skipped during tab navigation
-	ensureToolbarIsSkippedOnTab();
+	// Set up simplified toolbar accessibility
+	setupSimpleToolbarAccessibility();
 
 	return editors;
 }
 
 /**
- * Make sure all toolbar elements are removed from tab order
- * This helps when dynamically added elements might be missed
+ * Simplified toolbar accessibility setup
+ * Uses a single MutationObserver for efficient DOM monitoring
  */
-function ensureToolbarIsSkippedOnTab()
-{
-	// Give Quill time to fully render before applying
-	setTimeout(() => {
-		// Target everything inside toolbars with comprehensive selectors
-		const toolbarSelectors = [
-			'.ql-toolbar *',
-			'.ql-toolbar button',
-			'.ql-toolbar .ql-picker',
-			'.ql-toolbar .ql-picker-label',
-			'.ql-toolbar .ql-picker-item',
-			'.ql-toolbar .ql-formats *',
-			'.ql-header',
-			'.ql-align',
-			'.ql-bold',
-			'.ql-italic',
-			'.ql-underline',
-			'.ql-strike',
-			'.ql-list',
-			'.ql-indent',
-			'.ql-clean'  // Specifically target the clean button
-		];
-		
-		toolbarSelectors.forEach(selector => {
-			document.querySelectorAll(selector).forEach(element => {
-				// Make sure no toolbar elements can be tabbed to
-				element.setAttribute('tabindex', '-1');
-				// Also remove any existing focus handlers that might interfere
-				element.blur();
-			});
-		});
-	}, 100);
+function setupSimpleToolbarAccessibility() {
+	// Initial setup
+	makeToolbarElementsNonTabbable();
 	
-	// Also apply after a longer delay to catch any dynamically added elements
-	setTimeout(() => {
-		document.querySelectorAll('.ql-toolbar, .ql-toolbar *, .ql-clean').forEach(element => {
-			element.setAttribute('tabindex', '-1');
-			// Ensure the element cannot receive focus
-			if (element.focus) {
-				const originalFocus = element.focus;
-				element.focus = function() {
-					// Prevent focus on toolbar elements
-					return false;
-				};
-			}
-		});
-	}, 1000);
-	
-	// Add mutation observer to catch dynamically added toolbar elements
+	// Set up MutationObserver to handle dynamically added toolbar elements
 	if (typeof MutationObserver !== 'undefined') {
 		const observer = new MutationObserver((mutations) => {
+			let needsUpdate = false;
 			mutations.forEach((mutation) => {
 				if (mutation.type === 'childList') {
 					mutation.addedNodes.forEach((node) => {
-						if (node.nodeType === 1) { // Element node
-							// Check if the added node is a toolbar element
-							if (node.matches && (node.matches('.ql-toolbar *') || node.matches('.ql-clean'))) {
-								node.setAttribute('tabindex', '-1');
-							}
-							// Also check children of added nodes
-							const toolbarChildren = node.querySelectorAll && node.querySelectorAll('.ql-toolbar *, .ql-clean');
-							if (toolbarChildren) {
-								toolbarChildren.forEach(child => child.setAttribute('tabindex', '-1'));
-							}
+						if (node.nodeType === 1 && node.matches && 
+							(node.matches('.ql-toolbar') || node.closest('.ql-toolbar'))) {
+							needsUpdate = true;
 						}
 					});
 				}
 			});
+			
+			if (needsUpdate) {
+				makeToolbarElementsNonTabbable();
+			}
 		});
 		
-		// Observe changes to the document
+		// Observe changes to the document body
 		observer.observe(document.body, {
 			childList: true,
 			subtree: true
 		});
 	}
+}
+
+/**
+ * Make toolbar elements non-tabbable
+ */
+function makeToolbarElementsNonTabbable() {
+	// Give Quill time to fully render before applying
+	setTimeout(() => {
+		document.querySelectorAll('.ql-toolbar, .ql-toolbar *').forEach(element => {
+			element.setAttribute('tabindex', '-1');
+			
+			// Also remove any existing focus event listeners that might interfere
+			element.setAttribute('data-quill-toolbar', 'true');
+		});
+		
+		// Extra safety: ensure clean button is never focusable
+		document.querySelectorAll('.ql-clean').forEach(element => {
+			element.setAttribute('tabindex', '-1');
+			element.style.pointerEvents = 'auto'; // Keep mouse interaction
+		});
+	}, 100);
 }
 
 /**
@@ -643,8 +613,8 @@ function addAccessibleButtonLabels()
  */
 function validateQuillEditor(elemId)
 {
-	// Get the editor instance
-	const editor = quill[elemId];
+	// Get the editor instance from the global registry
+	const editor = window.quillInstances[elemId];
 	if (!editor) return true; // If no editor found, consider it valid
 
 	// Check if editor is empty (only contains empty paragraphs or whitespace)
@@ -713,8 +683,7 @@ function validateQuillEditor(elemId)
 	return !isEmpty;
 }
 
-// Global quill object with safe initialization
-var quill = {};
+// Remove the global quill variable declaration as we're using window.quillInstances consistently
 
 // Wait for DOM to be ready before initializing Quill
 $(document).ready(function () 
@@ -736,12 +705,12 @@ $(document).ready(function ()
 				theme: 'snow'
 			});
 
-			// Safely assign the editor to the global quill object
+			// Safely assign the editor to the global quill object for backward compatibility
 			if (editors && typeof editors === 'object')
 			{
 				if (editors.message)
 				{
-					quill.message = editors.message;
+					window.quillInstances.message = editors.message;
 				}
 			}
 		}
@@ -750,76 +719,90 @@ $(document).ready(function ()
 		Debug.warn("Error initializing Quill editor for message:", err);
 	}
 
-	// Handle tab key navigation properly within the editor
+	// Handle tab navigation between form fields
 	$(document).on('keydown', '.ql-editor', function(e) {
-	  // Handle both Tab and Shift+Tab navigation
-	  if (e.key === 'Tab') {
-		// This is the critical part - stop the editor from handling it
-		e.preventDefault();
-		
-		// Find all focusable elements in the page (not just form)
-		const focusable = 'button:not(.ql-toolbar button):not(.ql-clean), [href], input, select, textarea, [tabindex]:not([tabindex="-1"]):not(.ql-toolbar *):not(.ql-clean)';
-		const container = $(this).closest('body'); // Use body instead of form for broader scope
-		let focusableElements = container.find(focusable).filter(':visible').not('.ql-toolbar *');
-		
-		// Also include the editor containers themselves in the focusable elements
-		const editorContainers = container.find('.quill-editor-container').filter(':visible');
-		focusableElements = focusableElements.add(editorContainers);
-		
-		// Sort by document order to maintain proper tab sequence
-		focusableElements = focusableElements.sort(function(a, b) {
-			return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-		});
-		
-		const currentContainer = $(this).closest('.quill-editor-container');
-		const currentIndex = focusableElements.index(currentContainer);
-		
-		if (e.shiftKey) {
-		  // Shift+Tab: Navigate backwards (previous element)
-		  if (currentIndex > 0) {
-			const prevElement = focusableElements.eq(currentIndex - 1);
-			prevElement.focus();
-			return false;
-		  } else {
-			// If we're at the first element, let the browser handle it (might go to address bar, etc.)
+		// Handle Tab and Shift+Tab for form field navigation
+		if (e.key === 'Tab') {
+			e.preventDefault();
 			e.stopPropagation();
-			return true;
-		  }
-		} else {
-		  // Tab: Navigate forwards (next element)
-		  if (currentIndex > -1 && currentIndex < focusableElements.length - 1) {
-			const nextElement = focusableElements.eq(currentIndex + 1);
-			nextElement.focus();
+			
+			// Find all focusable form elements, explicitly excluding toolbar elements
+			const focusableElements = $('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex="0"], .quill-editor-container')
+				.filter(':visible')
+				.not('.ql-toolbar')
+				.not('.ql-toolbar *')
+				.not('.ql-clean')
+				.not('[data-quill-toolbar]');
+			
+			// Sort by document order
+			const sortedElements = focusableElements.sort(function(a, b) {
+				return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+			});
+			
+			const currentContainer = $(this).closest('.quill-editor-container');
+			const currentIndex = sortedElements.index(currentContainer);
+			
+			if (e.shiftKey) {
+				// Shift+Tab: Move to previous element
+				if (currentIndex > 0) {
+					const prevElement = sortedElements.eq(currentIndex - 1);
+					prevElement.focus();
+				} else {
+					// If we're at the first element, let browser handle (may go to address bar)
+					// Use a timeout to ensure the focus is properly removed
+					setTimeout(() => {
+						$(this).blur();
+						window.focus();
+					}, 10);
+				}
+			} else {
+				// Tab: Move to next element
+				if (currentIndex < sortedElements.length - 1) {
+					const nextElement = sortedElements.eq(currentIndex + 1);
+					nextElement.focus();
+				} else {
+					// If we're at the last element, let browser handle
+					setTimeout(() => {
+						$(this).blur();
+						window.focus();
+					}, 10);
+				}
+			}
 			return false;
-		  } else {
-			// If we're at the last element, let the browser handle it
-			e.stopPropagation();
-			return true;
-		  }
 		}
-	  }
-	});
-
-	// When TAB key focuses the editor container, skip toolbar and jump directly to edit area
-	$(document).on('focus', '.quill-editor-container', function(e) {
-		// Only handle forward Tab navigation (not Shift+Tab)
-		// When the container is focused via Tab, focus its editor area directly
-		const editor = $(this).find('.ql-editor');
-		if (editor.length && e.originalEvent && e.originalEvent.key === 'Tab' && !e.originalEvent.shiftKey) {
-			editor.focus();
-		}
-	});
-
-	// Add keyboard shortcut (Alt+F) to access the formatting toolbar if needed
-	$(document).on('keydown', '.ql-editor', function(e) {
+		
 		// Alt+F to focus the first toolbar button (for users who want to access toolbar)
 		if (e.altKey && e.key.toLowerCase() === 'f') {
 			e.preventDefault();
 			const toolbar = $(this).closest('.quill-editor-container').find('.ql-toolbar');
 			const firstButton = toolbar.find('button').first();
 			if (firstButton.length) {
-				firstButton.focus();
-				announceToScreenReader('Toolbar navigation activated. Use Tab or arrow keys to navigate toolbar buttons.');
+				firstButton.removeAttr('tabindex').focus();
+				announceToScreenReader('Toolbar navigation activated. Use Tab to navigate buttons, Escape to return to editor.');
+			}
+			return false;
+		}
+	});
+	
+	// Prevent toolbar elements from receiving focus during tab navigation
+	$(document).on('focus', '.ql-toolbar, .ql-toolbar *, .ql-clean', function(e) {
+		// If this element has tabindex="-1", it shouldn't receive focus
+		if ($(this).attr('tabindex') === '-1') {
+			e.preventDefault();
+			e.stopPropagation();
+			
+			// Find the associated editor and focus it instead
+			const toolbar = $(this).closest('.ql-toolbar');
+			const editorContainer = toolbar.closest('.quill-editor-container');
+			
+			if (editorContainer.length) {
+				const editor = editorContainer.find('.ql-editor');
+				if (editor.length) {
+					// Small delay to ensure proper focus handling
+					setTimeout(() => {
+						editor.focus();
+					}, 10);
+				}
 			}
 			return false;
 		}
@@ -835,7 +818,7 @@ $(document).ready(function ()
 		$(this).find('textarea').each(function ()
 		{
 			const id = $(this).attr('id');
-			if (id && quill[id])
+			if (id && window.quillInstances[id])
 			{
 				// If this is a required field
 				if ($(this).attr('required'))
@@ -851,57 +834,6 @@ $(document).ready(function ()
 		});
 
 		return formValid;
-	});
-
-	// Make ALL toolbar elements non-tabbable to skip them when tabbing
-	// Use multiple attempts to catch all possible toolbar elements
-	setTimeout(() => {
-		$('.ql-toolbar, .ql-toolbar *, .ql-picker, .ql-picker-label, .ql-header, .ql-align, .ql-clean').attr('tabindex', '-1');
-	}, 100);
-	
-	setTimeout(() => {
-		$('.ql-toolbar button, .ql-toolbar .ql-picker, .ql-toolbar .ql-picker-label, .ql-toolbar .ql-formats *, .ql-clean').attr('tabindex', '-1');
-	}, 500);
-	
-	setTimeout(() => {
-		// Final sweep to ensure everything is non-tabbable, including .ql-clean specifically
-		$('.ql-toolbar').find('*').attr('tabindex', '-1');
-		$('.ql-clean').attr('tabindex', '-1');
-		
-		// Also use DOM API to ensure it's really set
-		document.querySelectorAll('.ql-toolbar, .ql-toolbar *, .ql-clean').forEach(el => {
-			el.setAttribute('tabindex', '-1');
-		});
-	}, 1000);
-	
-	// Add a more aggressive cleanup that runs periodically
-	setInterval(() => {
-		document.querySelectorAll('.ql-toolbar, .ql-toolbar *, .ql-clean').forEach(el => {
-			if (el.getAttribute('tabindex') !== '-1') {
-				el.setAttribute('tabindex', '-1');
-			}
-		});
-	}, 2000);
-
-	// Add focus interception only for toolbar elements that accidentally get focus
-	// But don't interfere with programmatic focus or legitimate navigation
-	$(document).on('focus', '.ql-toolbar *, .ql-clean', function(e) {
-		// Only intercept if this is an actual tab navigation event
-		// and the element has tabindex="-1" (meaning it shouldn't be focusable)
-		if ($(this).attr('tabindex') === '-1') {
-			e.preventDefault();
-			e.stopPropagation();
-			
-			// Find the editor container and focus the editor content instead
-			const editorContainer = $(this).closest('.quill-editor-container');
-			if (editorContainer.length) {
-				const editor = editorContainer.find('.ql-editor');
-				if (editor.length) {
-					editor.focus();
-				}
-			}
-			return false;
-		}
 	});
 
 	// Add ARIA labels for each button group in the toolbar

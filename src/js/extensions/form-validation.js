@@ -113,9 +113,28 @@ if (typeof FormValidationExtension === 'undefined') {
     const value = $field.val();
     const fieldType = $field.attr('type');
     const isRequired = $field.attr('required') !== undefined;
+    const isTextarea = $field.is('textarea');
     
-    // Check required fields first
-    if (isRequired && (!value || value.trim() === '')) {
+    // Handle rich text editor content - strip HTML and check if truly empty
+    let cleanValue = value;
+    if (isTextarea && value && value.includes('<')) {
+      // Strip HTML tags and decode HTML entities
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = value;
+      cleanValue = tempDiv.textContent || tempDiv.innerText || '';
+      
+      // Also handle common rich editor artifacts
+      cleanValue = cleanValue
+        .replace(/&nbsp;/g, ' ')  // Replace non-breaking spaces
+        .replace(/\u00A0/g, ' ')  // Replace Unicode non-breaking spaces
+        .trim();
+      
+      Debug.debug('🔍 Rich text validation - original:', value, 'cleaned:', cleanValue);
+    }
+    
+    // Check required fields first (use cleaned value for textareas)
+    const valueToCheck = isTextarea ? cleanValue : (value || '').trim();
+    if (isRequired && (!valueToCheck || valueToCheck === '')) {
       return {
         isValid: false,
         errorMessage: this.getRequiredFieldMessage($field)
@@ -123,12 +142,15 @@ if (typeof FormValidationExtension === 'undefined') {
     }
     
     // If field is empty and not required, it's valid
-    if (!value || value.trim() === '') {
+    if (!valueToCheck || valueToCheck === '') {
       return { isValid: true, errorMessage: '' };
     }
     
+    // For textareas with rich editors, use the cleaned value for further validation
+    const finalValue = isTextarea ? cleanValue : value;
+    
     // Validate based on field type
-    if (fieldType === 'email' && !this.isValidEmail(value)) {
+    if (fieldType === 'email' && !this.isValidEmail(finalValue)) {
       return {
         isValid: false,
         errorMessage: this.getEmailValidationMessage()
@@ -136,7 +158,7 @@ if (typeof FormValidationExtension === 'undefined') {
     }
     
     const fieldName = $field.attr('name') || '';
-    if ((fieldType === 'tel' || fieldName.includes('phone')) && !this.isValidPhone(value)) {
+    if ((fieldType === 'tel' || fieldName.includes('phone')) && !this.isValidPhone(finalValue)) {
       return {
         isValid: false,
         errorMessage: this.getPhoneValidationMessage()
@@ -150,8 +172,8 @@ if (typeof FormValidationExtension === 'undefined') {
       };
     }
     
-    // Use HTML5 validation if available
-    if ($field[0].validity && !$field[0].validity.valid) {
+    // Use HTML5 validation if available (but skip for textareas with rich editors)
+    if (!isTextarea && $field[0].validity && !$field[0].validity.valid) {
       return {
         isValid: false,
         errorMessage: $field[0].validationMessage || 'Invalid input'

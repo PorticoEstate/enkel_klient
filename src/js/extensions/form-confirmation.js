@@ -1082,6 +1082,9 @@ var FormConfirmationExtension = FormConfirmationExtension || (function() {
     const $completeButton = $modal.find('.btn-complete-process');
     $completeButton.prop('disabled', true).text(this.getTranslation('form_confirmation.process_completed', 'Process completed'));
     
+    // Clear autosaved data after successful process completion
+    this.clearAutosaveData();
+    
     // Wait a moment to show completion, then redirect
     setTimeout(() => {
       window.location.href = this.formHandler.redirectUrl || window.location.href;

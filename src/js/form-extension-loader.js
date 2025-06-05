@@ -13,7 +13,7 @@ class FormExtensionLoader {
       autoSave: `${window.strBaseURL || ''}/src/js/extensions/form-autosave.js`, 
       fileUpload: `${window.strBaseURL || ''}/src/js/extensions/file-upload.js`,
       accessibility: `${window.strBaseURL || ''}/src/js/extensions/form-accessibility.js`,
-      confirmation: `${window.strBaseURL || ''}/src/js/extensions/form-confirmation.js`,
+      confirmation: `${window.strBaseURL || ''}/src/js/extensions/form-confirmation-modular.js`,
     };
     
     // Define dependencies for extensions
@@ -24,6 +24,12 @@ class FormExtensionLoader {
         `${window.strBaseURL || ''}/src/js/file-upload/js/jquery.fileupload.js`,
         `${window.strBaseURL || ''}/src/js/file-upload/js/jquery.fileupload-process.js`,
         `${window.strBaseURL || ''}/src/js/file-upload/js/jquery.fileupload-validate.js`
+      ],
+      confirmation: [
+        `${window.strBaseURL || ''}/src/js/extensions/form-confirmation-core.js`,
+        `${window.strBaseURL || ''}/src/js/extensions/form-confirmation-ui.js`,
+        `${window.strBaseURL || ''}/src/js/extensions/form-confirmation-phases.js`,
+        `${window.strBaseURL || ''}/src/js/extensions/form-confirmation-uploads.js`
       ]
     };
   }
@@ -36,9 +42,11 @@ class FormExtensionLoader {
   async loadDependencies(extensionName) {
     const dependencies = this.extensionDependencies[extensionName];
     if (!dependencies || dependencies.length === 0) {
+      Debug.debug(`📦 No dependencies for ${extensionName}`);
       return Promise.resolve();
     }
 
+    Debug.debug(`📦 Loading dependencies for ${extensionName}:`, dependencies);
     // Load dependencies sequentially to ensure proper order
     for (const url of dependencies) {
       await this.loadDependency(url);
@@ -123,6 +131,9 @@ class FormExtensionLoader {
    */
   async createFormHandler(config) {
     const extensionNames = Object.keys(config.extensions || {});
+    
+    Debug.debug(`🔧 createFormHandler called with config:`, config);
+    Debug.debug(`🔧 Extension names found:`, extensionNames);
     
     if (extensionNames.length > 0) {
       // Define loading order to ensure validation runs before confirmation
@@ -260,6 +271,8 @@ class FormExtensionLoader {
       if (configAttr) {
         const config = JSON.parse(configAttr);
         Debug.debug(`✅ Found data-form-config attribute for ${formId}`);
+        Debug.debug(`📋 Parsed configuration:`, config);
+        Debug.debug(`📋 Configuration keys:`, Object.keys(config));
         return config;
       }
 

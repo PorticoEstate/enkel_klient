@@ -97,12 +97,8 @@ function fallbackToDirectInitialization() {
 function initializeForm() {
  
 
-    // Add form-specific validation hooks
+    // Add form-specific hooks  
     if (formHandler && formHandler.addHook) {
-        formHandler.addHook('beforeSubmit', function(formData) {
-            return validateNokkelbestillingSpecific(formData);
-        });
-
         formHandler.addHook('afterSuccess', function(response) {
             Debug.debug('✅ Nokkelbestilling submitted successfully');
             // Any post-submission cleanup
@@ -110,52 +106,6 @@ function initializeForm() {
     }
 }
 
-
-/**
- * Nokkelbestilling-specific validation
- * @param {FormData} formData The form data to validate
- * @returns {boolean} True if validation passes
- */
-function validateNokkelbestillingSpecific(formData) {
-    let isValid = true;
-    const errors = [];
-
-    // Check if location code is provided
-    const locationCode = formData.get('location_code');
-    const hasFiles = formData.getAll('files[]').length > 0 || 
-                    formData.getAll('file_upload').length > 0 ||
-                    formData.getAll('attachment').length > 0;
-
-    // If no location code, file upload is required
-    if (!locationCode && !hasFiles) {
-        errors.push('File upload is required when no location is specified.');
-        isValid = false;
-    }
-
-    // Validate key type selection
-    const keyType = formData.get('key_type');
-    if (!keyType) {
-        errors.push('Please select the type of key you need.');
-        isValid = false;
-    }
-
-    // Validate reason length
-    const reason = formData.get('reason');
-    if (reason && reason.length < 5) {
-        errors.push('Please provide a more detailed reason (at least 5 characters).');
-        isValid = false;
-    }
-
-    // Display errors if any
-    if (!isValid) {
-        Debug.warn('⚠️ Nokkelbestilling validation failed:', errors);
-        if (formHandler && formHandler.showErrors) {
-            formHandler.showErrors(errors);
-        }
-    }
-
-    return isValid;
-}
 
 /**
  * Fallback initialization if clean architecture fails

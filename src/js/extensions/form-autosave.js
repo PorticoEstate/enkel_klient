@@ -1662,17 +1662,13 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             Debug.debug(`🎯 Found matching file in field ${fieldName}: ${file.name} (${file.size} bytes)`);
             Debug.debug(`📋 File was restored from autosave: ${wasRestored}`);
             
+            // Always remove the file from metadata when delete button is clicked
+            Debug.debug(`✅ Removing file from metadata: ${file.name}`);
             if (wasRestored) {
-              // This file was from the "Previously selected files" list, so remove it
-              Debug.debug(`✅ Removing restored file from metadata: ${file.name}`);
-              this.restoredFiles.delete(fileId); // Also clean up tracking
-              filesRemoved++;
-              return false; // Remove from metadata
-            } else {
-              // This file was newly selected in current session, don't remove from metadata
-              Debug.debug(`⚠️ File was newly selected (not restored), keeping in metadata: ${file.name}`);
-              return true; // Keep in metadata
+              this.restoredFiles.delete(fileId); // Clean up tracking for restored files
             }
+            filesRemoved++;
+            return false; // Remove from metadata
           }
           return true; // Keep other files
         });

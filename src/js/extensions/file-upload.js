@@ -411,7 +411,7 @@ if (typeof FileUploadExtension === 'undefined') {
   
   addFileToQueue(file, data) {
     Debug.debug(`FileUploadExtension: Adding file ${file.name} to queue`);
-    const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
     
     const fileItem = $(`
       <div class="file-item" data-file-id="${fileId}">

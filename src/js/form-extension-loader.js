@@ -13,7 +13,7 @@ class FormExtensionLoader {
       autoSave: `${window.strBaseURL || ''}/src/js/extensions/form-autosave.js`, 
       fileUpload: `${window.strBaseURL || ''}/src/js/extensions/file-upload.js`,
       accessibility: `${window.strBaseURL || ''}/src/js/extensions/form-accessibility.js`,
-      confirmation: `${window.strBaseURL || ''}/src/js/extensions/form-confirmation-modular.js`,
+      confirmation: `${window.strBaseURL || ''}/src/js/extensions/form-confirmation.js`,
     };
     
     // Define dependencies for extensions

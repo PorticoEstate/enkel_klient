@@ -1,7 +1,154 @@
 /**
  * FormConfirmation Core Module
- * Handles main confirmation logic, lifecycle management, and coordination
+ * Handles main confirmation logic, lifecycle management, coordination, and module loading
  */
+
+// Module loading utilities
+const FormConfirmationModuleLoader = {
+  // Track loaded modules
+  loadedModules: new Set(),
+  moduleLoadPromises: new Map(),
+  
+  // Module dependencies and load order
+  moduleConfig: {
+    'form-confirmation-core': {
+      path: '/src/js/extensions/form-confirmation-core.js',
+      dependencies: [],
+      globalVar: 'FormConfirmationCore'
+    },
+    'form-confirmation-ui': {
+      path: '/src/js/extensions/form-confirmation-ui.js', 
+      dependencies: [],
+      globalVar: 'FormConfirmationUI'
+    },
+    'form-confirmation-phases': {
+      path: '/src/js/extensions/form-confirmation-phases.js',
+      dependencies: ['form-confirmation-core'],
+      globalVar: 'FormConfirmationPhases'
+    },
+    'form-confirmation-uploads': {
+      path: '/src/js/extensions/form-confirmation-uploads.js',
+      dependencies: [],
+      globalVar: 'FormConfirmationUploads'
+    }
+  },
+  
+  /**
+   * Load a JavaScript module dynamically
+   */
+  loadModule(moduleId) {
+    if (this.loadedModules.has(moduleId)) {
+      return Promise.resolve();
+    }
+    
+    if (this.moduleLoadPromises.has(moduleId)) {
+      return this.moduleLoadPromises.get(moduleId);
+    }
+    
+    const config = this.moduleConfig[moduleId];
+    if (!config) {
+      return Promise.reject(new Error(`Unknown module: ${moduleId}`));
+    }
+    
+    // Load dependencies first
+    const dependencyPromises = config.dependencies.map(dep => this.loadModule(dep));
+    
+    const loadPromise = Promise.all(dependencyPromises).then(() => {
+      return new Promise((resolve, reject) => {
+        // Check if module is already loaded globally
+        if (config.globalVar && window[config.globalVar]) {
+          this.loadedModules.add(moduleId);
+          resolve();
+          return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = config.path;
+        script.onload = () => {
+          this.loadedModules.add(moduleId);
+          Debug.debug(`FormConfirmation: Loaded module ${moduleId}`);
+          resolve();
+        };
+        script.onerror = () => {
+          reject(new Error(`Failed to load module: ${moduleId} from ${config.path}`));
+        };
+        
+        document.head.appendChild(script);
+      });
+    });
+    
+    this.moduleLoadPromises.set(moduleId, loadPromise);
+    return loadPromise;
+  },
+  
+  /**
+   * Load all form confirmation modules
+   */
+  async loadAllModules() {
+    try {
+      Debug.debug('FormConfirmation: Starting module loading...');
+      
+      // Load modules in dependency order
+      const moduleIds = Object.keys(this.moduleConfig);
+      await Promise.all(moduleIds.map(moduleId => this.loadModule(moduleId)));
+      
+      Debug.debug('FormConfirmation: All modules loaded successfully');
+      return true;
+    } catch (error) {
+      Debug.error('FormConfirmation: Module loading failed:', error);
+      return false;
+    }
+  },
+  
+  /**
+   * Initialize the modular FormConfirmation system
+   */
+  async initializeModularFormConfirmation() {
+    Debug.debug('FormConfirmation: Initializing modular system...');
+    
+    // Load all modules first
+    const modulesLoaded = await this.loadAllModules();
+    
+    if (!modulesLoaded) {
+      Debug.warn('FormConfirmation: Some modules failed to load, falling back to monolithic version');
+      return false;
+    }
+    
+    // Verify all required globals are available
+    const requiredGlobals = ['FormConfirmationCore', 'FormConfirmationUI', 'FormConfirmationPhases', 'FormConfirmationUploads'];
+    const missingGlobals = requiredGlobals.filter(global => !window[global]);
+    
+    if (missingGlobals.length > 0) {
+      Debug.warn('FormConfirmation: Missing module globals:', missingGlobals);
+      return false;
+    }
+    
+    // Load the modular entry point
+    try {
+      const entryScript = document.createElement('script');
+      entryScript.src = '/src/js/extensions/form-confirmation.js';
+      
+      await new Promise((resolve, reject) => {
+        entryScript.onload = resolve;
+        entryScript.onerror = reject;
+        document.head.appendChild(entryScript);
+      });
+      
+      Debug.debug('FormConfirmation: Modular system initialized successfully');
+      return true;
+    } catch (error) {
+      Debug.error('FormConfirmation: Failed to load modular entry point:', error);
+      return false;
+    }
+  },
+  
+  /**
+   * Get list of loaded modules
+   */
+  getLoadedModules() {
+    return Array.from(this.loadedModules);
+  }
+};
 
 // Core functionality for FormConfirmationExtension
 const FormConfirmationCore = {
@@ -290,5 +437,23 @@ const FormConfirmationCore = {
       Debug.warn('❌ Error clearing autosave data:', error);
     }
   },
+  
+  // Module loading methods (moved from form-confirmation-loader.js)
+  loadModule: FormConfirmationModuleLoader.loadModule.bind(FormConfirmationModuleLoader),
+  loadAllModules: FormConfirmationModuleLoader.loadAllModules.bind(FormConfirmationModuleLoader),
+  initializeModularFormConfirmation: FormConfirmationModuleLoader.initializeModularFormConfirmation.bind(FormConfirmationModuleLoader),
+  getLoadedModules: FormConfirmationModuleLoader.getLoadedModules.bind(FormConfirmationModuleLoader)
 
 };
+
+// Make FormConfirmationCore available globally
+if (typeof window !== 'undefined') {
+  window.FormConfirmationCore = FormConfirmationCore;
+  
+  // Also expose the module loader for external access (backwards compatibility)
+  window.FormConfirmationLoader = {
+    loadAllModules: FormConfirmationModuleLoader.loadAllModules.bind(FormConfirmationModuleLoader),
+    initializeModularFormConfirmation: FormConfirmationModuleLoader.initializeModularFormConfirmation.bind(FormConfirmationModuleLoader),
+    loadedModules: FormConfirmationModuleLoader.getLoadedModules.bind(FormConfirmationModuleLoader)
+  };
+}

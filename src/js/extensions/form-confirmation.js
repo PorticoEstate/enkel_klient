@@ -1,8 +1,8 @@
 /**
- * FormConfirmation Extension - Modular Entry Point
+ * FormConfirmation Extension - Main Entry Point
  * Handles WCAG 3.3.4 confirmation features (summary and dialogs)
  * 
- * This is the new modular version that combines functionality from:
+ * This is the modular version that combines functionality from:
  * - form-confirmation-core.js (core logic and lifecycle)
  * - form-confirmation-ui.js (UI generation and styling)
  * - form-confirmation-phases.js (two-phase submission process)

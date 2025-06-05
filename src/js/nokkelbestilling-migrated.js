@@ -95,30 +95,7 @@ function fallbackToDirectInitialization() {
  * Initialize form-specific functionality
  */
 function initializeForm() {
-    // Handle location code changes - affects file upload requirement
-    $('#location_code').on('change', function() {
-        const hasLocationCode = $(this).val();
-        const fileRequired = !hasLocationCode;
-        
-        // Update file upload requirement dynamically using extension
-        if (formHandler && formHandler.getExtension) {
-            const fileUploadExt = formHandler.getExtension('fileUpload');
-            if (fileUploadExt && fileUploadExt.setRequired) {
-                fileUploadExt.setRequired(fileRequired);
-            }
-        }
-        
-        // Update UI to reflect requirement change
-        updateFileUploadRequirement(fileRequired);
-        
-        Debug.debug(`📋 File upload requirement updated: ${fileRequired ? 'Required' : 'Optional'}`);
-    });
-
-    // Initialize location code check on page load
-    const initialLocationCode = $('#location_code').val();
-    if (initialLocationCode) {
-        $('#location_code').trigger('change');
-    }
+ 
 
     // Add form-specific validation hooks
     if (formHandler && formHandler.addHook) {
@@ -133,41 +110,6 @@ function initializeForm() {
     }
 }
 
-/**
- * Update file upload requirement in UI
- * @param {boolean} required Whether file upload is required
- */
-function updateFileUploadRequirement(required) {
-    const $fileUploadSection = $('#file-upload-section, .file-upload-area');
-    const $fileField = $fileUploadSection.find('input[type="file"]');
-    const $fileLabel = $('label[for*="file"], label[for*="upload"]');
-    
-    // Set or remove the required attribute on the file input
-    if ($fileField.length) {
-        if (required) {
-            $fileField.attr('required', 'required');
-        } else {
-            $fileField.removeAttr('required');
-        }
-        
-        // Use the accessibility extension to handle required field marking
-        if (formHandler && formHandler.getExtension) {
-            const accessibility = formHandler.getExtension('accessibility');
-            if (accessibility && accessibility.markRequiredFields) {
-                // Just mark the file field specifically
-                accessibility.markRequiredFields($fileField);
-            }
-        }
-    }
-    
-    // Update help text regardless of extension availability
-    const $helpText = $fileUploadSection.find('.form-text, .help-text');
-    if ($helpText.length) {
-        $helpText.text(required ? 
-            'File upload is required when no location is specified.' : 
-            'File upload is optional when location is specified.');
-    }
-}
 
 /**
  * Nokkelbestilling-specific validation
@@ -243,12 +185,7 @@ function initializeFallback() {
             this.submit();
         }
     });
-    
-    // Basic location code handling
-    $('#location_code').on('change', function() {
-        const hasLocationCode = $(this).val();
-        updateFileUploadRequirement(!hasLocationCode);
-    });
+
 }
 
 // MIGRATION NOTES:

@@ -970,12 +970,32 @@ if (typeof FileUploadExtension === 'undefined') {
     try {
       // Get the autosave extension
       const autosaveExtension = this.formHandler.getExtension('autoSave');
-      if (autosaveExtension && typeof autosaveExtension.saveData === 'function') {
+      Debug.debug(`FileUploadExtension: Autosave extension found: ${!!autosaveExtension}`);
+      if (autosaveExtension) {
         Debug.debug(`FileUploadExtension: Notifying autosave about added file: ${file.name}`);
-        // Trigger autosave to immediately update metadata with the new file
-        autosaveExtension.saveData();
+        Debug.debug(`FileUploadExtension: Autosave extension type:`, typeof autosaveExtension);
+        Debug.debug(`FileUploadExtension: Autosave extension methods:`, Object.getOwnPropertyNames(autosaveExtension).filter(name => typeof autosaveExtension[name] === 'function'));
+        
+        // First, handle the file list reduction functionality for drag-and-drop
+        if (typeof autosaveExtension.handleFileAdded === 'function') {
+          Debug.debug(`FileUploadExtension: Calling autosaveExtension.handleFileAdded for: ${file.name}`);
+          try {
+            autosaveExtension.handleFileAdded(file);
+            Debug.debug(`FileUploadExtension: Successfully called handleFileAdded for: ${file.name}`);
+          } catch (error) {
+            Debug.error(`FileUploadExtension: Error calling handleFileAdded:`, error);
+          }
+        } else {
+          Debug.warn(`FileUploadExtension: handleFileAdded method not found on autosave extension`);
+          Debug.warn(`FileUploadExtension: Available methods:`, Object.getOwnPropertyNames(autosaveExtension).filter(name => typeof autosaveExtension[name] === 'function'));
+        }
+        
+        // Then trigger autosave to immediately update metadata with the new file
+        if (typeof autosaveExtension.saveData === 'function') {
+          autosaveExtension.saveData();
+        }
       } else {
-        Debug.debug('FileUploadExtension: Autosave extension not found or saveData method not available');
+        Debug.debug('FileUploadExtension: Autosave extension not found');
       }
     } catch (error) {
       Debug.warn('FileUploadExtension: Error notifying autosave about file addition:', error);

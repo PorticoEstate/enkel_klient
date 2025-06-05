@@ -1314,6 +1314,297 @@ if (typeof FormAutoSaveExtension === 'undefined') {
     return fallback;
   }
 
+  /**
+   * Handle file addition via drag-and-drop or other non-input means
+   * This triggers the same file list reduction logic as the file input change event
+   * @param {File} file - The file that was added
+   * @param {string} fieldName - The name of the field (optional, will try to detect)
+   */
+  handleFileAdded(file, fieldName = null) {
+    Debug.debug(`🎯 FormAutoSaveExtension.handleFileAdded called with file: ${file ? file.name : 'null'} (${file ? file.size : 'null'} bytes)`);
+    Debug.debug(`📋 Field name provided: ${fieldName || 'null'}`);
+    
+    try {
+      if (!file) {
+        Debug.warn('❌ No file provided to handleFileAdded');
+        return;
+      }
+
+      Debug.debug(`📁 FormAutoSaveExtension: Processing added file: ${file.name} (${file.size} bytes)`);
+      
+      // If no field name provided, try to find the appropriate file input
+      if (!fieldName) {
+        const form = this.formHandler.getForm();
+        const fileInputs = form.find('input[type="file"]');
+        
+        Debug.debug(`🔍 Found ${fileInputs.length} file input(s) in form`);
+        
+        if (fileInputs.length === 1) {
+          // If there's only one file input, use its name
+          fieldName = fileInputs.first().attr('name') || fileInputs.first().attr('id') || 'fileupload';
+          Debug.debug(`🎯 Auto-detected field name: ${fieldName}`);
+        } else if (fileInputs.length > 1) {
+          // Try to find file input with files or most recently used
+          let foundInput = null;
+          fileInputs.each(function() {
+            const input = $(this);
+            const inputName = input.attr('name') || input.attr('id');
+            Debug.debug(`📋 Checking file input: ${inputName}, files: ${input[0].files?.length || 0}`);
+            
+            // Prefer inputs that have files or were recently changed
+            if (input[0].files && input[0].files.length > 0) {
+              foundInput = inputName;
+              Debug.debug(`🎯 Found file input with files: ${inputName}`);
+              return false; // Break the loop
+            }
+          });
+          
+          if (foundInput) {
+            fieldName = foundInput;
+          } else {
+            // Use the first file input as default
+            fieldName = fileInputs.first().attr('name') || fileInputs.first().attr('id') || 'fileupload';
+            Debug.debug(`🔄 Using first file input as default: ${fieldName}`);
+          }
+        } else {
+          // Default fallback
+          fieldName = 'fileupload';
+          Debug.debug(`🔄 Using default field name: ${fieldName}`);
+        }
+      }
+      
+      Debug.debug(`📝 Final field name to use: ${fieldName}`);
+      
+      // Find the file input and info area for this field
+      const form = this.formHandler.getForm();
+      const escapedFieldName = fieldName.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      let fileInput = form.find(`[name="${escapedFieldName}"], #${escapedFieldName}`);
+      
+      Debug.debug(`🔍 Looking for file input with name/id: ${fieldName} (escaped: ${escapedFieldName})`);
+      Debug.debug(`📋 Found file input by name/id: ${fileInput.length > 0 ? 'YES' : 'NO'}`);
+      
+      if (!fileInput.length) {
+        Debug.debug(`🔍 File input not found by name, searching all file inputs...`);
+        const allFileInputs = form.find('input[type="file"]');
+        allFileInputs.each(function() {
+          const input = $(this);
+          const inputName = input.attr('name') || input.attr('id');
+          Debug.debug(`📋 Checking input: ${inputName} against fieldName: ${fieldName}`);
+          if (inputName && (inputName === fieldName || input.attr('id') === fieldName)) {
+            fileInput = input;
+            Debug.debug(`🎯 Found matching file input: ${inputName} for key: ${fieldName}`);
+            return false; // Break the each loop
+          }
+        });
+      }
+      
+      Debug.debug(`📋 Final check - file input found: ${fileInput.length > 0 ? 'YES' : 'NO'}`);
+      if (!fileInput.length) {
+        Debug.warn(`❌ Could not find file input for field: ${fieldName}`);
+        return;
+      }
+      
+      // Get field container
+      let fieldContainer = fileInput.closest('.form-group, .custom-file, .file-upload-container, .file-input-container');
+      if (!fieldContainer.length) {
+        fieldContainer = fileInput.parent();
+      }
+      
+      Debug.debug(`📦 Field container found: ${fieldContainer.length > 0 ? 'YES' : 'NO'}`);
+      if (!fieldContainer.length) {
+        Debug.warn(`❌ Could not find container for file input: ${fieldName}`);
+        return;
+      }
+      
+      // Find the info area
+      const infoArea = fieldContainer.find('.autosave-file-info');
+      Debug.debug(`📋 Info area (.autosave-file-info) found: ${infoArea.length > 0 ? 'YES' : 'NO'}`);
+      if (!infoArea.length) {
+        Debug.debug(`ℹ️ No info area found for field: ${fieldName} - no previously selected files to process`);
+        return;
+      }
+      
+      Debug.debug(`✅ All prerequisites met, calling processFilesAgainstPreviouslySelected for drag-and-drop`);
+      // Use the unified processing method
+      this.processFilesAgainstPreviouslySelected(file, fieldName, infoArea, 'drag-and-drop');
+      
+    } catch (error) {
+      Debug.warn('❌ Error handling added file for autosave:', error);
+      Debug.error(error);
+    }
+  }
+
+  /**
+   * Process file(s) against the previously selected files list to remove matches
+   * This is the unified method used by both file-select and drag-and-drop scenarios
+   * @param {Array|File} files - Array of files or single file to process
+   * @param {string} fieldName - The name of the field
+   * @param {jQuery} infoArea - The info area containing the previously selected files list
+   * @param {string} source - Source of the operation ('file-select' or 'drag-and-drop')
+   */
+  processFilesAgainstPreviouslySelected(files, fieldName, infoArea, source = 'unknown') {
+    try {
+      Debug.debug(`🔄 Processing files against previously selected list for ${fieldName} (source: ${source})`);
+      
+      // Normalize files to array
+      const filesToProcess = Array.isArray(files) ? files : [files];
+      
+      if (filesToProcess.length === 0) {
+        Debug.debug(`ℹ️ No files to process for ${fieldName}`);
+        return;
+      }
+      
+      // Get original files from the info area
+      let originalFiles = [];
+      try {
+        const originalFilesData = infoArea.data('original-files');
+        if (originalFilesData) {
+          originalFiles = JSON.parse(originalFilesData);
+        }
+      } catch (e) {
+        Debug.warn('Could not parse original files from info area data attribute:', e);
+        return;
+      }
+      
+      if (originalFiles.length === 0) {
+        Debug.debug(`ℹ️ No original previously saved files found for field: ${fieldName}`);
+        return;
+      }
+      
+      Debug.debug(`📦 Found ${originalFiles.length} original previously saved files for ${fieldName}`);
+      Debug.debug(`📁 Processing ${filesToProcess.length} file(s):`);
+      filesToProcess.forEach((file, index) => {
+        Debug.debug(`  ${index + 1}. ${file.name} (${file.size} bytes)`);
+      });
+      
+      const fileUploadExtension = this.formHandler.getExtension ? this.formHandler.getExtension('fileUpload') : null;
+      const form = this.formHandler.getForm();
+      const escapedFieldName = fieldName.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      const fileInput = form.find(`[name="${escapedFieldName}"], #${escapedFieldName}`).first();
+      
+      let removedFiles = [];
+      let remainingFiles = [];
+      
+      // Process each file in the previously selected list
+      originalFiles.forEach(savedFile => {
+        const matchingNewFile = filesToProcess.find(newFile =>
+          newFile.name === savedFile.name &&
+          newFile.size === savedFile.size
+        );
+        
+        if (matchingNewFile) {
+          // File was re-selected/re-added - validate it
+          let isValid = true;
+          if (fileUploadExtension && typeof fileUploadExtension.validateFile === 'function') {
+            isValid = fileUploadExtension.validateFile(matchingNewFile);
+            Debug.debug(`🔍 File ${matchingNewFile.name} validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+          } else {
+            isValid = this.basicFileValidation(matchingNewFile, fileInput[0]);
+            Debug.debug(`🔍 File ${matchingNewFile.name} basic validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+          }
+          
+          if (isValid) {
+            // Valid file - remove from previously selected list
+            removedFiles.push(savedFile);
+            const fileId = `${fieldName}:${savedFile.name}:${savedFile.size}`;
+            this.restoredFiles.delete(fileId);
+            Debug.debug(`🗑️ Removing previously selected file (valid re-addition): ${savedFile.name}`);
+            Debug.debug(`📋 Removed from restored files tracking: ${fileId}`);
+          } else {
+            // Invalid file - keep in previously selected list
+            remainingFiles.push(savedFile);
+            Debug.debug(`📋 Keeping file in list (re-added but failed validation): ${savedFile.name}`);
+          }
+        } else {
+          // File was not re-selected/re-added - keep in previously selected list
+          remainingFiles.push(savedFile);
+          Debug.debug(`📋 Keeping file in list (not re-added): ${savedFile.name}`);
+        }
+      });
+      
+      Debug.debug(`📊 Result: ${removedFiles.length} files to remove, ${remainingFiles.length} files to keep`);
+      
+      // Update the display if any files were removed
+      if (removedFiles.length > 0) {
+        if (remainingFiles.length > 0) {
+          // Some files remain - update the display
+          if (infoArea.length && infoArea.is(':visible')) {
+            this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
+            // Update the data attribute with remaining files
+            infoArea.data('original-files', JSON.stringify(remainingFiles));
+            Debug.debug(`✅ Removed ${removedFiles.length} file(s) via ${source}, ${remainingFiles.length} remaining`);
+          } else {
+            Debug.debug(`⚠️ Info area no longer exists or is not visible, skipping update`);
+          }
+        } else {
+          // No files remain - remove the entire info area
+          if (infoArea.length && infoArea.is(':visible')) {
+            infoArea.fadeOut(300, function() {
+              $(this).remove();
+            });
+            Debug.debug(`✅ All previously selected files have been re-added via ${source}, removing info area`);
+          } else {
+            Debug.debug(`ℹ️ Info area already removed or not visible`);
+          }
+        }
+      } else {
+        Debug.debug(`ℹ️ No matching files found to remove from the list (no valid re-additions)`);
+      }
+      
+    } catch (error) {
+      Debug.warn(`❌ Error processing files against previously selected list (${source}):`, error);
+      Debug.error(error);
+    }
+  }
+
+  /**
+   * Basic file validation fallback when FileUploadExtension is not available
+   * @param {File} file - The file to validate
+   * @param {HTMLInputElement} input - The file input element
+   * @returns {boolean} - Whether the file is valid
+   */
+  basicFileValidation(file, input) {
+    // Check if file is empty
+    if (file.size === 0) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} is empty (0 bytes)`);
+      return false;
+    }
+    
+    // Check if file is suspiciously small (less than 10 bytes)
+    if (file.size < 10) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} is very small (${file.size} bytes)`);
+      return false;
+    }
+    
+    // Check for basic file size limit (default 15MB if not specified)
+    const maxSizeMB = 15;
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB > ${maxSizeMB}MB)`);
+      return false;
+    }
+    
+    // Check if file has an extension
+    const fileName = file.name.toLowerCase();
+    const hasExtension = fileName.includes('.') && fileName.split('.').pop() !== fileName;
+    if (!hasExtension) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} has no file extension`);
+      return false;
+    }
+    
+    // Check for dangerous extensions
+    const fileExt = fileName.split('.').pop();
+    const dangerousExtensions = ['exe', 'bat', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar', 'ps1'];
+    if (dangerousExtensions.includes(fileExt)) {
+      Debug.warn(`FormAutoSaveExtension: File ${file.name} has dangerous extension (.${fileExt})`);
+      return false;
+    }
+    
+    // If we get here, the file passes basic validation
+    Debug.debug(`FormAutoSaveExtension: File ${file.name} passed basic validation`);
+    return true;
+  }
+
   // Cleanup
   destroy() {
     if (this.saveInterval) {

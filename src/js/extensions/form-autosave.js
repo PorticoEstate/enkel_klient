@@ -1169,22 +1169,28 @@ if (typeof FormAutoSaveExtension === 'undefined') {
             }
           });
           Debug.debug(`📊 Result: ${removedFiles.length} files to remove, ${remainingFiles.length} files to keep`);
-          // Only remove the info area if ALL previously saved files have been reselected and validated (matchedFilesCount === savedFiles.length)
+          // Only remove the info area if ALL files have been removed (remainingFiles.length === 0)
           if (removedFiles.length > 0) {
             // Do not update localStorage here, only update the info area
             if (remainingFiles.length > 0) {
-              this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
-              Debug.debug(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
-            } else if (matchedFilesCount === savedFiles.length) {
-              // Only remove info area if all previously saved files have been matched and validated
-              infoArea.fadeOut(300, function() {
-                $(this).remove();
-              });
-              Debug.debug(`✅ All previously selected files have been re-selected and validated, removing info area`);
+              // Some files remain, update the display to show only remaining files
+              // Check if info area still exists before updating
+              if (infoArea.length && infoArea.is(':visible')) {
+                this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
+                Debug.debug(`✅ Removed ${removedFiles.length} re-selected file(s), ${remainingFiles.length} remaining`);
+              } else {
+                Debug.debug(`⚠️ Info area no longer exists or is not visible, skipping update`);
+              }
             } else {
-              // If not all previously saved files have been matched, do not remove info area
-              this.updateFileMetadataDisplay(infoArea, fieldName, remainingFiles);
-              Debug.debug(`ℹ️ Not all previously saved files have been reselected, info area remains`);
+              // No files remain, remove the entire info area
+              if (infoArea.length && infoArea.is(':visible')) {
+                infoArea.fadeOut(300, function() {
+                  $(this).remove();
+                });
+                Debug.debug(`✅ All previously selected files have been re-selected and validated, removing info area`);
+              } else {
+                Debug.debug(`ℹ️ Info area already removed or not visible`);
+              }
             }
           } else {
             // No valid matching files found to remove from the list (no reselected files passed validation)
@@ -1207,37 +1213,68 @@ if (typeof FormAutoSaveExtension === 'undefined') {
    */
   updateFileMetadataDisplay(infoArea, fieldName, remainingFiles) {
     try {
+      Debug.debug(`📝 updateFileMetadataDisplay called with ${remainingFiles.length} remaining files for field: ${fieldName}`);
+      remainingFiles.forEach((file, index) => {
+        Debug.debug(`  ${index + 1}. Remaining: ${file.name} (${file.size} bytes)`);
+      });
+      
       const fileList = infoArea.find('ul');
       if (fileList.length === 0) {
         Debug.warn('File list not found in info area');
         return;
       }
+      
+      const initialLiCount = fileList.find('li').length;
+      Debug.debug(`📋 Found ${initialLiCount} <li> elements in the list before update`);
+      
       // For each <li>, check if its file is still in the remaining files. If not, remove it.
       fileList.find('li').each((_, li) => {
         const $li = $(li);
         // Extract file name and size from the <li> text
         const text = $li.text();
         const match = text.match(/([^\(]+)\s*\((\d+(?:\.\d+)?\s*(?:bytes|KB|MB))\)/i);
-        if (!match) return;
+        if (!match) {
+          Debug.debug(`⚠️ Could not parse file info from <li> text: "${text}"`);
+          return;
+        }
         const fileName = match[1].trim();
         let fileSize = null;
-        if (match[2].includes('bytes')) {
-          fileSize = parseInt(match[2]);
-        } else if (match[2].includes('KB')) {
-          fileSize = Math.round(parseFloat(match[2]) * 1024);
-        } else if (match[2].includes('MB')) {
-          fileSize = Math.round(parseFloat(match[2]) * 1024 * 1024);
+        const sizeText = match[2].toLowerCase();
+        
+        if (sizeText.includes('bytes')) {
+          fileSize = parseInt(parseFloat(sizeText));
+        } else if (sizeText.includes('kb')) {
+          fileSize = Math.round(parseFloat(sizeText) * 1024);
+        } else if (sizeText.includes('mb')) {
+          fileSize = Math.round(parseFloat(sizeText) * 1024 * 1024);
         }
+        
+        Debug.debug(`📋 Parsed from <li>: "${fileName}" → ${fileSize} bytes (from "${sizeText}")`);
+        
         // If this file is NOT in the remaining files, remove the <li>
-        const stillPresent = remainingFiles.some(f => f.name === fileName && Math.abs(f.size - fileSize) < 10);
+        const stillPresent = remainingFiles.some(f => {
+          const sizeMatch = Math.abs(f.size - fileSize) < 100; // Increased tolerance for rounding differences
+          const nameMatch = f.name === fileName;
+          Debug.debug(`🔍 Comparing with remaining file "${f.name}" (${f.size} bytes): name=${nameMatch}, size=${sizeMatch} (diff=${Math.abs(f.size - fileSize)})`);
+          return nameMatch && sizeMatch;
+        });
+        Debug.debug(`🔍 Checking <li>: "${fileName}" (${fileSize} bytes) - Still present: ${stillPresent}`);
         if (!stillPresent) {
+          Debug.debug(`🗑️ Removing <li> for: ${fileName}`);
           $li.fadeOut(200, function() { $(this).remove(); });
         }
       });
-      // If no <li> remain, remove the info area
+      // If no <li> remain, remove the info area (but only if we expected all to be removed)
       setTimeout(() => {
-        if (fileList.find('li').length === 0) {
+        const remainingLiCount = fileList.find('li').length;
+        Debug.debug(`📊 After update: ${remainingLiCount} <li> elements remain, expected ${remainingFiles.length} files`);
+        // Only remove if there are truly no remaining files AND no remaining <li> elements
+        // AND the info area still exists (hasn't been removed by other logic)
+        if (remainingLiCount === 0 && remainingFiles.length === 0 && infoArea.is(':visible')) {
+          Debug.debug(`🗑️ No files remain in list and info area is still visible, removing info area`);
           infoArea.fadeOut(300, function() { $(this).remove(); });
+        } else if (remainingLiCount > 0 || remainingFiles.length > 0) {
+          Debug.debug(`📋 Keeping info area: ${remainingLiCount} <li> elements, ${remainingFiles.length} expected files`);
         }
       }, 250);
       Debug.debug(`📝 Updated file list display with ${remainingFiles.length} remaining file(s)`);

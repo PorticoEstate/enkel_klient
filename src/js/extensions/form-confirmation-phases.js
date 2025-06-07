@@ -162,14 +162,56 @@ const FormConfirmationPhases = {
       this.$currentModal = $modal;
       
       // Run file upload with our own method
-      await this.uploadFiles($modal);
+      const uploadResult = await this.uploadFiles($modal);
       
-      // Update UI for success
-      $phase2Step.removeClass('active').addClass('complete');
-      $phase2Step.find('.step-indicator').text('✅');
-      $phase2Button.text(this.getTranslation('form_confirmation.files_uploaded', 'Files uploaded'));
+      // Check the upload result and update UI accordingly
+      if (uploadResult && uploadResult.success === false && uploadResult.hasErrors) {
+        // Upload completed with errors - show warning state
+        $phase2Step.removeClass('active').addClass('complete warning');
+        $phase2Step.find('.step-indicator').text('⚠️');
+        
+        if (uploadResult.failed > 0 && uploadResult.successful > 0) {
+          // Some files succeeded, some failed
+          const errorText = this.getTranslation('form_confirmation.files_uploaded_with_errors', 
+            'Upload completed with errors ({successful} successful, {failed} failed)')
+            .replace('{successful}', uploadResult.successful)
+            .replace('{failed}', uploadResult.failed);
+          $phase2Button.text(errorText);
+        } else if (uploadResult.failed > 0) {
+          // All files failed
+          $phase2Button.text(this.getTranslation('form_confirmation.files_upload_failed', 'File upload failed'));
+        } else if (uploadResult.timeout) {
+          // Timeout occurred
+          $phase2Button.text(this.getTranslation('form_confirmation.files_upload_timeout', 'Upload timeout - completed anyway'));
+        } else {
+          // Generic error
+          $phase2Button.text(this.getTranslation('form_confirmation.files_upload_error', 'Upload completed with issues'));
+        }
+        
+        // Add warning styling if not already present
+        if (!$('#phase-warning-styles').length) {
+          $('head').append(`
+            <style id="phase-warning-styles">
+              .step-item.warning {
+                background-color: #fff3cd !important;
+                border-left: 4px solid #ffc107 !important;
+              }
+              .step-item.warning .step-indicator {
+                background-color: #ffc107 !important;
+                color: #856404 !important;
+              }
+            </style>
+          `);
+        }
+        
+      } else {
+        // Upload completed successfully
+        $phase2Step.removeClass('active').addClass('complete');
+        $phase2Step.find('.step-indicator').text('✅');
+        $phase2Button.text(this.getTranslation('form_confirmation.files_uploaded', 'Files uploaded'));
+      }
       
-      // Enable completion button
+      // Enable completion button regardless of upload issues
       $modal.find('.btn-complete-process').prop('disabled', false);
       
       // Remove the warning notice as it's no longer needed
@@ -381,7 +423,22 @@ const FormConfirmationPhases = {
         $overlay.find('.status-text').text(uploadingFiles);
         $overlay.find('.progress-bar').css('width', '60%');
         
-        await this.uploadFiles();
+        const uploadResult = await this.uploadFiles();
+        
+        // Handle upload result
+        if (uploadResult && uploadResult.success === false && uploadResult.hasErrors) {
+          // Upload completed with errors - show warning but continue
+          const uploadWarning = uploadResult.message || 'Some files failed to upload';
+          $overlay.find('.status-text').html(`
+            <div style="color: #856404; background-color: #fff3cd; padding: 8px; border-radius: 4px; margin: 10px 0;">
+              ⚠️ ${uploadWarning}
+            </div>
+          `);
+          $overlay.find('.progress-bar').css('width', '90%');
+          
+          // Wait a moment to show the warning
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
       
       // Complete

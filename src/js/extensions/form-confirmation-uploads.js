@@ -58,7 +58,7 @@ const FormConfirmationUploads = {
         const totalFiles = fileCount;
         let completedFiles = 0;
         
-        this.$form.off('fileuploaddone.phase2');
+        this.$form.off('fileuploadext-done.phase2');
         this.$form.off('fileuploadfail.phase2');
         this.$form.off('fileuploadprogress.phase2');
         
@@ -85,12 +85,15 @@ const FormConfirmationUploads = {
         });
         
         // Listen for the actual event that FileUploadExtension triggers
-        this.$form.one('fileuploaddone', () => {
+        this.$form.one('fileuploadext-done', () => {
           Debug.debug('All files uploaded successfully via FileUploadExtension');
           clearTimeout(uploadTimeout);
           this.$form.off('fileuploadfail.phase2');
           this.$form.off('fileuploadprogress.phase2'); 
           this.$form.off('fileuploadcompleted.phase2');
+          this.$form.off('filechunkfail.phase2');
+          this.$form.off('fileuploadchunkprogress.phase2');
+          this.$form.off('fileuploadallcomplete');
           
           // Ensure progress bar shows 100%
           if (this.$currentModal) {
@@ -98,27 +101,112 @@ const FormConfirmationUploads = {
             this.$currentModal.find('.progress-text').text('100% complete - All files uploaded!');
           }
           
-          resolve();
+          resolve({ success: true, failed: 0, successful: totalFiles });
+        });
+        
+        // Listen for completion with some errors
+        this.$form.one('fileuploadallcomplete', (event, data) => {
+          Debug.debug('File upload completed with some errors:', data);
+          clearTimeout(uploadTimeout);
+          this.$form.off('fileuploadfail.phase2');
+          this.$form.off('fileuploadprogress.phase2'); 
+          this.$form.off('fileuploadcompleted.phase2');
+          this.$form.off('filechunkfail.phase2');
+          this.$form.off('fileuploadchunkprogress.phase2');
+          this.$form.off('fileuploadext-done');
+          
+          // Show completion with errors message
+          if (this.$currentModal) {
+            this.$currentModal.find('.progress-bar').css('width', '100%');
+            const successfulText = data.successful > 0 ? ` (${data.successful} successful` : '';
+            const failedText = data.failed > 0 ? `, ${data.failed} failed)` : ')';
+            this.$currentModal.find('.progress-text').text(`Upload completed with errors${successfulText}${failedText}`);
+          }
+          
+          // Resolve with error status information
+          resolve({ 
+            success: false, 
+            hasErrors: true, 
+            failed: data.failed || 0, 
+            successful: data.successful || 0,
+            message: `Upload completed with errors: ${data.successful || 0} successful, ${data.failed || 0} failed`
+          });
         });
         
         this.$form.one('fileuploadfail.phase2', (event, data) => {
           Debug.error('File upload failed via FileUploadExtension:', data);
           clearTimeout(uploadTimeout);
-          this.$form.off('fileuploaddone');
+          this.$form.off('fileuploadext-done');
           this.$form.off('fileuploadprogress.phase2');
           this.$form.off('fileuploadcompleted.phase2');
-          // Don't reject - just resolve to allow form completion with error message
-          resolve();
+          this.$form.off('filechunkfail.phase2');
+          this.$form.off('fileuploadchunkprogress.phase2');
+          this.$form.off('fileuploadallcomplete');
+          // Return failure status but don't reject to allow form completion
+          resolve({ 
+            success: false, 
+            hasErrors: true, 
+            failed: totalFiles, 
+            successful: 0,
+            message: 'File upload failed'
+          });
+        });
+        
+        // Handle individual chunk failures - continue with other files
+        this.$form.on('filechunkfail.phase2', (event, data) => {
+          Debug.warn(`Chunk upload failed for file: ${data.fileName}`, data.error);
+          
+          // Update progress to show that this file failed but others may continue
+          if (this.$currentModal) {
+            const errorMsg = this.$currentModal.find('.chunk-error-status');
+            if (errorMsg.length === 0) {
+              this.$currentModal.find('.progress-text').after(`
+                <div class="chunk-error-status text-danger mt-2">
+                  <small><i class="fas fa-exclamation-triangle"></i> Some files failed chunked upload but will continue with others...</small>
+                </div>
+              `);
+            }
+          }
+          
+          // Don't stop the overall upload process - let other files continue
+        });
+        
+        // Handle chunk progress updates
+        this.$form.on('fileuploadchunkprogress.phase2', (event, data) => {
+          const chunkProgress = Math.round((data.completed / data.totalChunks) * 100);
+          Debug.debug(`Chunk progress for ${data.fileName}: ${data.completed}/${data.totalChunks} chunks (${chunkProgress}%)`);
+          
+          // Update chunk-specific progress if available
+          if (this.$currentModal) {
+            const chunkStatus = this.$currentModal.find('.chunk-status');
+            if (chunkStatus.length === 0) {
+              this.$currentModal.find('.progress-text').after(`
+                <div class="chunk-status text-muted mt-1">
+                  <small>Processing chunks...</small>
+                </div>
+              `);
+            } else {
+              chunkStatus.html(`<small>Chunk ${data.completed}/${data.totalChunks} for ${data.fileName}</small>`);
+            }
+          }
         });
         
         // Set a timeout to prevent hanging (generous timeout based on file count)
         const uploadTimeout = setTimeout(() => {
           Debug.warn('File upload timeout reached, completing anyway');
-          this.$form.off('fileuploaddone');
+          this.$form.off('fileuploadext-done');
           this.$form.off('fileuploadfail.phase2');
           this.$form.off('fileuploadprogress.phase2');
           this.$form.off('fileuploadcompleted.phase2');
-          resolve(); // Resolve instead of reject to allow form completion
+          this.$form.off('filechunkfail.phase2');
+          this.$form.off('fileuploadchunkprogress.phase2');
+          this.$form.off('fileuploadallcomplete');
+          resolve({ 
+            success: false, 
+            hasErrors: true, 
+            timeout: true,
+            message: 'File upload timeout reached'
+          }); // Resolve instead of reject to allow form completion
         }, (totalFiles * 30 + 10) * 1000);
         
         // Start the uploads using the FileUploadExtension's method
@@ -149,16 +237,22 @@ const FormConfirmationUploads = {
           this.directUploadFiles($fileInput, uploadUrl)
             .then(() => {
               Debug.debug('Direct file upload completed successfully');
-              resolve();
+              resolve({ success: true, failed: 0, successful: fileInput.files.length });
             })
             .catch((error) => {
               Debug.error('Direct file upload failed:', error);
-              // Don't reject - just resolve to allow form completion
-              resolve();
+              // Return error status but don't reject to allow form completion
+              resolve({ 
+                success: false, 
+                hasErrors: true, 
+                failed: fileInput.files.length, 
+                successful: 0,
+                message: error.message 
+              });
             });
         } else {
           Debug.debug('No files found to upload');
-          resolve();
+          resolve({ success: true, failed: 0, successful: 0 });
         }
       }
     });
@@ -240,7 +334,17 @@ const FormConfirmationUploads = {
             if (completed === files.length) {
               if (errors.length === 0) {
                 resolve();
+              } else if (errors.length < files.length) {
+                // Some files succeeded, some failed
+                resolve({ 
+                  success: false, 
+                  hasErrors: true, 
+                  failed: errors.length, 
+                  successful: files.length - errors.length,
+                  message: `${errors.length} files failed: ${errors.join(', ')}`
+                });
               } else {
+                // All files failed
                 reject(new Error(`Failed to upload ${errors.length} files: ${errors.join(', ')}`));
               }
             }
@@ -268,7 +372,19 @@ const FormConfirmationUploads = {
             updateProgress(percent);
             
             if (completed === files.length) {
-              reject(new Error(`Failed to upload ${errors.length} files: ${errors.join(', ')}`));
+              if (errors.length < files.length) {
+                // Some files succeeded, some failed
+                resolve({ 
+                  success: false, 
+                  hasErrors: true, 
+                  failed: errors.length, 
+                  successful: files.length - errors.length,
+                  message: `${errors.length} files failed: ${errors.join(', ')}`
+                });
+              } else {
+                // All files failed
+                reject(new Error(`Failed to upload ${errors.length} files: ${errors.join(', ')}`));
+              }
             }
           }
         });

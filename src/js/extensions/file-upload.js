@@ -38,9 +38,50 @@ if (typeof FileUploadExtension === 'undefined') {
     this.$form = this.formHandler.getForm();
     this.uploadUrl = this.options.uploadUrl || `${strBaseURL}/${this.formHandler.getFormId()}/upload`;
     
+    // Add CSS styles for chunked uploads
+    this.addChunkedUploadStyles();
+    
     this.initFileUploader();
     this.setupValidation();
     this.displayAllowedFileTypes();
+  }
+
+  addChunkedUploadStyles() {
+    // Add CSS styles for chunked upload states if not already present
+    if (!document.getElementById('chunked-upload-styles')) {
+      const style = document.createElement('style');
+      style.id = 'chunked-upload-styles';
+      style.textContent = `
+        .file-item.chunk-error {
+          border-left: 4px solid #dc3545;
+          background-color: #f8d7da;
+        }
+        .file-item.done {
+          border-left: 4px solid #28a745;
+          background-color: #d4edda;
+        }
+        .file-item.uploading {
+          border-left: 4px solid #007bff;
+          background-color: #d1ecf1;
+        }
+        .chunk-error-indicator, .upload-error-indicator {
+          padding: 2px 0;
+          font-weight: 500;
+        }
+        .progress-bar {
+          transition: width 0.3s ease;
+        }
+        .chunk-status {
+          font-size: 0.8em;
+          color: #6c757d;
+        }
+        .chunk-error-status {
+          font-size: 0.85em;
+        }
+      `;
+      document.head.appendChild(style);
+      Debug.debug('FileUploadExtension: Added chunked upload CSS styles');
+    }
   }
   
   displayAllowedFileTypes() {
@@ -103,9 +144,14 @@ if (typeof FileUploadExtension === 'undefined') {
         sequentialUploads: true,
         replaceFileInput: false,
         
-        // Enhanced chunking capabilities (from FileUploader)
-        maxChunkSize: this.options.maxChunkSize || 8388000, // 8MB chunks by default
+        // Enhanced chunking capabilities following jQuery-File-Upload wiki
+        maxChunkSize: this.options.maxChunkSize || 8388608, // 8MB chunks by default (8 * 1024 * 1024)
+        multipart: true, // Keep as multipart to ensure files appear in $_FILES
         limitConcurrentUploads: 1,
+        
+        // Chunk retry configuration
+        maxRetries: 3,
+        retryTimeout: 1000, // Start with 1 second, increases for each retry
         
         // Add formData for security tokens (like FileUploader does)
         formData: () => {
@@ -175,12 +221,89 @@ if (typeof FileUploadExtension === 'undefined') {
         
         done: (e, data) => {
           Debug.debug('File upload complete:', data.files[0].name);
-          this.handleUploadComplete(true, data);
+          
+          // CRITICAL: Use setTimeout to ensure this runs AFTER any automatic event triggers
+          // This fixes the race condition where fileuploaddone fires before error detection
+          setTimeout(() => {
+            const fileName = data.files[0].name;
+            
+            // Remove from pending completions
+            if (this.pendingCompletions) {
+              this.pendingCompletions.delete(fileName);
+            }
+            
+            // Check if the server response contains errors, even with HTTP 200 status
+            let hasServerError = false;
+            let errorMessage = '';
+            
+            if (data.result && data.result.files && data.result.files.length > 0) {
+              const fileResult = data.result.files[0];
+              if (fileResult.error) {
+                hasServerError = true;
+                errorMessage = fileResult.error;
+                Debug.error(`Server reported error for ${fileName}: ${errorMessage}`);
+              }
+            }
+            
+            if (hasServerError) {
+              // Treat as failure despite HTTP 200 status
+              this.handleUploadComplete(false, data);
+            } else {
+              // Actual success
+              this.handleUploadComplete(true, data);
+            }
+          }, 0); // Minimal delay to ensure we run after automatic events
         },
         
         fail: (e, data) => {
           Debug.debug('File upload failed:', data.files[0].name);
           this.handleUploadComplete(false, data);
+        },
+        
+        // Chunked upload callbacks - these handle individual chunk events  
+        fileuploadchunkbeforesend: (e, data) => {
+          const fileName = data.files?.[0]?.name || 'unknown';
+          const chunkIndex = data.chunkIndex || 0;
+          const totalChunks = data.totalChunks || 1;
+          Debug.debug(`Chunk upload starting - File: ${fileName}, Chunk: ${chunkIndex + 1}/${totalChunks}`);
+        },
+        
+        fileuploadchunksend: (e, data) => {
+          const fileName = data.files?.[0]?.name || 'unknown';
+          const chunkIndex = data.chunkIndex || 0;
+          Debug.debug(`Chunk sent - File: ${fileName}, Chunk: ${chunkIndex + 1}`);
+        },
+        
+        fileuploadchunkdone: (e, data) => {
+          const fileName = data.files?.[0]?.name || 'unknown';
+          const chunkIndex = data.chunkIndex || 0;
+          const totalChunks = data.totalChunks || 1;
+          Debug.debug(`Chunk completed - File: ${fileName}, Chunk: ${chunkIndex + 1}/${totalChunks}`);
+          
+          // Trigger custom event for chunk completion tracking
+          this.$form.trigger('fileuploadchunkprogress', {
+            fileName: fileName,
+            chunkIndex: chunkIndex,
+            totalChunks: totalChunks,
+            completed: chunkIndex + 1
+          });
+        },
+        
+        fileuploadchunkfail: (e, data) => {
+          const fileName = data.files?.[0]?.name || 'unknown';
+          const chunkIndex = data.chunkIndex || 0;
+          const totalChunks = data.totalChunks || 1;
+          
+          Debug.error(`Chunk failed - File: ${fileName}, Chunk: ${chunkIndex + 1}/${totalChunks}`, data);
+          
+          // Handle chunk failure with retry logic
+          this.handleChunkFailure(data, e);
+        },
+        
+        fileuploadchunkalways: (e, data) => {
+          const fileName = data.files?.[0]?.name || 'unknown';
+          const chunkIndex = data.chunkIndex || 0;
+          Debug.debug(`Chunk always callback - File: ${fileName}, Chunk: ${chunkIndex + 1}`);
         }
       });
       
@@ -201,16 +324,23 @@ if (typeof FileUploadExtension === 'undefined') {
   // Add methods for two-phase submission compatibility
   sendAllFiles(uploadId) {
     this.uploadId = uploadId;
+    this.uploadStartTime = Date.now();
+    this.totalFilesToUpload = 0;
+    this.successfulUploads = 0;
+    this.failedUploads = 0;
+    this.pendingCompletions = new Set(); // Track files still being processed
+    this.completionEventFired = false; // Prevent duplicate events
     Debug.debug('FileUploadExtension: Starting upload for ID:', uploadId);
     
     // Count how many files we're about to submit
     const fileItems = this.$form.find('.file-item:not(.done):not(.deleted)');
+    this.totalFilesToUpload = fileItems.length;
     Debug.debug(`FileUploadExtension: Found ${fileItems.length} file items to upload`);
     
     if (fileItems.length === 0) {
       Debug.debug('FileUploadExtension: No files to upload, triggering completion event');
       // Trigger completion event immediately if no files
-      this.$form.trigger('fileuploaddone');
+      this.$form.trigger('fileuploadext-done');
       return;
     }
     
@@ -225,6 +355,9 @@ if (typeof FileUploadExtension === 'undefined') {
         const fileName = uploadData.files[0]?.name || 'unknown';
         Debug.debug(`FileUploadExtension: Submitting file ${submittedCount + 1}/${fileItems.length}: ${fileName}`);
         submittedCount++;
+        
+        // Track this file as pending completion
+        this.pendingCompletions.add(fileName);
         
         // Update the upload URL for Phase 2
         const baseUrl = this.uploadUrl;
@@ -249,7 +382,7 @@ if (typeof FileUploadExtension === 'undefined') {
     // If no files were actually submitted, trigger completion
     if (submittedCount === 0) {
       Debug.debug('FileUploadExtension: No files submitted, triggering completion event');
-      this.$form.trigger('fileuploaddone');
+      this.$form.trigger('fileuploadext-done');
     }
   }
   
@@ -838,18 +971,40 @@ if (typeof FileUploadExtension === 'undefined') {
     const fileName = data.files?.[0]?.name || 'unknown';
     Debug.debug(`FileUploadExtension: handleUploadComplete called for ${fileName}, success: ${success}`);
     
+    // Prevent duplicate processing of the same file
+    if (data._processedByExtension) {
+      Debug.debug(`FileUploadExtension: File ${fileName} already processed, skipping duplicate`);
+      return;
+    }
+    data._processedByExtension = true;
+    
+    // Track upload statistics for two-phase mode
+    if (this.uploadId) {
+      if (success) {
+        this.successfulUploads++;
+        Debug.debug(`FileUploadExtension: Success count: ${this.successfulUploads}/${this.totalFilesToUpload}`);
+      } else {
+        this.failedUploads++;
+        Debug.debug(`FileUploadExtension: Failed count: ${this.failedUploads}/${this.totalFilesToUpload}`);
+      }
+    }
+    
     if (success) {
       // Mark file as completed in the UI
       if (data.context) {
-        data.context.addClass('done').removeClass('uploading');
+        data.context.addClass('done').removeClass('uploading').removeClass('chunk-error');
         Debug.debug(`FileUploadExtension: Marked file ${fileName} as done in UI`);
+        
+        // Remove any chunk error indicators
+        data.context.find('.chunk-error-indicator').remove();
       } else {
         // Fallback: find file item by name and mark as done
         const $fileItem = this.$form.find('.file-item').filter(function() {
           return $(this).find('.file-name').text().trim() === fileName;
         });
         if ($fileItem.length) {
-          $fileItem.addClass('done').removeClass('uploading');
+          $fileItem.addClass('done').removeClass('uploading').removeClass('chunk-error');
+          $fileItem.find('.chunk-error-indicator').remove();
           Debug.debug(`FileUploadExtension: Found and marked file ${fileName} as done via fallback`);
         }
       }
@@ -858,13 +1013,29 @@ if (typeof FileUploadExtension === 'undefined') {
       if (this.uploadId) {
         Debug.debug(`FileUploadExtension: Two-phase upload detected for ${fileName}`);
         
-        // Check if all files are now complete
-        const remainingFiles = this.$form.find('.file-item:not(.done):not(.deleted)').length;
+        // Check if all files are now complete (including files with chunk errors)
+        const remainingFiles = this.$form.find('.file-item:not(.done):not(.deleted):not(.chunk-error)').length;
         Debug.debug(`FileUploadExtension: ${remainingFiles} files remaining after ${fileName} completion`);
         
         if (remainingFiles === 0) {
-          Debug.debug('FileUploadExtension: All files uploaded, triggering completion event');
-          this.$form.trigger('fileuploaddone');
+          Debug.debug('FileUploadExtension: All files processed (completed or failed), checking overall result');
+          
+          // Check if all files were successful
+          const allSuccessful = this.successfulUploads === this.totalFilesToUpload && this.failedUploads === 0;
+          Debug.debug(`FileUploadExtension: Upload summary - Success: ${this.successfulUploads}, Failed: ${this.failedUploads}, All successful: ${allSuccessful}`);
+          
+          if (allSuccessful) {
+            Debug.debug('FileUploadExtension: All files uploaded successfully, triggering success event');
+            this.$form.trigger('fileuploadext-done');
+          } else {
+            Debug.debug('FileUploadExtension: Some files failed, triggering completion with errors event');
+            this.$form.trigger('fileuploadallcomplete', {
+              total: this.totalFilesToUpload,
+              successful: this.successfulUploads,
+              failed: this.failedUploads,
+              allSuccessful: false
+            });
+          }
         }
       } else {
         // Single phase upload - redirect as before
@@ -872,11 +1043,43 @@ if (typeof FileUploadExtension === 'undefined') {
         window.location.href = this.formHandler.redirectUrl;
       }
     } else {
-      // Handle upload failure
+      // Handle upload failure (non-chunk related)
       Debug.error(`FileUploadExtension: Upload failed for ${fileName}`);
+      
+      // Try to parse server error response for better error messages
+      let errorMessage = `Upload failed: ${fileName}`;
+      
+      // Check data.result first (from done callback with server errors)
+      if (data.result && data.result.files && data.result.files[0] && data.result.files[0].error) {
+        errorMessage = data.result.files[0].error;
+      } 
+      // Then check jqXHR response (from actual HTTP errors)
+      else if (data.jqXHR && data.jqXHR.responseText) {
+        try {
+          const response = JSON.parse(data.jqXHR.responseText);
+          if (response.files && response.files[0] && response.files[0].error) {
+            errorMessage = response.files[0].error;
+          }
+        } catch (e) {
+          // If not JSON, use the raw response text
+          errorMessage = data.jqXHR.responseText || errorMessage;
+        }
+      }
       
       if (data.context) {
         data.context.addClass('error').removeClass('uploading');
+        
+        // Add error indicator
+        const errorIndicator = $(`
+          <div class="upload-error-indicator" style="color: #dc3545; font-size: 0.8em; margin-top: 5px;">
+            <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+            ${errorMessage}
+          </div>
+        `);
+        
+        if (!data.context.find('.upload-error-indicator').length) {
+          data.context.find('.file-info').append(errorIndicator);
+        }
       } else {
         // Fallback: find file item by name and mark as error
         const $fileItem = this.$form.find('.file-item').filter(function() {
@@ -887,14 +1090,168 @@ if (typeof FileUploadExtension === 'undefined') {
         }
       }
       
-      // Show error message
-      this.showFileError(`File upload failed: ${fileName}`);
+      // Show error message in standard format
+      const errorResponse = {
+        files: [{
+          name: fileName,
+          size: data.files?.[0]?.size || 0,
+          type: data.files?.[0]?.type || 'application/octet-stream',
+          error: errorMessage
+        }],
+        num_files: 1
+      };
       
-      // In two-phase mode, trigger failure event
+      this.showFileError(errorResponse);
+      
+      // In two-phase mode, continue with other files
       if (this.uploadId) {
-        this.$form.trigger('fileuploadfail', data);
+        // Check if all files are now processed (completed or failed)
+        const remainingFiles = this.$form.find('.file-item:not(.done):not(.deleted):not(.error):not(.chunk-error)').length;
+        Debug.debug(`FileUploadExtension: ${remainingFiles} files remaining after ${fileName} failure`);
+        
+        if (remainingFiles === 0) {
+          Debug.debug('FileUploadExtension: All files processed after failure, checking overall result');
+          
+          // Check if all files were successful
+          const allSuccessful = this.successfulUploads === this.totalFilesToUpload && this.failedUploads === 0;
+          Debug.debug(`FileUploadExtension: Upload summary after failure - Success: ${this.successfulUploads}, Failed: ${this.failedUploads}, All successful: ${allSuccessful}`);
+          
+          if (allSuccessful) {
+            Debug.debug('FileUploadExtension: All files uploaded successfully, triggering success event');
+            this.$form.trigger('fileuploadext-done');
+          } else {
+            Debug.debug('FileUploadExtension: Some files failed, triggering completion with errors event');
+            this.$form.trigger('fileuploadallcomplete', {
+              total: this.totalFilesToUpload,
+              successful: this.successfulUploads,
+              failed: this.failedUploads,
+              allSuccessful: false
+            });
+          }
+        } else {
+          // Trigger failure event for this specific file
+          this.$form.trigger('fileuploadfail', {fileName: fileName, error: errorResponse, data: data});
+        }
       }
     }
+  }
+
+  showFileError(errorResponse) {
+    // Format the error message according to the required specification  
+    const file = errorResponse.files[0];
+    const message = `
+      <div class="file-upload-error">
+        <strong>File Upload Error:</strong><br>
+        <strong>File:</strong> ${file.name}<br>
+        <strong>Size:</strong> ${this.formatFileSize(file.size)}<br>
+        <strong>Type:</strong> ${file.type}<br>
+        <strong>Error:</strong> ${file.error}
+      </div>
+    `;
+    
+    this.showError(message);
+    
+    // Also log the exact format for debugging
+    Debug.error('File error in required format:', JSON.stringify(errorResponse));
+  }
+
+  handleChunkFailure(data, event) {
+    const fileName = data.files?.[0]?.name || 'unknown';
+    const chunkIndex = data.chunkIndex || 0;
+    const totalChunks = data.totalChunks || 1;
+    
+    Debug.error(`Chunk failure for ${fileName}, chunk ${chunkIndex + 1}/${totalChunks}`);
+    
+    // Get retry information
+    const retries = data.context?.data('retries') || 0;
+    const maxRetries = data.maxRetries || 3;
+    
+    // Check if we should retry or fail completely
+    if (data.errorThrown !== 'abort' && retries < maxRetries) {
+      const newRetries = retries + 1;
+      data.context?.data('retries', newRetries);
+      
+      Debug.debug(`Retrying chunk ${chunkIndex + 1} for ${fileName} (attempt ${newRetries}/${maxRetries})`);
+      
+      // Retry after a delay (exponential backoff)
+      const retryDelay = (data.retryTimeout || 1000) * newRetries;
+      setTimeout(() => {
+        // Clear the previous data and retry
+        data.data = null;
+        data.submit();
+      }, retryDelay);
+      
+      return; // Don't show error yet, we're retrying
+    }
+    
+    // Max retries exceeded or abort - show error and stop chunk process for this file
+    data.context?.removeData('retries');
+    
+    // Create error response in the required format
+    const errorResponse = {
+      files: [{
+        name: fileName,
+        size: data.files?.[0]?.size || 0,
+        type: data.files?.[0]?.type || 'application/octet-stream',
+        error: `Chunk upload failed after ${maxRetries} retries (chunk ${chunkIndex + 1}/${totalChunks})`
+      }],
+      num_files: 1
+    };
+    
+    Debug.error('Chunk upload failed permanently:', errorResponse);
+    
+    // Display the error message
+    this.showChunkError(errorResponse);
+    
+    // Mark the file as failed in UI
+    if (data.context) {
+      data.context.addClass('chunk-error').removeClass('uploading');
+      
+      // Add error indicator to the file item
+      const errorIndicator = $(`
+        <div class="chunk-error-indicator" style="color: #dc3545; font-size: 0.8em; margin-top: 5px;">
+          <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+          Chunk upload failed
+        </div>
+      `);
+      
+      if (!data.context.find('.chunk-error-indicator').length) {
+        data.context.find('.file-info').append(errorIndicator);
+      }
+    }
+    
+    // In two-phase mode, continue with other files but mark this one as failed
+    if (this.uploadId) {
+      // Trigger a custom event to let the upload manager know about the failure
+      this.$form.trigger('filechunkfail', {
+        fileName: fileName,
+        error: errorResponse,
+        data: data
+      });
+      
+      // Don't stop the entire upload process - let other files continue
+      // but mark this file as failed
+      Debug.debug(`Continuing with other files despite chunk failure for ${fileName}`);
+    }
+  }
+
+  showChunkError(errorResponse) {
+    // Format the error message according to the required specification
+    const file = errorResponse.files[0];
+    const message = `
+      <div class="chunk-upload-error">
+        <strong>Chunked Upload Error:</strong><br>
+        <strong>File:</strong> ${file.name}<br>
+        <strong>Size:</strong> ${this.formatFileSize(file.size)}<br>
+        <strong>Type:</strong> ${file.type}<br>
+        <strong>Error:</strong> ${file.error}
+      </div>
+    `;
+    
+    this.showError(message);
+    
+    // Also log the exact format for debugging
+    Debug.error('Chunk error in required format:', JSON.stringify(errorResponse));
   }
 
   cleanup() {

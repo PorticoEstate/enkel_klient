@@ -55,20 +55,38 @@ php -S localhost:8080 -t public
 enkel_klient/
 ├── src/
 │   ├── js/
-│   │   ├── base.js              # Core system & debug
-│   │   ├── extensions/          # Modular form components
-│   │   │   ├── form-validation.js
-│   │   │   ├── form-autosave.js
-│   │   │   ├── form-confirmation.js
-│   │   │   └── file-upload.js
-│   │   └── accessibility-helpers.js
+│   │   ├── base.js                    # Core system & debug
+│   │   ├── debug.js                   # Standalone debug utilities
+│   │   ├── form-handler-core.js       # Core form handling system
+│   │   ├── form-extension-loader.js   # Dynamic extension loader
+│   │   ├── accessibility-helpers.js   # Global accessibility functions
+│   │   ├── extensions/                # Modular form components
+│   │   │   ├── form-validation.js     # Form validation system
+│   │   │   ├── form-autosave.js       # Auto-save functionality
+│   │   │   ├── form-accessibility.js  # Form-specific accessibility
+│   │   │   ├── file-upload.js         # File upload handling
+│   │   │   ├── form-confirmation.js   # Main confirmation entry point
+│   │   │   ├── form-confirmation-core.js    # Core confirmation logic & module loading
+│   │   │   ├── form-confirmation-ui.js      # UI generation & styling
+│   │   │   ├── form-confirmation-phases.js  # Two-phase submission process
+│   │   │   └── form-confirmation-uploads.js # File upload coordination
+│   │   ├── components/            # Reusable JS components
+│   │   ├── config/               # Form-specific configurations
+│   │   ├── file-upload/          # File upload dependencies
+│   │   └── *-migrated.js         # Form-specific handlers
+│   ├── css/                      # Styling and themes
 │   ├── translations/
-│   │   ├── en.php              # English translations
-│   │   └── no.php              # Norwegian translations
-│   └── templates/
-│       └── components/
-│           └── translations.twig  # Translation bridge
-└── public/
+│   │   ├── en.php                # English translations
+│   │   └── no.php                # Norwegian translations
+│   ├── templates/                # Twig templates
+│   │   └── components/
+│   │       └── translations.twig # Translation bridge
+│   ├── configs/                  # Form configurations
+│   ├── Controller/               # PHP controllers
+│   └── Service/                  # Business logic services
+├── docs/                         # Documentation
+├── tests/                        # Test files
+└── public/                       # Web-accessible files
 ```
 
 ---
@@ -632,7 +650,49 @@ EnkelKlient uses a modular extension system where each form component is a self-
 4. **FileUploadExtension**: Multi-file upload with progress
 5. **AccessibilityHelpers**: Screen reader support
 
-#### Extension Registration
+### Form Confirmation System
+
+The form confirmation system implements WCAG 3.3.4 Error Prevention through a modular architecture:
+
+#### Modular Components
+
+- **`form-confirmation.js`**: Main entry point that coordinates all modules
+- **`form-confirmation-core.js`**: Core logic, lifecycle management, and module loading
+- **`form-confirmation-ui.js`**: UI generation, modal creation, and styling
+- **`form-confirmation-phases.js`**: Two-phase submission process management
+- **`form-confirmation-uploads.js`**: File upload coordination and progress tracking
+
+#### Features
+
+- **Form Summary Modal**: Review all form data before submission
+- **Two-Phase Submission**: 
+  1. Phase 1: Submit form data (fields locked after success)
+  2. Phase 2: Upload files with progress tracking
+- **WCAG 3.3.4 Compliance**: Error prevention through confirmation
+- **Auto-Save Integration**: Prevents data loss during confirmation process
+- **Progress Tracking**: Real-time file upload progress with visual feedback
+- **Accessibility**: Full screen reader support and keyboard navigation
+
+#### Configuration
+
+Forms enable confirmation through data attributes:
+
+```html
+<form data-form-config='{"showSummary": true}'>
+```
+
+Or through JavaScript configuration:
+
+```javascript
+window.formConfigs = {
+    'helpdesk': {
+        form_summary_on_submit: true,
+        confirmation_dialog_enabled: true
+    }
+};
+```
+
+### Extension Registration
 
 ```javascript
 // Register an extension
@@ -894,28 +954,77 @@ This project (EnkelKlient) serves as a modern frontend for selected modules and 
 
 ## 📤 Two-Phase Form Submission (with File Attachments)
 
-EnkelKlient supports a robust two-phase form submission process for forms that include file uploads:
+EnkelKlient supports a robust two-phase form submission process for forms that include file uploads, implemented through the modular confirmation system:
+
+### Process Flow
 
 1. **Phase 1: Submit Form Data**
-   - The user reviews and submits all non-file form fields.
-   - The form data is sent to the backend and a record is created (with a unique ID).
-   - After successful submission, the form fields are locked to prevent further editing.
+   - User reviews form summary in a modal dialog (WCAG 3.3.4 compliance)
+   - All non-file form fields are validated and submitted to the backend
+   - A record is created with a unique ID
+   - Form fields are locked to prevent further editing
+   - Progress tracking begins for Phase 2
 
 2. **Phase 2: Upload Files**
-   - The user uploads any required files, which are attached to the previously created record.
-   - File uploads are tracked with progress indicators and error handling.
-   - Only after all files are uploaded is the submission process considered complete.
+   - Files are uploaded and attached to the previously created record
+   - Real-time progress indicators show upload status
+   - Individual file progress and overall completion tracking
+   - Error handling with retry capabilities
+   - Submission complete only after all files are uploaded
 
-**Why two phases?**
-- This approach ensures that form data is never lost due to file upload errors or interruptions.
-- It allows for better error handling, user feedback, and compliance with accessibility standards.
-- Users can retry file uploads without re-entering all form data.
+### Implementation Architecture
 
-**User Experience:**
-- The UI guides users through both phases, showing clear progress and locking fields after Phase 1.
-- If no files are attached, the form is submitted in a single step.
+The two-phase system is implemented across multiple modular components:
 
-For technical details, see `src/js/extensions/form-confirmation.js` and the [docs/](docs/) folder.
+- **`form-confirmation-phases.js`**: Manages the phase workflow and state transitions
+- **`form-confirmation-uploads.js`**: Handles file upload coordination and progress
+- **`form-confirmation-ui.js`**: Provides progress indicators and modal updates
+- **`form-confirmation-core.js`**: Coordinates the overall process
+
+### Key Features
+
+- **Data Protection**: Form data never lost due to file upload errors
+- **Progress Tracking**: Visual feedback with progress bars and file status
+- **Error Recovery**: Users can retry file uploads without re-entering form data
+- **WCAG Compliance**: Form summary modal for error prevention (3.3.4)
+- **Auto-Save Integration**: Automatic drafts during the confirmation process
+- **Accessibility**: Screen reader announcements for phase transitions
+
+### User Experience
+
+- **Single Step**: Forms without files submit in one step
+- **Two Step**: Forms with files show clear phase progression
+- **Visual Feedback**: Progress bars, status indicators, and completion messages
+- **Field Locking**: Form fields become read-only after Phase 1 success
+- **Modal Guidance**: Clear instructions and progress through each phase
+
+### Technical Implementation
+
+Forms enable two-phase submission through configuration:
+
+```html
+<!-- Data attribute configuration -->
+<form data-form-config='{"showSummary": true}'>
+
+<!-- With file upload detection -->
+<form data-form-config='{"showSummary": true, "fileUpload": {"enabled": true}}'>
+```
+
+Or JavaScript configuration:
+
+```javascript
+window.formConfigs = {
+    'helpdesk': {
+        form_summary_on_submit: true,
+        enable_fileupload: true
+    }
+};
+```
+
+For detailed technical documentation, see:
+- `src/js/extensions/form-confirmation-phases.js`
+- `src/js/extensions/form-confirmation-uploads.js`
+- `WCAG_334_IMPLEMENTATION_COMPLETE.md`
 
 ---
 

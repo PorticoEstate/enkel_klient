@@ -134,6 +134,8 @@ return array (
     'press_tab_exit_editor' => 'Trykk Tab for å gå ut av editoren.',
     'language_norwegian' => 'Norsk',
     'language_english' => 'English',
+    'logout' => 'Logg ut',
+    'logout_confirm' => 'Er du sikker på at du vil logge ut?',
     'form_errors_with_submission' => 'Det var feil med innsendingen din:',
     'previously_selected_files' => 'Tidligere valgte filer:',
     'files_auto_remove_info' => 'Filer vil automatisk bli fjernet fra denne listen når du velger dem igjen.',

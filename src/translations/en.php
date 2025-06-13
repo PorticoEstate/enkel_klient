@@ -134,6 +134,8 @@ return array (
     'press_tab_exit_editor' => 'Press Tab to exit the editor.',
     'language_norwegian' => 'Norsk',
     'language_english' => 'English',
+    'logout' => 'Log out',
+    'logout_confirm' => 'Are you sure you want to log out?',
     'form_errors_with_submission' => 'There were errors with your submission:',
     'previously_selected_files' => 'Previously selected files:',
     'files_auto_remove_info' => 'Files will be automatically removed from this list when you select them again.',

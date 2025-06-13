@@ -28,6 +28,13 @@
 						{{ __('reset_text_spacing') }}
 					</button>
 				</div>
+				<!-- Logout Button -->
+				<div class="logout-controls" role="region" aria-label="{{ __('logout') }}">
+					<button id="logout-btn" class="btn btn-sm btn-outline-danger logout-btn" onclick="confirmLogout()">
+						<i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+						{{ __('logout') }}
+					</button>
+				</div>
 			</div>
 		</div>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
@@ -159,6 +166,13 @@
 				document.body.classList.add('increased-spacing');
 				}
 
+				// Logout functionality
+				function confirmLogout() {
+					if (confirm('{{ __('logout_confirm') }}')) {
+						window.location.href = '{{ config.site.logout_url }}';
+					}
+				}
+
 				// Check if the stylesheet for high contrast accessibility buttons exists
 				if (!document.getElementById('accessibility-btn-styles')) {
 					// Create a style element for additional contrast
@@ -182,6 +196,24 @@
 						}
 						
 						.accessibility-btn:focus {
+							box-shadow: 0 0 0 3px #ffff00;
+							outline: 2px solid #000000;
+						}
+
+						.logout-btn {
+							border: 2px solid #dc3545;
+							font-weight: bold;
+							margin-left: 10px;
+							background-color: transparent;
+							color: #dc3545;
+						}
+
+						.logout-btn:hover {
+							background-color: #dc3545;
+							color: #ffffff;
+						}
+
+						.logout-btn:focus {
 							box-shadow: 0 0 0 3px #ffff00;
 							outline: 2px solid #000000;
 						}

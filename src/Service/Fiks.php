@@ -27,15 +27,13 @@ class Fiks
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
 		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
 		//ID-porten, Bergen kommune, portalen
-		$oidc_claim_pid = !empty($headers['oidc_claim_pid']) ? $headers['oidc_claim_pid'] : false;
+		$oidc_claim_pid = !empty($headers['OIDC_CLAIM_pid']) ? $headers['OIDC_CLAIM_pid'] : false;
 
 		if ($oidc_claim_pid)
 		{
 			$ssn = $oidc_claim_pid;
+			echo "Using OIDC_CLAIM_pid: $ssn\n";
 		}
-		echo "<pre>";
-		print_r($headers);
-		echo "</pre>";
 		return $ssn;
 	}
 

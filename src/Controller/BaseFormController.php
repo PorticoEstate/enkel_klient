@@ -95,7 +95,7 @@ abstract class BaseFormController
 		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
 
         //ID-porten, Bergen kommune, portalen
-        $oidc_claim_pid = !empty($headers['oidc_claim_pid']) ? $headers['oidc_claim_pid'] : false;
+        $oidc_claim_pid = !empty($headers['OIDC_CLAIM_pid']) ? $headers['OIDC_CLAIM_pid'] : false;
 
         if ($oidc_claim_pid)
         {

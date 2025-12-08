@@ -32,7 +32,6 @@ class Fiks
 		if ($oidc_claim_pid)
 		{
 			$ssn = $oidc_claim_pid;
-			echo "Using OIDC_CLAIM_pid: $ssn\n";
 		}
 		return $ssn;
 	}

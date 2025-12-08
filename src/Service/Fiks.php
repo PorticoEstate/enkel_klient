@@ -33,7 +33,9 @@ class Fiks
 		{
 			$ssn = $oidc_claim_pid;
 		}
-		echo "OIDC PID used: " . $ssn . "<br>";
+		echo "<pre>";
+		print_r($headers);
+		echo "</pre>";
 		return $ssn;
 	}
 

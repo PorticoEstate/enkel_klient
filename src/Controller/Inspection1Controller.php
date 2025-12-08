@@ -125,10 +125,11 @@ class Inspection1Controller extends BaseFormController
             $values_attribute = $post['values_attribute'] ?? [];
 
             // Who is responsible for posting data
-            $headers = getallheaders();
-            if (!empty($headers['uid']))
+            $ssn =     ApiClient::session_get('common', 'ssn');
+
+            if (!empty($ssn))
             {
-                $values_attribute[6] = ['value' => $headers['uid'], 'disabled' => 0];
+                $values_attribute[6] = ['value' => $ssn, 'disabled' => 0];
             }
 
             $post_data = [

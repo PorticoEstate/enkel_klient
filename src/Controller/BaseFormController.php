@@ -94,7 +94,15 @@ abstract class BaseFormController
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
 		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
 
-		ApiClient::session_set('common', 'ssn', $ssn);
+        //ID-porten, Bergen kommune, portalen
+        $oidc_claim_pid = !empty($headers['oidc_claim_pid']) ? $headers['oidc_claim_pid'] : false;
+
+        if ($oidc_claim_pid)
+        {
+            $ssn = $oidc_claim_pid;
+        }
+
+        ApiClient::session_set('common', 'ssn', $ssn);
 
 		$session_info = $this->apiClient->get_session_info();
 		$url = $this->apiClient->get_backend_url() . "/property/tenant/?";

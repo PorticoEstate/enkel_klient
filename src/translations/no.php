@@ -134,6 +134,7 @@ return array (
     'press_tab_exit_editor' => 'Trykk Tab for å gå ut av editoren.',
     'language_norwegian' => 'Norsk',
     'language_english' => 'English',
+    'language_ukrainian' => 'Українська',
     'logout' => 'Logg ut',
     'logout_confirm' => 'Er du sikker på at du vil logge ut?',
     'form_errors_with_submission' => 'Det var feil med innsendingen din:',

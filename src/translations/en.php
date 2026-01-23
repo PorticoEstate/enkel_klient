@@ -134,6 +134,7 @@ return array (
     'press_tab_exit_editor' => 'Press Tab to exit the editor.',
     'language_norwegian' => 'Norsk',
     'language_english' => 'English',
+    'language_ukrainian' => 'Українська',
     'logout' => 'Log out',
     'logout_confirm' => 'Are you sure you want to log out?',
     'form_errors_with_submission' => 'There were errors with your submission:',

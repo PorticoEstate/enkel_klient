@@ -8,7 +8,7 @@ class Translator
 
     public function __construct($lang = 'en')
     {
-        $this->lang = in_array($lang, ['en', 'no']) ? $lang : 'en';
+        $this->lang = in_array($lang, ['en', 'no', 'uk']) ? $lang : 'en';
         $this->loadTranslations();
     }
 

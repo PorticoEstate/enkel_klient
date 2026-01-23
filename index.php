@@ -26,7 +26,7 @@ ini_set('session.cookie_samesite', 'Lax');
 
 session_start();
 $lang = 'no'; // Default language
-if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'no']))
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'no', 'uk']))
 {
 	$lang = $_GET['lang'];
 	$_SESSION['lang'] = $lang;

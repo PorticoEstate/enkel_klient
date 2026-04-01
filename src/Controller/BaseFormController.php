@@ -92,7 +92,7 @@ abstract class BaseFormController
 		$headers = getallheaders();
 		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
-		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
+		$ssn = !empty($_SERVER['HTTP_X_OIDC_CLAIM_PID']) ? $_SERVER['HTTP_X_OIDC_CLAIM_PID'] : $ssn;
 
         //ID-porten, Bergen kommune, portalen
         $oidc_claim_pid = !empty($headers['OIDC_CLAIM_pid']) ? $headers['OIDC_CLAIM_pid'] : false;
@@ -102,7 +102,7 @@ abstract class BaseFormController
             $ssn = $oidc_claim_pid;
         }
         echo '<pre>';
-        print_r($_SERVER);
+        print_r($headers);
         echo '</pre>';
         ApiClient::session_set('common', 'ssn', $ssn);
 

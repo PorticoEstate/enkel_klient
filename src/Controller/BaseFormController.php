@@ -89,20 +89,20 @@ abstract class BaseFormController
 	 */
 	protected function getLoggedIn(): array
 	{
-		$headers = getallheaders();
-		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
+        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+        $ssn = !empty($headers['uid']) ? $headers['uid'] : '';
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
 		$ssn = !empty($_SERVER['HTTP_X_OIDC_CLAIM_PID']) ? $_SERVER['HTTP_X_OIDC_CLAIM_PID'] : $ssn;
 
         //ID-porten, Bergen kommune, portalen
-        $oidc_claim_pid = !empty($headers['X-Oidc-Claim-Pid']) ? $headers['X-Oidc-Claim-Pid'] : false;
+        $oidc_claim_pid = !empty($headers['x-oidc-claim-pid']) ? $headers['x-oidc-claim-pid'] : false;
 
         if ($oidc_claim_pid)
         {
             $ssn = $oidc_claim_pid;
         }
         echo '<pre>';
-        print_r($ssn);
+        print_r($headers);
         echo '</pre>';
         ApiClient::session_set('common', 'ssn', $ssn);
 

@@ -22,12 +22,13 @@ class Fiks
 
 	function get_ssn()
 	{
-		$headers = getallheaders();
+		$headers = array_change_key_case(getallheaders(), CASE_LOWER);
 		$ssn = !empty($headers['uid']) ? $headers['uid'] : '';
 		$ssn = !empty($_SERVER['HTTP_UID']) ? $_SERVER['HTTP_UID'] : $ssn;
-		$ssn = !empty($_SERVER['OIDC_pid']) ? $_SERVER['OIDC_pid'] : $ssn;
+		$ssn = !empty($_SERVER['HTTP_X_OIDC_CLAIM_PID']) ? $_SERVER['HTTP_X_OIDC_CLAIM_PID'] : $ssn;
+
 		//ID-porten, Bergen kommune, portalen
-		$oidc_claim_pid = !empty($headers['OIDC_CLAIM_pid']) ? $headers['OIDC_CLAIM_pid'] : false;
+		$oidc_claim_pid = !empty($headers['x-oidc-claim-pid']) ? $headers['x-oidc-claim-pid'] : false;
 
 		if ($oidc_claim_pid)
 		{

@@ -101,7 +101,9 @@ abstract class BaseFormController
         {
             $ssn = $oidc_claim_pid;
         }
-
+        echo '<pre>';
+        print_r($headers);
+        echo '</pre>';
         ApiClient::session_set('common', 'ssn', $ssn);
 
 		$session_info = $this->apiClient->get_session_info();
